@@ -183,60 +183,33 @@ function select(el){
   panel.style.display = 'block';
 }
 
-function drag(el){
-  let startX = 0, startY = 0;
-  let origX = 0, origY = 0;
-  let dragging = false;
-  let holdTimer = null;
+function addText(){
+  const p = centerPos();
+  const t = document.createElement('textarea');
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  
+  // 기본 크기: 글자 1개
+  t.style.fontSize = '14px';
+  t.style.width = '14px';   // 글자 크기와 같게
+  t.style.height = '18px';  // 글자 크기 + padding
+  mapDiv.appendChild(t);
 
-  el.style.touchAction = 'none';
+  drag(t);
+  enableDelete(t);
 
-  el.addEventListener('pointerdown', e => {
-
-    select(el);
-    el.style.zIndex = 3000;
-
-    startX = e.clientX;
-    startY = e.clientY;
-    origX = parseFloat(el.style.left);
-    origY = parseFloat(el.style.top);
-
-    // 🔑 textarea는 길게 눌러야 이동
-    if (el.tagName === 'TEXTAREA') {
-      holdTimer = setTimeout(() => {
-        dragging = true;
-        el.setPointerCapture(e.pointerId);
-      }, 300); // 0.3초 이상 길게 눌러야 이동
-      return; // preventDefault 호출 안함 → 클릭 시 입력 가능
-    }
-
-    // 아이콘/화살표는 바로 이동
-    e.preventDefault();
-    dragging = true;
-    el.setPointerCapture(e.pointerId);
-  });
-
-
-  el.addEventListener('pointermove', e => {
-    if(!dragging) return;
-
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    el.style.left = (origX + dx) + 'px';
-    el.style.top  = (origY + dy) + 'px';
-  });
-
-  el.addEventListener('pointerup', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
-  });
-
-  el.addEventListener('pointercancel', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
+  // 입력 시 자동 크기 조절
+  t.addEventListener('input', () => {
+    // 높이 자동
+    t.style.height = 'auto';
+    t.style.height = t.scrollHeight + 'px';
+    // 폭 자동
+    t.style.width = Math.max(14, t.scrollWidth) + 'px';
   });
 }
+
 
 
 function enableDelete(el){
@@ -283,26 +256,31 @@ function addArrow(){
 
 function addText(){
   const p = centerPos();
-  const t = document.createElement('textarea');  // ✅ input -> textarea
+  const t = document.createElement('textarea');
   t.className = 'textbox';
   t.placeholder = '텍스트';
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
-  t.style.width = '100px';
-  t.style.height = '24px';
+  
+  // 기본 크기: 글자 1개
   t.style.fontSize = '14px';
+  t.style.width = '14px';   // 글자 크기와 같게
+  t.style.height = '18px';  // 글자 크기 + padding
   mapDiv.appendChild(t);
 
   drag(t);
   enableDelete(t);
 
-  // 자동 크기 조절
-  t.addEventListener('input', e => {
+  // 입력 시 자동 크기 조절
+  t.addEventListener('input', () => {
+    // 높이 자동
     t.style.height = 'auto';
     t.style.height = t.scrollHeight + 'px';
-    t.style.width = Math.max(50, t.scrollWidth) + 'px';
+    // 폭 자동
+    t.style.width = Math.max(14, t.scrollWidth) + 'px';
   });
 }
+
 
 
 // =========================
@@ -327,23 +305,30 @@ document.getElementById('size').addEventListener('input', e => {
   }
 });
 
-// 글자크기 (문자 박스)
+// 글자 크기
 document.getElementById('fontSize').addEventListener('input', e => {
-  if (!selected) return;
-  const fs = parseFloat(e.target.value) || 12;
-  if (selected.tagName === 'INPUT') {
-    selected.style.fontSize = fs + 'px';
+  if(!selected) return;
+  const fs = parseFloat(e.target.value) || 14;
+  if(selected.tagName==='TEXTAREA'){
+    selected.style.fontSize = fs+'px';
+    // 글자 크기 변경 시 높이 재조정
+    selected.style.height = 'auto';
+    selected.style.height = selected.scrollHeight + 'px';
+    selected.style.width  = Math.max(fs, selected.scrollWidth)+'px';
   }
 });
 
-// 폭 (문자 박스)
+// 폭
 document.getElementById('width').addEventListener('input', e => {
-  if (!selected) return;
-  const w = parseFloat(e.target.value) || 100;
-  if (selected.tagName === 'INPUT') {
-    selected.style.width = w + 'px';
+  if(!selected) return;
+  const w = parseFloat(e.target.value) || 14;
+  if(selected.tagName==='TEXTAREA'){
+    selected.style.width = w+'px';
+    selected.style.height='auto';
+    selected.style.height=selected.scrollHeight+'px';
   }
 });
+
 
 
 
