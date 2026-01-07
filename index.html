@@ -332,8 +332,13 @@ document.getElementById('size').addEventListener('input', e => {
 document.getElementById('fontSize').addEventListener('input', e => {
   if (!selected) return;
   const fs = parseFloat(e.target.value) || 12;
-  if (selected.tagName === 'INPUT') {
+  if (selected.tagName === 'INPUT' || selected.tagName === 'TEXTAREA') {
     selected.style.fontSize = fs + 'px';
+
+    // 입력 시 자동 크기 조절
+    selected.style.height = 'auto';
+    selected.style.height = selected.scrollHeight + 'px';
+    selected.style.width  = Math.max(50, selected.scrollWidth) + 'px';
   }
 });
 
@@ -341,8 +346,12 @@ document.getElementById('fontSize').addEventListener('input', e => {
 document.getElementById('width').addEventListener('input', e => {
   if (!selected) return;
   const w = parseFloat(e.target.value) || 100;
-  if (selected.tagName === 'INPUT') {
+  if (selected.tagName === 'INPUT' || selected.tagName === 'TEXTAREA') {
     selected.style.width = w + 'px';
+
+    // 폭 조정 후 높이 재조절
+    selected.style.height = 'auto';
+    selected.style.height = selected.scrollHeight + 'px';
   }
 });
 
