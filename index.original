@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>교통사고 현장약도 (편집기 최종)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body { margin:0; background:#eee; font-family:sans-serif; }
+
+#container {
+  width:210mm; min-height:297mm;
+  margin:20px auto; padding:10mm;
+  background:#fff; border:1px solid #ccc;
+}
+
+h1 { text-align:center; }
+
+#map {
+  width:100%;
+  height:600px;
+  border:1px solid #888;
+  position:relative;
+}
+
+#controls {
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-top:8px;
+}
+
+button { padding:5px 10px; }
+
+.icon, .arrow {
+  position:absolute;
+  cursor:move;
+  z-index:1000;
+}
+
+.arrow { transform-origin:center; }
+
+.textbox {
+  position:absolute;
+  border:1px solid #333;
+  background:#fff;
+  padding:2px;
+  resize:both;
+  overflow:auto;
+  cursor:move;
+  z-index:1000;
+}
+
+/* 속성 패널 */
+#panel {
+  position:fixed;
+  right:10px;
+  bottom:10px;
+  background:#fff;
+  border:1px solid #333;
+  padding:10px;
+  width:200px;
+  display:none;
+  z-index:2000;
+}
+
+#panel label {
+  font-size:12px;
+  display:block;
+  margin-top:6px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="container">
+<h1>교통사고 현장약도</h1>
+
+<div id="map"></div>
+
+<div id="controls">
+<button onclick="addIcon('person')">사람</button>
+<button onclick="addIcon('car')">자동차</button>
+<button onclick="addIcon('bike')">자전거</button>
+<button onclick="addIcon('moto')">오토바이</button>
+<button onclick="addArrow()">화살표</button>
+<button onclick="addText()">문자</button>
+<button onclick="toggleMap()">지도 잠금 / 해제</button>
+<button onclick="savePDF()">PDF</button>
+</div>
+</div>
+
+<!-- 속성 패널 -->
+<div id="panel">
+<strong>선택 객체</strong>
+<label>각도 <input id="angle" type="number"></label>
+<label>크기 <input id="size" type="number"></label>
+<label>글자크기 <input id="fontSize" type="number"></label>
+<label>폭 <input id="width" type="number"></label>
+</div>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* =========================
+   지도 생성
+   ========================= */
+const leafletMap = L.map('map', {
+  maxZoom: 19,          // ✅ 지도 자체는 19까지만
+  zoomSnap: 0.25,
+  wheelPxPerZoomLevel: 40
+}).setView([37.5665, 126.978], 18);
+
+/* =========================
+   지도 잠금 / 해제 (📌 여기!)
+   ========================= */
+let mapLocked = false;
+
+function lockMap(){
+  leafletMap.dragging.disable();
+  leafletMap.scrollWheelZoom.disable();
+  leafletMap.doubleClickZoom.disable();
+  leafletMap.boxZoom.disable();
+  leafletMap.keyboard.disable();
+  if (leafletMap.tap) leafletMap.tap.disable();
+  mapLocked = true;
+}
+
+function unlockMap(){
+  leafletMap.dragging.enable();
+  leafletMap.scrollWheelZoom.enable();
+  leafletMap.doubleClickZoom.enable();
+  leafletMap.boxZoom.enable();
+  leafletMap.keyboard.enable();
+  if (leafletMap.tap) leafletMap.tap.enable();
+  mapLocked = false;
+}
+
+function toggleMap(){
+  if(mapLocked){
+    unlockMap();
+    alert('지도 이동 가능');
+  } else {
+    lockMap();
+    alert('지도 고정됨');
+  }
+}
+
+/* =========================
+   타일 레이어
+   ========================= */
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }
+).addTo(leafletMap);
+
+
+
+/* 기존 코드 호환용 map 객체 */
+const map = {
+  getDiv: () => leafletMap.getContainer()
+};
+
+setTimeout(() => {
+  leafletMap.invalidateSize();
+}, 300);
+
+/* =========================
+   아이콘 정의
+   ========================= */
+const icons = {
+  person:'icons/person.png',
+  car:'icons/car.png',
+  bike:'icons/bike.png',
+  moto:'icons/moto.png',
+  arrow:'icons/arrow.png'
+};
+
+let selected = null;
+const panel = document.getElementById('panel');
+
+/* =========================
+   공통 함수
+   ========================= */
+function centerPos(){
+  const r = map.getDiv().getBoundingClientRect();
+  return { x:r.width/2-16, y:r.height/2-16 };
+}
+
+function select(el){
+  selected = el;
+  panel.style.display = 'block';
+  updatePanel();
+}
+
+function updatePanel(){
+  if(!selected) return;
+  angle.value = getRotation(selected) || 0;
+  size.value = selected.offsetWidth || '';
+  fontSize.value = parseInt(selected.style.fontSize) || '';
+  width.value = parseInt(selected.style.width) || '';
+}
+
+angle.oninput = () => {
+  selected.style.transform = `rotate(${angle.value}deg)`;
+};
+
+size.oninput = () => {
+  selected.style.width = selected.style.height = size.value + 'px';
+};
+
+fontSize.oninput = () => {
+  selected.style.fontSize = fontSize.value + 'px';
+};
+
+width.oninput = () => {
+  selected.style.width = width.value + 'px';
+};
+
+function drag(el){
+  let dragging = false, ox = 0, oy = 0;
+
+  el.onmousedown = e => {
+    if(e.shiftKey) return;
+    dragging = true;
+    ox = e.offsetX;
+    oy = e.offsetY;
+    select(el);
+  };
+
+  document.onmousemove = e => {
+    if(!dragging) return;
+    const r = map.getDiv().getBoundingClientRect();
+    el.style.left = (e.clientX - r.left - ox) + 'px';
+    el.style.top  = (e.clientY - r.top  - oy) + 'px';
+  };
+
+  document.onmouseup = () => dragging = false;
+}
+
+/* =========================
+   객체 추가
+   ========================= */
+function addIcon(type){
+  const p = centerPos();
+  const img = document.createElement('img');
+  img.src = icons[type];
+  img.className = 'icon';
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '32px';
+  map.getDiv().appendChild(img);
+  drag(img);
+  img.ondblclick = () => img.remove();
+}
+
+function addArrow(){
+  const p = centerPos();
+  const a = document.createElement('img');
+  a.src = icons.arrow;
+  a.className = 'arrow';
+  a.style.left = p.x + 'px';
+  a.style.top  = p.y + 'px';
+  a.style.width = '32px';
+  map.getDiv().appendChild(a);
+  drag(a);
+
+  a.onwheel = e => {
+    e.preventDefault();
+    let r = getRotation(a) + (e.deltaY > 0 ? 15 : -15);
+    a.style.transform = `rotate(${r}deg)`;
+    updatePanel();
+  };
+
+  a.ondblclick = () => a.remove();
+}
+
+function addText(){
+  const p = centerPos();
+  const t = document.createElement('input');
+  t.className = 'textbox';
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.placeholder = '텍스트';
+  map.getDiv().appendChild(t);
+  drag(t);
+  t.ondblclick = () => t.remove();
+}
+
+function getRotation(el){
+  const tr = getComputedStyle(el).transform;
+  if(tr === 'none') return 0;
+  const v = tr.split('(')[1].split(')')[0].split(',');
+  return Math.round(Math.atan2(v[1], v[0]) * 180 / Math.PI);
+}
+
+/* =========================
+   지도 이미지 고정 (PDF용)
+   ========================= */
+async function freezeMapAsImage() {
+  const mapDiv = leafletMap.getContainer();
+
+  const canvas = await html2canvas(mapDiv, {
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  });
+
+  const img = document.createElement('img');
+  img.src = canvas.toDataURL('image/png');
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.position = 'absolute';
+  img.style.top = '0';
+  img.style.left = '0';
+  img.style.zIndex = 1;
+
+  mapDiv.innerHTML = '';
+  mapDiv.appendChild(img);
+}
+
+/* =========================
+   PDF 저장
+   ========================= */
+async function savePDF(){
+  lockMap();                 // 1️⃣ 지도 이동 잠금
+  await freezeMapAsImage();  // 2️⃣ 지도 → 이미지 고정
+
+  html2canvas(container, { useCORS:true }).then(canvas => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const w = pdf.internal.pageSize.getWidth();
+    const h = canvas.height * w / canvas.width;
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h);
+    pdf.save('교통사고_현장약도.pdf');
+  });
+}
+
+</script>
+
+</body>
+</html>
