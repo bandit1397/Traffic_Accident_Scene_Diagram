@@ -191,10 +191,17 @@ function drag(el){
   el.style.touchAction = 'none'; // 모바일 필수
 
   el.addEventListener('pointerdown', e => {
-    e.preventDefault();
+
+    // ✅ input(textbox)은 글자 입력 허용
+    if (el.tagName === 'INPUT') {
+      dragging = false;
+      select(el);
+      return;
+    }
+
+    e.preventDefault();   // 아이콘/화살표만 드래그 차단
     dragging = true;
 
-    // 선택 + 맨 위로
     select(el);
     el.style.zIndex = 3000;
 
@@ -205,6 +212,7 @@ function drag(el){
 
     el.setPointerCapture(e.pointerId);
   });
+
 
   el.addEventListener('pointermove', e => {
     if(!dragging) return;
