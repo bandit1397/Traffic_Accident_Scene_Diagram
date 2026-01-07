@@ -292,6 +292,47 @@ function addText(){
   enableDelete(t);     // ✅ 추가
 }
 
+// =========================
+// ✅ 여기에 추가
+// 속성 패널 입력 적용
+// =========================
+
+// 각도 입력
+document.getElementById('angle').addEventListener('input', e => {
+  if (!selected) return;
+  const deg = parseFloat(e.target.value) || 0;
+  selected.style.transform = `rotate(${deg}deg)`;
+});
+
+// 크기 입력 (아이콘/화살표)
+document.getElementById('size').addEventListener('input', e => {
+  if (!selected) return;
+  const s = parseFloat(e.target.value) || 32;
+  if (selected.tagName === 'IMG') {
+    selected.style.width = s + 'px';
+    selected.style.height = 'auto';
+  }
+});
+
+// 글자크기 (문자 박스)
+document.getElementById('fontSize').addEventListener('input', e => {
+  if (!selected) return;
+  const fs = parseFloat(e.target.value) || 12;
+  if (selected.tagName === 'INPUT') {
+    selected.style.fontSize = fs + 'px';
+  }
+});
+
+// 폭 (문자 박스)
+document.getElementById('width').addEventListener('input', e => {
+  if (!selected) return;
+  const w = parseFloat(e.target.value) || 100;
+  if (selected.tagName === 'INPUT') {
+    selected.style.width = w + 'px';
+  }
+});
+
+
 
 /* =========================
    PDF 저장
