@@ -52,13 +52,11 @@ button { padding:5px 10px; }
   border:1px solid #333;
   background:#fff;
   padding:2px;
-  resize:none; /* 사용자가 직접 늘리기 금지 */
-  overflow:hidden; /* 스크롤 숨김 */
+  resize:both;
+  overflow:auto;
   cursor:move;
   z-index:1000;
-  font-family:sans-serif;
 }
-
 
 /* 속성 패널 */
 #panel {
@@ -203,20 +201,21 @@ function drag(el){
     origX = parseFloat(el.style.left);
     origY = parseFloat(el.style.top);
 
-    // 🔑 INPUT은 길게 눌러야 이동
-    if (el.tagName === 'INPUT') {
+    // 🔑 textarea는 길게 눌러야 이동
+    if (el.tagName === 'TEXTAREA') {
       holdTimer = setTimeout(() => {
         dragging = true;
         el.setPointerCapture(e.pointerId);
-      }, 200); // 0.2초
-      return;
+      }, 300); // 0.3초 이상 길게 눌러야 이동
+      return; // preventDefault 호출 안함 → 클릭 시 입력 가능
     }
 
-    // 아이콘/화살표는 즉시 이동
+    // 아이콘/화살표는 바로 이동
     e.preventDefault();
     dragging = true;
     el.setPointerCapture(e.pointerId);
   });
+
 
   el.addEventListener('pointermove', e => {
     if(!dragging) return;
@@ -289,19 +288,19 @@ function addText(){
   t.placeholder = '텍스트';
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
-  t.style.width = '100px';   // 기본 폭
-  t.style.height = '24px';   // 기본 높이
-  t.style.fontSize = '14px'; // 기본 글자 크기
+  t.style.width = '100px';
+  t.style.height = '24px';
+  t.style.fontSize = '14px';
   mapDiv.appendChild(t);
 
   drag(t);
   enableDelete(t);
 
-  // ✅ 자동 크기 조절
+  // 자동 크기 조절
   t.addEventListener('input', e => {
-    t.style.height = 'auto'; // 높이 초기화
-    t.style.height = t.scrollHeight + 'px'; // 내용에 맞게 조절
-    t.style.width = Math.max(50, t.scrollWidth) + 'px'; // 최소폭 50
+    t.style.height = 'auto';
+    t.style.height = t.scrollHeight + 'px';
+    t.style.width = Math.max(50, t.scrollWidth) + 'px';
   });
 }
 
@@ -332,13 +331,8 @@ document.getElementById('size').addEventListener('input', e => {
 document.getElementById('fontSize').addEventListener('input', e => {
   if (!selected) return;
   const fs = parseFloat(e.target.value) || 12;
-  if (selected.tagName === 'INPUT' || selected.tagName === 'TEXTAREA') {
+  if (selected.tagName === 'INPUT') {
     selected.style.fontSize = fs + 'px';
-
-    // 입력 시 자동 크기 조절
-    selected.style.height = 'auto';
-    selected.style.height = selected.scrollHeight + 'px';
-    selected.style.width  = Math.max(50, selected.scrollWidth) + 'px';
   }
 });
 
@@ -346,12 +340,8 @@ document.getElementById('fontSize').addEventListener('input', e => {
 document.getElementById('width').addEventListener('input', e => {
   if (!selected) return;
   const w = parseFloat(e.target.value) || 100;
-  if (selected.tagName === 'INPUT' || selected.tagName === 'TEXTAREA') {
+  if (selected.tagName === 'INPUT') {
     selected.style.width = w + 'px';
-
-    // 폭 조정 후 높이 재조절
-    selected.style.height = 'auto';
-    selected.style.height = selected.scrollHeight + 'px';
   }
 });
 
