@@ -4,28 +4,44 @@
 <meta charset="UTF-8">
 <title>교통사고 현장약도 (편집기 최종)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
+
 #container {
   width:210mm; min-height:297mm;
   margin:20px auto; padding:10mm;
   background:#fff; border:1px solid #ccc;
 }
+
 h1 { text-align:center; }
+
 #map {
-  width:100%; height:75vh;
-  height: 600px;
+  width:100%;
+  height:600px;
   border:1px solid #888;
   position:relative;
 }
+
 #controls {
-  display:flex; justify-content:center; gap:6px; margin-top:8px;
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-top:8px;
 }
+
 button { padding:5px 10px; }
 
 .icon, .arrow {
-  position:absolute; cursor:move;
+  position:absolute;
+  cursor:move;
+  z-index:1000;
 }
+
 .arrow { transform-origin:center; }
 
 .textbox {
@@ -36,25 +52,35 @@ button { padding:5px 10px; }
   resize:both;
   overflow:auto;
   cursor:move;
+  z-index:1000;
 }
 
 /* 속성 패널 */
 #panel {
   position:fixed;
-  right:10px; bottom:10px;
+  right:10px;
+  bottom:10px;
   background:#fff;
   border:1px solid #333;
   padding:10px;
   width:200px;
   display:none;
+  z-index:2000;
 }
-#panel label { font-size:12px; display:block; margin-top:6px; }
+
+#panel label {
+  font-size:12px;
+  display:block;
+  margin-top:6px;
+}
 </style>
 </head>
 
 <body>
+
 <div id="container">
 <h1>교통사고 현장약도</h1>
+
 <div id="map"></div>
 
 <div id="controls">
@@ -77,126 +103,172 @@ button { padding:5px 10px; }
 <label>폭 <input id="width" type="number"></label>
 </div>
 
+<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=03f30d19c270e6fdef0285fb2a0fc1b2"></script>
 
 <script>
-const map = new kakao.maps.Map(document.getElementById('map'), {
-  center:new kakao.maps.LatLng(37.5665,126.978),
-  level:3
-});
+/* =========================
+   지도 초기화 (Leaflet)
+   ========================= */
+const leafletMap = L.map('map').setView([37.5665, 126.978], 17);
 
-setTimeout(() => {
-  map.relayout();
-  map.setCenter(new kakao.maps.LatLng(37.5665,126.978));
-}, 300);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution:'© OpenStreetMap'
+}).addTo(leafletMap);
 
-
-const icons={
- person:'icons/person.png',
- car:'icons/car.png',
- bike:'icons/bike.png',
- moto:'icons/moto.png',
- arrow:'icons/arrow.png'
+/* 기존 코드 호환용 map 객체 */
+const map = {
+  getDiv: () => leafletMap.getContainer()
 };
 
-let selected=null;
-const panel=document.getElementById('panel');
+setTimeout(() => {
+  leafletMap.invalidateSize();
+}, 300);
 
+/* =========================
+   아이콘 정의
+   ========================= */
+const icons = {
+  person:'icons/person.png',
+  car:'icons/car.png',
+  bike:'icons/bike.png',
+  moto:'icons/moto.png',
+  arrow:'icons/arrow.png'
+};
+
+let selected = null;
+const panel = document.getElementById('panel');
+
+/* =========================
+   공통 함수
+   ========================= */
 function centerPos(){
- const r=map.getDiv().getBoundingClientRect();
- return {x:r.width/2-16,y:r.height/2-16};
+  const r = map.getDiv().getBoundingClientRect();
+  return { x:r.width/2-16, y:r.height/2-16 };
 }
 
 function select(el){
- selected=el; panel.style.display='block';
- updatePanel();
+  selected = el;
+  panel.style.display = 'block';
+  updatePanel();
 }
 
 function updatePanel(){
- if(!selected) return;
- angle.value=getRotation(selected)||0;
- size.value=selected.offsetWidth||0;
- fontSize.value=parseInt(selected.style.fontSize)||'';
- width.value=parseInt(selected.style.width)||'';
+  if(!selected) return;
+  angle.value = getRotation(selected) || 0;
+  size.value = selected.offsetWidth || '';
+  fontSize.value = parseInt(selected.style.fontSize) || '';
+  width.value = parseInt(selected.style.width) || '';
 }
 
-angle.oninput=()=>selected.style.transform=`rotate(${angle.value}deg)`;
-size.oninput=()=>selected.style.width=selected.style.height=size.value+'px';
-fontSize.oninput=()=>selected.style.fontSize=fontSize.value+'px';
-width.oninput=()=>selected.style.width=width.value+'px';
+angle.oninput = () => {
+  selected.style.transform = `rotate(${angle.value}deg)`;
+};
+
+size.oninput = () => {
+  selected.style.width = selected.style.height = size.value + 'px';
+};
+
+fontSize.oninput = () => {
+  selected.style.fontSize = fontSize.value + 'px';
+};
+
+width.oninput = () => {
+  selected.style.width = width.value + 'px';
+};
 
 function drag(el){
- let d=false,ox,oy;
- el.onmousedown=e=>{
-  if(e.shiftKey)return;
-  d=true; ox=e.offsetX; oy=e.offsetY; select(el);
- };
- document.onmousemove=e=>{
-  if(!d)return;
-  const r=map.getDiv().getBoundingClientRect();
-  el.style.left=e.clientX-r.left-ox+'px';
-  el.style.top=e.clientY-r.top-oy+'px';
- };
- document.onmouseup=()=>d=false;
+  let dragging = false, ox = 0, oy = 0;
+
+  el.onmousedown = e => {
+    if(e.shiftKey) return;
+    dragging = true;
+    ox = e.offsetX;
+    oy = e.offsetY;
+    select(el);
+  };
+
+  document.onmousemove = e => {
+    if(!dragging) return;
+    const r = map.getDiv().getBoundingClientRect();
+    el.style.left = (e.clientX - r.left - ox) + 'px';
+    el.style.top  = (e.clientY - r.top  - oy) + 'px';
+  };
+
+  document.onmouseup = () => dragging = false;
 }
 
+/* =========================
+   객체 추가
+   ========================= */
 function addIcon(type){
- const p=centerPos();
- const img=document.createElement('img');
- img.src=icons[type]; img.className='icon';
- img.style.left=p.x+'px'; img.style.top=p.y+'px';
- img.style.width='32px';
- map.getDiv().appendChild(img);
- drag(img);
- img.ondblclick=()=>img.remove();
+  const p = centerPos();
+  const img = document.createElement('img');
+  img.src = icons[type];
+  img.className = 'icon';
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '32px';
+  map.getDiv().appendChild(img);
+  drag(img);
+  img.ondblclick = () => img.remove();
 }
 
 function addArrow(){
- const p=centerPos();
- const a=document.createElement('img');
- a.src=icons.arrow; a.className='arrow';
- a.style.left=p.x+'px'; a.style.top=p.y+'px';
- a.style.width='32px';
- map.getDiv().appendChild(a);
- drag(a);
- a.onwheel=e=>{
-  e.preventDefault();
-  let r=getRotation(a)+(e.deltaY>0?15:-15);
-  a.style.transform=`rotate(${r}deg)`; updatePanel();
- };
- a.ondblclick=()=>a.remove();
+  const p = centerPos();
+  const a = document.createElement('img');
+  a.src = icons.arrow;
+  a.className = 'arrow';
+  a.style.left = p.x + 'px';
+  a.style.top  = p.y + 'px';
+  a.style.width = '32px';
+  map.getDiv().appendChild(a);
+  drag(a);
+
+  a.onwheel = e => {
+    e.preventDefault();
+    let r = getRotation(a) + (e.deltaY > 0 ? 15 : -15);
+    a.style.transform = `rotate(${r}deg)`;
+    updatePanel();
+  };
+
+  a.ondblclick = () => a.remove();
 }
 
 function addText(){
- const p=centerPos();
- const t=document.createElement('input');
- t.className='textbox';
- t.style.left=p.x+'px'; t.style.top=p.y+'px';
- t.placeholder='텍스트';
- map.getDiv().appendChild(t);
- drag(t);
- t.ondblclick=()=>t.remove();
+  const p = centerPos();
+  const t = document.createElement('input');
+  t.className = 'textbox';
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.placeholder = '텍스트';
+  map.getDiv().appendChild(t);
+  drag(t);
+  t.ondblclick = () => t.remove();
 }
 
 function getRotation(el){
- const tr=getComputedStyle(el).transform;
- if(tr==='none')return 0;
- const v=tr.split('(')[1].split(')')[0].split(',');
- return Math.round(Math.atan2(v[1],v[0])*180/Math.PI);
+  const tr = getComputedStyle(el).transform;
+  if(tr === 'none') return 0;
+  const v = tr.split('(')[1].split(')')[0].split(',');
+  return Math.round(Math.atan2(v[1], v[0]) * 180 / Math.PI);
 }
 
+/* =========================
+   PDF 저장
+   ========================= */
 function savePDF(){
- html2canvas(container).then(c=>{
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=c.height*w/c.width;
-  pdf.addImage(c.toDataURL(),'PNG',0,0,w,h);
-  pdf.save('현장약도.pdf');
- });
+  html2canvas(container).then(canvas => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p','mm','a4');
+    const w = pdf.internal.pageSize.getWidth();
+    const h = canvas.height * w / canvas.width;
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',0,0,w,h);
+    pdf.save('교통사고_현장약도.pdf');
+  });
 }
 </script>
+
 </body>
 </html>
