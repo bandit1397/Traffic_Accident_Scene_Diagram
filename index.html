@@ -281,28 +281,16 @@ function addArrow(){
 
 
 function addText(){
-  const p = centerPos();
-  const t = document.createElement('textarea'); // ✅ input → textarea
-  t.className = 'textbox';
-  t.placeholder = '텍스트';
-  t.style.left = p.x + 'px';
-  t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
-  t.style.width = '14px';   // 글자 1개 크기로 초기화
-  t.style.height = '20px';  // 기본 높이
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top=p.y+'px';
   mapDiv.appendChild(t);
-
   drag(t);
-  enableDelete(t);
-
-  // 입력에 따라 폭과 높이 자동 조절
-  t.addEventListener('input', () => {
-    t.style.height = 'auto';          // 높이 초기화
-    t.style.height = t.scrollHeight + 'px';   // 내용에 맞게 높이
-    t.style.width  = Math.max(14, t.scrollWidth) + 'px'; // 내용에 맞게 폭
-  });
+  enableDelete(t);     // ✅ 추가
 }
-
 
 // =========================
 // ✅ 여기에 추가
@@ -326,30 +314,23 @@ document.getElementById('size').addEventListener('input', e => {
   }
 });
 
-// 글자크기
+// 글자크기 (문자 박스)
 document.getElementById('fontSize').addEventListener('input', e => {
   if (!selected) return;
-  const fs = parseFloat(e.target.value) || 14;
-  if (selected.tagName === 'TEXTAREA') {
+  const fs = parseFloat(e.target.value) || 12;
+  if (selected.tagName === 'INPUT') {
     selected.style.fontSize = fs + 'px';
-    // 글자 크기 변경 후 내용 높이/폭 재조정
-    selected.style.height = 'auto';
-    selected.style.height = selected.scrollHeight + 'px';
-    selected.style.width  = Math.max(fs, selected.scrollWidth) + 'px';
   }
 });
 
-// 폭
+// 폭 (문자 박스)
 document.getElementById('width').addEventListener('input', e => {
   if (!selected) return;
-  const w = parseFloat(e.target.value) || 14;
-  if (selected.tagName === 'TEXTAREA') {
+  const w = parseFloat(e.target.value) || 100;
+  if (selected.tagName === 'INPUT') {
     selected.style.width = w + 'px';
-    selected.style.height = 'auto';
-    selected.style.height = selected.scrollHeight + 'px';
   }
 });
-
 
 
 
