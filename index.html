@@ -90,6 +90,7 @@ button { padding:5px 10px; }
 <button onclick="addIcon('moto')">오토바이</button>
 <button onclick="addArrow()">화살표</button>
 <button onclick="addText()">문자</button>
+<button onclick="toggleMap()">지도 잠금 / 해제</button>
 <button onclick="savePDF()">PDF</button>
 </div>
 </div>
@@ -109,13 +110,61 @@ button { padding:5px 10px; }
 
 <script>
 /* =========================
-   지도 초기화 (Leaflet)
+   지도 생성
    ========================= */
-const leafletMap = L.map('map').setView([37.5665, 126.978], 17);
+const leafletMap = L.map('map', {
+  maxZoom: 19,          // ✅ 지도 자체는 19까지만
+  zoomSnap: 0.25,
+  wheelPxPerZoomLevel: 40
+}).setView([37.5665, 126.978], 18);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution:'© OpenStreetMap'
-}).addTo(leafletMap);
+/* =========================
+   지도 잠금 / 해제 (📌 여기!)
+   ========================= */
+let mapLocked = false;
+
+function lockMap(){
+  leafletMap.dragging.disable();
+  leafletMap.scrollWheelZoom.disable();
+  leafletMap.doubleClickZoom.disable();
+  leafletMap.boxZoom.disable();
+  leafletMap.keyboard.disable();
+  if (leafletMap.tap) leafletMap.tap.disable();
+  mapLocked = true;
+}
+
+function unlockMap(){
+  leafletMap.dragging.enable();
+  leafletMap.scrollWheelZoom.enable();
+  leafletMap.doubleClickZoom.enable();
+  leafletMap.boxZoom.enable();
+  leafletMap.keyboard.enable();
+  if (leafletMap.tap) leafletMap.tap.enable();
+  mapLocked = false;
+}
+
+function toggleMap(){
+  if(mapLocked){
+    unlockMap();
+    alert('지도 이동 가능');
+  } else {
+    lockMap();
+    alert('지도 고정됨');
+  }
+}
+
+/* =========================
+   타일 레이어
+   ========================= */
+L.tileLayer(
+  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }
+).addTo(leafletMap);
+
+
 
 /* 기존 코드 호환용 map 객체 */
 const map = {
@@ -256,10 +305,38 @@ function getRotation(el){
 }
 
 /* =========================
+   지도 이미지 고정 (PDF용)
+   ========================= */
+async function freezeMapAsImage() {
+  const mapDiv = leafletMap.getContainer();
+
+  const canvas = await html2canvas(mapDiv, {
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: null
+  });
+
+  const img = document.createElement('img');
+  img.src = canvas.toDataURL('image/png');
+  img.style.width = '100%';
+  img.style.height = '100%';
+  img.style.position = 'absolute';
+  img.style.top = '0';
+  img.style.left = '0';
+  img.style.zIndex = 1;
+
+  mapDiv.innerHTML = '';
+  mapDiv.appendChild(img);
+}
+
+/* =========================
    PDF 저장
    ========================= */
-function savePDF(){
-  html2canvas(container).then(canvas => {
+async function savePDF(){
+  lockMap();                 // 1️⃣ 지도 이동 잠금
+  await freezeMapAsImage();  // 2️⃣ 지도 → 이미지 고정
+
+  html2canvas(container, { useCORS:true }).then(canvas => {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF('p','mm','a4');
     const w = pdf.internal.pageSize.getWidth();
@@ -268,6 +345,7 @@ function savePDF(){
     pdf.save('교통사고_현장약도.pdf');
   });
 }
+
 </script>
 
 </body>
