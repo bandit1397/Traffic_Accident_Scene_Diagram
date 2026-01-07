@@ -184,20 +184,70 @@ function select(el){
 }
 
 function drag(el){
-  let dragging=false, ox=0, oy=0;
-  el.onmousedown = e => {
-    dragging=true;
-    ox=e.offsetX; oy=e.offsetY;
+  let startX = 0, startY = 0;
+  let origX = 0, origY = 0;
+  let dragging = false;
+  let holdTimer = null;
+
+  el.style.touchAction = 'none';
+
+  el.addEventListener('pointerdown', e => {
+
     select(el);
-  };
-  document.onmousemove = e => {
+    el.style.zIndex = 3000;
+
+    startX = e.clientX;
+    startY = e.clientY;
+    origX = parseFloat(el.style.left);
+    origY = parseFloat(el.style.top);
+
+    // 🔑 INPUT은 길게 눌러야 이동
+    if (el.tagName === 'INPUT') {
+      holdTimer = setTimeout(() => {
+        dragging = true;
+        el.setPointerCapture(e.pointerId);
+      }, 200); // 0.2초
+      return;
+    }
+
+    // 아이콘/화살표는 즉시 이동
+    e.preventDefault();
+    dragging = true;
+    el.setPointerCapture(e.pointerId);
+  });
+
+  el.addEventListener('pointermove', e => {
     if(!dragging) return;
-    const r = mapDiv.getBoundingClientRect();
-    el.style.left = (e.clientX-r.left-ox)+'px';
-    el.style.top  = (e.clientY-r.top-oy)+'px';
-  };
-  document.onmouseup = ()=> dragging=false;
+
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+
+    el.style.left = (origX + dx) + 'px';
+    el.style.top  = (origY + dy) + 'px';
+  });
+
+  el.addEventListener('pointerup', () => {
+    dragging = false;
+    clearTimeout(holdTimer);
+  });
+
+  el.addEventListener('pointercancel', () => {
+    dragging = false;
+    clearTimeout(holdTimer);
+  });
 }
+
+
+function enableDelete(el){
+  // PC: 우클릭
+  el.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (confirm('이 객체를 삭제하시겠습니까?')) {
+      el.remove();
+    }
+  });
+}
+
 
 /* =========================
    객체 추가
@@ -212,8 +262,9 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
-  img.ondblclick=()=>img.remove();
+  enableDelete(img);   // ✅ 추가
 }
+
 
 function addArrow(){
   const p=centerPos();
@@ -225,8 +276,9 @@ function addArrow(){
   a.style.width='32px';
   mapDiv.appendChild(a);
   drag(a);
-  a.ondblclick=()=>a.remove();
+  enableDelete(a);     // ✅ 추가
 }
+
 
 function addText(){
   const p=centerPos();
@@ -237,8 +289,9 @@ function addText(){
   t.style.top=p.y+'px';
   mapDiv.appendChild(t);
   drag(t);
-  t.ondblclick=()=>t.remove();
+  enableDelete(t);     // ✅ 추가
 }
+
 
 /* =========================
    PDF 저장
