@@ -52,11 +52,13 @@ button { padding:5px 10px; }
   border:1px solid #333;
   background:#fff;
   padding:2px;
-  resize:both;
-  overflow:auto;
+  resize:none; /* 사용자가 직접 늘리기 금지 */
+  overflow:hidden; /* 스크롤 숨김 */
   cursor:move;
   z-index:1000;
+  font-family:sans-serif;
 }
+
 
 /* 속성 패널 */
 #panel {
@@ -281,16 +283,28 @@ function addArrow(){
 
 
 function addText(){
-  const p=centerPos();
-  const t=document.createElement('input');
-  t.className='textbox';
-  t.placeholder='텍스트';
-  t.style.left=p.x+'px';
-  t.style.top=p.y+'px';
+  const p = centerPos();
+  const t = document.createElement('textarea');  // ✅ input -> textarea
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.style.width = '100px';   // 기본 폭
+  t.style.height = '24px';   // 기본 높이
+  t.style.fontSize = '14px'; // 기본 글자 크기
   mapDiv.appendChild(t);
+
   drag(t);
-  enableDelete(t);     // ✅ 추가
+  enableDelete(t);
+
+  // ✅ 자동 크기 조절
+  t.addEventListener('input', e => {
+    t.style.height = 'auto'; // 높이 초기화
+    t.style.height = t.scrollHeight + 'px'; // 내용에 맞게 조절
+    t.style.width = Math.max(50, t.scrollWidth) + 'px'; // 최소폭 50
+  });
 }
+
 
 // =========================
 // ✅ 여기에 추가
