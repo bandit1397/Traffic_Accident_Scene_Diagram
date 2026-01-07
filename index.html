@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>교통사고 현장약도 (편집기 최종)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body { margin:0; background:#eee; font-family:sans-serif; }
+#container {
+  width:210mm; min-height:297mm;
+  margin:20px auto; padding:10mm;
+  background:#fff; border:1px solid #ccc;
+}
+h1 { text-align:center; }
+#map {
+  width:100%; height:75vh;
+  border:1px solid #888;
+  position:relative;
+}
+#controls {
+  display:flex; justify-content:center; gap:6px; margin-top:8px;
+}
+button { padding:5px 10px; }
+
+.icon, .arrow {
+  position:absolute; cursor:move;
+}
+.arrow { transform-origin:center; }
+
+.textbox {
+  position:absolute;
+  border:1px solid #333;
+  background:#fff;
+  padding:2px;
+  resize:both;
+  overflow:auto;
+  cursor:move;
+}
+
+/* 속성 패널 */
+#panel {
+  position:fixed;
+  right:10px; bottom:10px;
+  background:#fff;
+  border:1px solid #333;
+  padding:10px;
+  width:200px;
+  display:none;
+}
+#panel label { font-size:12px; display:block; margin-top:6px; }
+</style>
+</head>
+
+<body>
+<div id="container">
+<h1>교통사고 현장약도</h1>
+<div id="map"></div>
+
+<div id="controls">
+<button onclick="addIcon('person')">사람</button>
+<button onclick="addIcon('car')">자동차</button>
+<button onclick="addIcon('bike')">자전거</button>
+<button onclick="addIcon('moto')">오토바이</button>
+<button onclick="addArrow()">화살표</button>
+<button onclick="addText()">문자</button>
+<button onclick="savePDF()">PDF</button>
+</div>
+</div>
+
+<!-- 속성 패널 -->
+<div id="panel">
+<strong>선택 객체</strong>
+<label>각도 <input id="angle" type="number"></label>
+<label>크기 <input id="size" type="number"></label>
+<label>글자크기 <input id="fontSize" type="number"></label>
+<label>폭 <input id="width" type="number"></label>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_APP_KEY"></script>
+
+<script>
+const map = new kakao.maps.Map(document.getElementById('map'), {
+  center:new kakao.maps.LatLng(37.5665,126.978),
+  level:3
+});
+
+const icons={
+ person:'icons/person.png',
+ car:'icons/car.png',
+ bike:'icons/bike.png',
+ moto:'icons/moto.png',
+ arrow:'icons/arrow.png'
+};
+
+let selected=null;
+const panel=document.getElementById('panel');
+
+function centerPos(){
+ const r=map.getDiv().getBoundingClientRect();
+ return {x:r.width/2-16,y:r.height/2-16};
+}
+
+function select(el){
+ selected=el; panel.style.display='block';
+ updatePanel();
+}
+
+function updatePanel(){
+ if(!selected) return;
+ angle.value=getRotation(selected)||0;
+ size.value=selected.offsetWidth||0;
+ fontSize.value=parseInt(selected.style.fontSize)||'';
+ width.value=parseInt(selected.style.width)||'';
+}
+
+angle.oninput=()=>selected.style.transform=`rotate(${angle.value}deg)`;
+size.oninput=()=>selected.style.width=selected.style.height=size.value+'px';
+fontSize.oninput=()=>selected.style.fontSize=fontSize.value+'px';
+width.oninput=()=>selected.style.width=width.value+'px';
+
+function drag(el){
+ let d=false,ox,oy;
+ el.onmousedown=e=>{
+  if(e.shiftKey)return;
+  d=true; ox=e.offsetX; oy=e.offsetY; select(el);
+ };
+ document.onmousemove=e=>{
+  if(!d)return;
+  const r=map.getDiv().getBoundingClientRect();
+  el.style.left=e.clientX-r.left-ox+'px';
+  el.style.top=e.clientY-r.top-oy+'px';
+ };
+ document.onmouseup=()=>d=false;
+}
+
+function addIcon(type){
+ const p=centerPos();
+ const img=document.createElement('img');
+ img.src=icons[type]; img.className='icon';
+ img.style.left=p.x+'px'; img.style.top=p.y+'px';
+ img.style.width='32px';
+ map.getDiv().appendChild(img);
+ drag(img);
+ img.ondblclick=()=>img.remove();
+}
+
+function addArrow(){
+ const p=centerPos();
+ const a=document.createElement('img');
+ a.src=icons.arrow; a.className='arrow';
+ a.style.left=p.x+'px'; a.style.top=p.y+'px';
+ a.style.width='32px';
+ map.getDiv().appendChild(a);
+ drag(a);
+ a.onwheel=e=>{
+  e.preventDefault();
+  let r=getRotation(a)+(e.deltaY>0?15:-15);
+  a.style.transform=`rotate(${r}deg)`; updatePanel();
+ };
+ a.ondblclick=()=>a.remove();
+}
+
+function addText(){
+ const p=centerPos();
+ const t=document.createElement('input');
+ t.className='textbox';
+ t.style.left=p.x+'px'; t.style.top=p.y+'px';
+ t.placeholder='텍스트';
+ map.getDiv().appendChild(t);
+ drag(t);
+ t.ondblclick=()=>t.remove();
+}
+
+function getRotation(el){
+ const tr=getComputedStyle(el).transform;
+ if(tr==='none')return 0;
+ const v=tr.split('(')[1].split(')')[0].split(',');
+ return Math.round(Math.atan2(v[1],v[0])*180/Math.PI);
+}
+
+function savePDF(){
+ html2canvas(container).then(c=>{
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=c.height*w/c.width;
+  pdf.addImage(c.toDataURL(),'PNG',0,0,w,h);
+  pdf.save('현장약도.pdf');
+ });
+}
+</script>
+</body>
+</html>
