@@ -225,6 +225,16 @@ function drag(el){
   });
 }
 
+function enableDelete(el){
+  // PC: 우클릭
+  el.addEventListener('contextmenu', e => {
+    e.preventDefault();
+    if (confirm('이 객체를 삭제하시겠습니까?')) {
+      el.remove();
+    }
+  });
+}
+
 
 /* =========================
    객체 추가
@@ -239,8 +249,9 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
-  img.ondblclick=()=>img.remove();
+  enableDelete(img);   // ✅ 추가
 }
+
 
 function addArrow(){
   const p=centerPos();
@@ -252,8 +263,9 @@ function addArrow(){
   a.style.width='32px';
   mapDiv.appendChild(a);
   drag(a);
-  a.ondblclick=()=>a.remove();
+  enableDelete(a);     // ✅ 추가
 }
+
 
 function addText(){
   const p=centerPos();
@@ -264,8 +276,9 @@ function addText(){
   t.style.top=p.y+'px';
   mapDiv.appendChild(t);
   drag(t);
-  t.ondblclick=()=>t.remove();
+  enableDelete(t);     // ✅ 추가
 }
+
 
 /* =========================
    PDF 저장
