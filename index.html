@@ -104,6 +104,23 @@ button { padding:5px 10px; }
 }
 
 /* =========================
+   🔒 지도 위 고정 UI (공통)
+========================= */
+#uiOverlay {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 5000;
+  pointer-events: none;
+}
+
+#uiOverlay button,
+#uiOverlay #panel {
+  pointer-events: auto;
+}
+
+
+/* =========================
    모바일 대응 스타일
 ========================= */
 @media(max-width:768px){
@@ -122,29 +139,42 @@ button { padding:5px 10px; }
     font-size: 14px;
   }
 
-  /* 속성 패널 모바일에서는 전체 화면 하단에 나타나도록 */
+  /* 📱 모바일: 속성 패널을 화면 하단 전체 */
   #panel {
-    width: 100%;
+    position: fixed;     /* ← 핵심 */
+    left: 0;
     right: 0;
     bottom: 0;
+    width: 100%;
     border-radius: 0;
     box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
-    z-index: 4000; /* 패널 토글 버튼보다 위 */
+    z-index: 6000;
   }
 
   #panel label {
     font-size: 14px;
   }
-}
 
+}
 
 </style>
 </head>
 
 <body>
 
-<!-- 🔘 패널 토글 버튼 (좌측 상단 고정) -->
-<button id="panelToggle" onclick="togglePanel()">⚙️ 설정</button>  
+<!-- 🔒 지도 위 고정 UI 레이어 (여기에 추가) -->
+<div id="uiOverlay">
+  <button id="panelToggle" onclick="togglePanel()">⚙️ 설정</button>
+
+  <div id="panel">
+    <strong>선택 객체</strong>
+    <label>각도 <input id="angle" type="number"></label>
+    <label>크기 <input id="size" type="number"></label>
+    <label>글자크기 <input id="fontSize" type="number"></label>
+    <label>폭 <input id="width" type="number"></label>
+  </div>
+</div>
+ 
 <div id="container">
   
 <h1>교통사고 현장약도</h1>
@@ -163,14 +193,7 @@ button { padding:5px 10px; }
 </div>
 </div>
 
-<!-- 속성 패널 -->
-<div id="panel">
-<strong>선택 객체</strong>
-<label>각도 <input id="angle" type="number"></label>
-<label>크기 <input id="size" type="number"></label>
-<label>글자크기 <input id="fontSize" type="number"></label>
-<label>폭 <input id="width" type="number"></label>
-</div>
+ 
 
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
