@@ -102,6 +102,7 @@ button { padding:5px 10px; }
   #controls button {
     flex: 1 1 30%;
     min-width: 80px;
+    min-height: 40px;   /* ✅ 터치용 높이 확보 */
     padding: 10px 5px;
     font-size: 14px;
   }
@@ -179,24 +180,32 @@ L.tileLayer(
 let mapLocked = false;
 
 function lockMap(){
+  // 드래그
   leafletMap.dragging.disable();
-  leafletMap.scrollWheelZoom.disable();
+  
+  // 터치 관련
+  leafletMap.touchZoom.disable();  // 핀치 줌 막기
   leafletMap.doubleClickZoom.disable();
+  leafletMap.scrollWheelZoom.disable();
   leafletMap.boxZoom.disable();
   leafletMap.keyboard.disable();
   if (leafletMap.tap) leafletMap.tap.disable();
+
   mapLocked = true;
 }
 
 function unlockMap(){
   leafletMap.dragging.enable();
-  leafletMap.scrollWheelZoom.enable();
+  leafletMap.touchZoom.enable();   // 핀치 줌 허용
   leafletMap.doubleClickZoom.enable();
+  leafletMap.scrollWheelZoom.enable();
   leafletMap.boxZoom.enable();
   leafletMap.keyboard.enable();
   if (leafletMap.tap) leafletMap.tap.enable();
+
   mapLocked = false;
 }
+
 
 function toggleMap(){
   mapLocked ? unlockMap() : lockMap();
