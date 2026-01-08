@@ -102,26 +102,26 @@ button { padding:5px 10px; }
   #controls button {
     flex: 1 1 30%;
     min-width: 80px;
-    min-height: 40px;   /* ✅ 터치용 높이 확보 */
+    min-height: 40px;
     padding: 10px 5px;
     font-size: 14px;
   }
 
-  /* 속성 패널 모바일에서는 전체 화면 하단에 나타나도록 */
+  /* ✅ 모바일 패널: JS가 위치를 제어 */
   #panel {
-    width: 100%;
-    right: 0;
-    bottom: 0;
-    border-radius: 0;
+    position: fixed;      /* ★ 필수 */
+    width: 200px;         /* 객체 옆에 뜨게 */
     display: none;
     padding: 10px;
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
   }
 
   #panel label {
     font-size: 14px;
   }
 }
+
 
 
 </style>
@@ -237,38 +237,41 @@ function centerPos(){
 function select(el){
   selected = el;
 
-  const rect = el.getBoundingClientRect();
-  const panelWidth = 200;
-  const margin = 6;
-
   if (window.innerWidth <= 768) {
-    /* 📱 모바일: 객체 바로 오른쪽 */
+    const rect = el.getBoundingClientRect();
+    const panelWidth = 200;
+    const panelHeight = panel.offsetHeight || 180;
+    const margin = 8;
+
     let left = rect.right + margin;
     let top  = rect.top;
 
-    // 👉 화면 오른쪽 넘어가면 객체 왼쪽에 표시
+    /* 👉 화면 오른쪽 초과 시 왼쪽 */
     if (left + panelWidth > window.innerWidth) {
       left = rect.left - panelWidth - margin;
     }
 
-    // 👉 위아래 화면 벗어남 방지
+    /* 👉 위/아래 안전 보정 */
     if (top < 10) top = 10;
-    if (top + panel.offsetHeight > window.innerHeight) {
-      top = window.innerHeight - panel.offsetHeight - 10;
+    if (top + panelHeight > window.innerHeight) {
+      top = window.innerHeight - panelHeight - 10;
     }
 
+    /* 🔑 모바일 CSS 하단 고정 완전 해제 */
     panel.style.position = 'fixed';
     panel.style.left = left + 'px';
     panel.style.top = top + 'px';
     panel.style.right = 'auto';
     panel.style.bottom = 'auto';
+    panel.style.width = '200px';   // 모바일 전체폭 무효화
     panel.style.display = 'block';
 
   } else {
-    /* 🖥 PC: 기존 방식 그대로 */
+    /* 🖥 PC는 기존 그대로 */
     panel.style.display = 'block';
   }
 }
+
 
 
 function drag(el){
