@@ -247,9 +247,10 @@ function centerPos(){
 
 // 모바일: 선택 시 패널 표시/숨김
 function select(el){
+  if(selected) selected.style.outline = '';
   selected = el;
+  el.style.outline = '2px dashed red';
 }
-
 
 function drag(el){
   let startX = 0, startY = 0;
