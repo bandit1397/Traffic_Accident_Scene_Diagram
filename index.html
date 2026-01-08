@@ -35,7 +35,18 @@ h1 { text-align:center; }
   justify-content:center;
   gap:6px;
   margin-top:8px;
+  overflow-x: auto;  /* ← 추가 */
+  padding: 2px 0;    /* ← 추가 */
 }
+
+#controls::-webkit-scrollbar {
+  height: 4px;       /* 스크롤바 높이 */
+}
+#controls::-webkit-scrollbar-thumb {
+  background: #888;  /* 스크롤바 색상 */
+  border-radius: 2px;
+}
+
 
 button { padding:5px 10px; }
 
@@ -76,6 +87,42 @@ button { padding:5px 10px; }
   display:block;
   margin-top:6px;
 }
+
+/* =========================
+   모바일 대응 스타일
+========================= */
+@media(max-width:768px){
+  #controls {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  #controls button {
+    flex: 1 1 30%;
+    min-width: 80px;
+    padding: 10px 5px;
+    font-size: 14px;
+  }
+
+  /* 속성 패널 모바일에서는 전체 화면 하단에 나타나도록 */
+  #panel {
+    width: 100%;
+    right: 0;
+    bottom: 0;
+    border-radius: 0;
+    display: none;
+    padding: 10px;
+    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
+  }
+
+  #panel label {
+    font-size: 14px;
+  }
+}
+
+
 </style>
 </head>
 
@@ -178,10 +225,18 @@ function centerPos(){
   return { x:r.width/2-16, y:r.height/2-16 };
 }
 
+// 모바일: 선택 시 패널 표시/숨김
 function select(el){
   selected = el;
-  panel.style.display = 'block';
+
+  // PC는 항상 표시, 모바일은 토글
+  if(window.innerWidth <= 768){
+    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+  } else {
+    panel.style.display = 'block';
+  }
 }
+
 
 function drag(el){
   let startX = 0, startY = 0;
