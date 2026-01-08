@@ -281,15 +281,26 @@ function addArrow(){
 
 
 function addText(){
-  const p=centerPos();
-  const t=document.createElement('input');
-  t.className='textbox';
-  t.placeholder='텍스트';
-  t.style.left=p.x+'px';
-  t.style.top=p.y+'px';
+  const p = centerPos();
+  const t = document.createElement('input'); // 한 줄 입력
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.style.fontSize = '14px';
+  t.style.width = '14px'; // 초기 폭: 글자 1개 크기
+  t.style.height = '20px'; // 높이는 기존 기능 유지
   mapDiv.appendChild(t);
+
   drag(t);
-  enableDelete(t);     // ✅ 추가
+  enableDelete(t);
+
+  // 글자 수에 맞춰 폭 자동 조절
+  t.addEventListener('input', () => {
+    const fs = parseFloat(window.getComputedStyle(t).fontSize) || 14;
+    const len = t.value.length || 1; // 글자가 없으면 최소 1
+    t.style.width = (len * fs * 0.6) + 'px'; // 글자 폭 계산
+  });
 }
 
 // =========================
