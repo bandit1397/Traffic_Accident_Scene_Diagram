@@ -237,13 +237,6 @@ function centerPos(){
 // 모바일: 선택 시 패널 표시/숨김
 function select(el){
   selected = el;
-
-  // PC는 항상 표시, 모바일은 토글
-  if(window.innerWidth <= 768){
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-  } else {
-    panel.style.display = 'block';
-  }
 }
 
 
