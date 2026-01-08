@@ -35,32 +35,21 @@ h1 { text-align:center; }
   justify-content:center;
   gap:6px;
   margin-top:8px;
-  overflow-x: auto;  /* ← 추가 */
-  padding: 2px 0;    /* ← 추가 */
+  overflow-x:auto;
+  padding:2px 0;
 }
 
-#controls::-webkit-scrollbar {
-  height: 4px;       /* 스크롤바 높이 */
-}
+#controls::-webkit-scrollbar { height:4px; }
 #controls::-webkit-scrollbar-thumb {
-  background: #888;  /* 스크롤바 색상 */
-  border-radius: 2px;
+  background:#888;
+  border-radius:2px;
 }
-
 
 button { padding:5px 10px; }
 
-/* 🔘 패널 토글 버튼 (좌측 상단 고정) */
-#panelToggle {
-  background: #333;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  padding: 8px 10px;
-  font-size: 14px;
-}
-
-
+/* =========================
+   아이콘 / 객체
+========================= */
 .icon, .arrow {
   position:absolute;
   cursor:move;
@@ -80,7 +69,33 @@ button { padding:5px 10px; }
   z-index:1000;
 }
 
-/* 속성 패널 */
+/* =========================
+   🔒 지도 위 고정 UI (단일 레이어)
+========================= */
+#uiOverlay {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 5000;          /* ★ 유일한 z-index */
+  pointer-events: none;
+}
+
+#uiOverlay button,
+#uiOverlay #panel {
+  pointer-events: auto;
+}
+
+/* 패널 토글 버튼 */
+#panelToggle {
+  background:#333;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+  padding:8px 10px;
+  font-size:14px;
+}
+
+/* 속성 패널 (공통) */
 #panel {
   position:fixed;
   right:10px;
@@ -90,7 +105,6 @@ button { padding:5px 10px; }
   padding:10px;
   width:200px;
   display:none;
-  z-index:2000;
 }
 
 #panel label {
@@ -100,65 +114,40 @@ button { padding:5px 10px; }
 }
 
 /* =========================
-   🔒 지도 위 고정 UI (공통)
-========================= */
-#uiOverlay {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  z-index: 5000;
-  pointer-events: none;
-}
-
-#uiOverlay button,
-#uiOverlay #panel {
-  pointer-events: auto;
-}
-
-
-/* =========================
-   모바일 대응 스타일
+   📱 모바일 대응
 ========================= */
 @media(max-width:768px){
   #controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 6px;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:4px;
   }
 
   #controls button {
-    flex: 1 1 30%;
-    min-width: 80px;
-    min-height: 40px;   /* ✅ 터치용 높이 확보 */
-    padding: 10px 5px;
-    font-size: 14px;
+    flex:1 1 30%;
+    min-width:80px;
+    min-height:40px;
+    padding:10px 5px;
+    font-size:14px;
   }
 
-  /* 📱 모바일: 속성 패널을 화면 하단 전체 */
   #panel {
-    position: fixed;     /* ← 핵심 */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    border-radius: 0;
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
-    z-index: 6000;
+    left:0;
+    right:0;
+    bottom:0;
+    width:100%;
+    border-radius:0;
+    box-shadow:0 -2px 6px rgba(0,0,0,0.2);
   }
 
-  #panel label {
-    font-size: 14px;
-  }
-
+  #panel label { font-size:14px; }
 }
-
 </style>
 </head>
 
 <body>
 
-<!-- 🔒 지도 위 고정 UI 레이어 (여기에 추가) -->
+<!-- 🔒 UI Overlay -->
 <div id="uiOverlay">
   <button id="panelToggle" onclick="togglePanel()">⚙️ 설정</button>
 
@@ -170,9 +159,8 @@ button { padding:5px 10px; }
     <label>폭 <input id="width" type="number"></label>
   </div>
 </div>
- 
+
 <div id="container">
-  
 <h1>교통사고 현장약도</h1>
 
 <div id="map"></div>
@@ -189,75 +177,64 @@ button { padding:5px 10px; }
 </div>
 </div>
 
- 
-
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 /* =========================
-   지도 생성
+   지도
 ========================= */
-const leafletMap = L.map('map', {
-  maxZoom: 19,
-  zoomSnap: 0.25,
-  wheelPxPerZoomLevel: 40
-}).setView([37.5665, 126.978], 18);
+const leafletMap = L.map('map',{
+  maxZoom:19,
+  zoomSnap:0.25,
+  wheelPxPerZoomLevel:40
+}).setView([37.5665,126.978],18);
 
-L.tileLayer(
-  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { maxZoom: 19, attribution: '© OpenStreetMap' }
-).addTo(leafletMap);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,
+  attribution:'© OpenStreetMap'
+}).addTo(leafletMap);
 
 /* =========================
-   지도 잠금 / 해제
+   지도 잠금
 ========================= */
-let mapLocked = false;
+let mapLocked=false;
 
 function lockMap(){
-  // 드래그
   leafletMap.dragging.disable();
-  
-  // 터치 관련
-  leafletMap.touchZoom.disable();  // 핀치 줌 막기
+  leafletMap.touchZoom.disable();
   leafletMap.doubleClickZoom.disable();
   leafletMap.scrollWheelZoom.disable();
   leafletMap.boxZoom.disable();
   leafletMap.keyboard.disable();
-  if (leafletMap.tap) leafletMap.tap.disable();
-
-  mapLocked = true;
+  if(leafletMap.tap) leafletMap.tap.disable();
+  mapLocked=true;
 }
 
 function unlockMap(){
   leafletMap.dragging.enable();
-  leafletMap.touchZoom.enable();   // 핀치 줌 허용
+  leafletMap.touchZoom.enable();
   leafletMap.doubleClickZoom.enable();
   leafletMap.scrollWheelZoom.enable();
   leafletMap.boxZoom.enable();
   leafletMap.keyboard.enable();
-  if (leafletMap.tap) leafletMap.tap.enable();
-
-  mapLocked = false;
+  if(leafletMap.tap) leafletMap.tap.enable();
+  mapLocked=false;
 }
 
-
-function toggleMap(){
-  mapLocked ? unlockMap() : lockMap();
-}
+function toggleMap(){ mapLocked ? unlockMap() : lockMap(); }
 
 /* =========================
-   🔘 패널 토글 함수 (여기에 추가)
+   패널 토글
 ========================= */
+const panel = document.getElementById('panel');
 function togglePanel(){
-  const current = window.getComputedStyle(panel).display;
-  panel.style.display = (current === 'none') ? 'block' : 'none';
+  panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
 }
 
-
 /* =========================
-   아이콘 경로
+   객체 공통
 ========================= */
 const icons = {
   person:'icons/person.png',
@@ -268,91 +245,50 @@ const icons = {
 };
 
 const mapDiv = leafletMap.getContainer();
-let selected = null;
-const panel = document.getElementById('panel')
-const container = document.getElementById('container'); // ✅ 추가
+const container = document.getElementById('container');
+let selected=null;
 
-
-/* =========================
-   공통
-========================= */
 function centerPos(){
   const r = mapDiv.getBoundingClientRect();
-  return { x:r.width/2-16, y:r.height/2-16 };
+  return {x:r.width/2-16,y:r.height/2-16};
 }
 
-// 모바일: 선택 시 패널 표시/숨김
 function select(el){
-  if(selected) selected.style.outline = '';
-  selected = el;
-  el.style.outline = '2px dashed red';
+  if(selected) selected.style.outline='';
+  selected=el;
+  el.style.outline='2px dashed red';
 }
 
 function drag(el){
-  let startX = 0, startY = 0;
-  let origX = 0, origY = 0;
-  let dragging = false;
-  let holdTimer = null;
+  let sx,sy,ox,oy,dragging=false;
 
-  el.style.touchAction = 'none';
+  el.style.touchAction='none';
 
-  el.addEventListener('pointerdown', e => {
-
+  el.addEventListener('pointerdown',e=>{
     select(el);
-    el.style.zIndex = 3000;
-
-    startX = e.clientX;
-    startY = e.clientY;
-    origX = parseFloat(el.style.left);
-    origY = parseFloat(el.style.top);
-
-    // 🔑 INPUT은 길게 눌러야 이동
-    if (el.tagName === 'INPUT') {
-      holdTimer = setTimeout(() => {
-        dragging = true;
-        el.setPointerCapture(e.pointerId);
-      }, 200); // 0.2초
-      return;
-    }
-
-    // 아이콘/화살표는 즉시 이동
-    e.preventDefault();
-    dragging = true;
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left);
+    oy=parseFloat(el.style.top);
+    dragging=true;
     el.setPointerCapture(e.pointerId);
+    e.preventDefault();
   });
 
-  el.addEventListener('pointermove', e => {
+  el.addEventListener('pointermove',e=>{
     if(!dragging) return;
-
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    el.style.left = (origX + dx) + 'px';
-    el.style.top  = (origY + dy) + 'px';
+    el.style.left=(ox+e.clientX-sx)+'px';
+    el.style.top =(oy+e.clientY-sy)+'px';
   });
 
-  el.addEventListener('pointerup', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
-  });
-
-  el.addEventListener('pointercancel', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
-  });
+  el.addEventListener('pointerup',()=>dragging=false);
 }
-
 
 function enableDelete(el){
-  // PC: 우클릭
-  el.addEventListener('contextmenu', e => {
+  el.addEventListener('contextmenu',e=>{
     e.preventDefault();
-    if (confirm('이 객체를 삭제하시겠습니까?')) {
-      el.remove();
-    }
+    if(confirm('이 객체를 삭제하시겠습니까?')) el.remove();
   });
 }
-
 
 /* =========================
    객체 추가
@@ -367,9 +303,8 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
-  enableDelete(img);   // ✅ 추가
+  enableDelete(img);
 }
-
 
 function addArrow(){
   const p=centerPos();
@@ -381,123 +316,59 @@ function addArrow(){
   a.style.width='32px';
   mapDiv.appendChild(a);
   drag(a);
-  enableDelete(a);     // ✅ 추가
+  enableDelete(a);
 }
-
 
 function addText(){
-  const p = centerPos();
-  const t = document.createElement('input');
-  t.className = 'textbox';
-  t.placeholder = '텍스트';
-  t.style.left = p.x + 'px';
-  t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
-  t.style.height = 'auto';
-  t.style.minHeight = '20px';
-  t.style.padding = '0 4px';
-  t.style.textAlign = 'center';
-  t.style.width = '14px'; // 초기 폭
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top=p.y+'px';
+  t.style.fontSize='14px';
+  t.style.width='14px';
   mapDiv.appendChild(t);
-
   drag(t);
   enableDelete(t);
-
-  // -----------------------------
-  // 폭 계산 함수
-  // -----------------------------
-  const adjustSize = () => {
-    const fs = parseFloat(window.getComputedStyle(t).fontSize) || 14;
-    const text = t.value || t.placeholder || '한';
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.font = `${fs}px sans-serif`;
-    const textWidth = ctx.measureText(text).width;
-    t.style.width = (textWidth + 8) + 'px'; // 좌우 4px 여백 포함
-    t.style.height = (fs + 4) + 'px'; // 높이: 글자 크기 + 4px
-  };
-
-  // -----------------------------
-  // 이벤트
-  // -----------------------------
-  t.addEventListener('input', adjustSize);
-  t.addEventListener('change', adjustSize);
-
-  // fontSize 패널 입력에서 즉시 적용
-  const fontInput = document.getElementById('fontSize');
-  fontInput.addEventListener('input', () => {
-    if(selected === t){
-      t.style.fontSize = fontInput.value + 'px';
-      adjustSize(); // 바로 폭 조절
-    }
-  });
-
-  // 클릭/터치 시에도 폭 재조정
-  t.addEventListener('pointerdown', adjustSize);
-
-  adjustSize(); // 초기 적용
 }
 
+/* =========================
+   속성 패널 연동
+========================= */
+angle.oninput=e=>{
+  if(selected) selected.style.transform=`rotate(${e.target.value}deg)`;
+};
 
+size.oninput=e=>{
+  if(selected && selected.tagName==='IMG')
+    selected.style.width=e.target.value+'px';
+};
 
+fontSize.oninput=e=>{
+  if(selected && selected.tagName==='INPUT')
+    selected.style.fontSize=e.target.value+'px';
+};
 
-// =========================
-// ✅ 여기에 추가
-// 속성 패널 입력 적용
-// =========================
-
-// 각도 입력
-document.getElementById('angle').addEventListener('input', e => {
-  if (!selected) return;
-  const deg = parseFloat(e.target.value) || 0;
-  selected.style.transform = `rotate(${deg}deg)`;
-});
-
-// 크기 입력 (아이콘/화살표)
-document.getElementById('size').addEventListener('input', e => {
-  if (!selected) return;
-  const s = parseFloat(e.target.value) || 32;
-  if (selected.tagName === 'IMG') {
-    selected.style.width = s + 'px';
-    selected.style.height = 'auto';
-  }
-});
-
-// 글자크기 (문자 박스)
-document.getElementById('fontSize').addEventListener('input', e => {
-  if (!selected) return;
-  const fs = parseFloat(e.target.value) || 12;
-  if (selected.tagName === 'INPUT') {
-    selected.style.fontSize = fs + 'px';
-  }
-});
-
-// 폭 (문자 박스)
-document.getElementById('width').addEventListener('input', e => {
-  if (!selected) return;
-  const w = parseFloat(e.target.value) || 100;
-  if (selected.tagName === 'INPUT') {
-    selected.style.width = w + 'px';
-  }
-});
-
-
+width.oninput=e=>{
+  if(selected && selected.tagName==='INPUT')
+    selected.style.width=e.target.value+'px';
+};
 
 /* =========================
-   PDF 저장
+   PDF
 ========================= */
 async function savePDF(){
   lockMap();
   const canvas = await html2canvas(container,{useCORS:true});
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
-  const w = pdf.internal.pageSize.getWidth();
-  const h = canvas.height * w / canvas.width;
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvas.height*w/canvas.width;
   pdf.addImage(canvas.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
   unlockMap();
 }
 </script>
-
 </body>
 </html>
