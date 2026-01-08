@@ -233,9 +233,10 @@ function toggleMap(){
    🔘 패널 토글 함수 (여기에 추가)
 ========================= */
 function togglePanel(){
-  panel.style.display =
-    panel.style.display === 'block' ? 'none' : 'block';
+  const current = window.getComputedStyle(panel).display;
+  panel.style.display = (current === 'none') ? 'block' : 'none';
 }
+
 
 /* =========================
    아이콘 경로
