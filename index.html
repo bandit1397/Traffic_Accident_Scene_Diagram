@@ -70,19 +70,15 @@ button { padding:5px 10px; }
 
 /* ===== 속성 패널 ===== */
 #panel {
-  position: fixed;
-  right: 10px;
-  bottom: 10px;
-  background: #fff;
-  border: 1px solid #333;
-  padding: 10px;
-  width: 200px;
-
-  display: block;          /* 🔑 항상 존재 */
-  visibility: hidden;      /* 🔑 안 보이게만 */
-  opacity: 0;
-
-  z-index: 3000;
+  position:fixed;
+  right:10px;
+  bottom:10px;
+  background:#fff;
+  border:1px solid #333;
+  padding:10px;
+  width:200px;
+  display:none;
+  z-index:3000;
 }
 
 #panel label {
@@ -219,51 +215,32 @@ function centerPos(){
 }
 
 function select(el){
-  if (selected === el) return;
+  selected=el;
+  panel.style.display='block';
 
-  selected = el;
+  if(window.innerWidth<=768){
+    const mapRect=mapDiv.getBoundingClientRect();
+    const elRect=el.getBoundingClientRect();
+    const pw=panel.offsetWidth||200;
+    const ph=panel.offsetHeight||180;
+    const m=8;
 
-  // 🔑 패널 보이게 (항상)
-  panel.style.visibility = 'visible';
-  panel.style.opacity = '1';
+    let left=elRect.right-mapRect.left+m;
+    let top =elRect.top-mapRect.top;
 
-  // 🔑 이미 패널이 한 번 위치 잡혔으면 다시 계산 ❌
-  if (panelInitialized) return;
-
-  panelInitialized = true;
-
-  if (window.innerWidth <= 768) {
-    const mapRect = mapDiv.getBoundingClientRect();
-    const elRect  = el.getBoundingClientRect();
-    const pw = panel.offsetWidth;
-    const ph = panel.offsetHeight;
-    const m  = 8;
-
-    let left = elRect.right - mapRect.left + m;
-    let top  = elRect.top   - mapRect.top;
-
-    if (left + pw > mapRect.width) {
-      left = elRect.left - mapRect.left - pw - m;
+    if(left+pw>mapRect.width){
+      left=elRect.left-mapRect.left-pw-m;
     }
+    if(top<0) top=0;
+    if(top+ph>mapRect.height) top=mapRect.height-ph;
 
-    if (top < 0) top = 0;
-    if (top + ph > mapRect.height) {
-      top = mapRect.height - ph;
-    }
-
-    panel.style.left   = left + 'px';
-    panel.style.top    = top  + 'px';
-    panel.style.right  = 'auto';
-    panel.style.bottom = 'auto';
-  } else {
-    panel.style.position = 'fixed';
-    panel.style.right = '10px';
-    panel.style.bottom = '10px';
+    panel.style.left=left+'px';
+    panel.style.top =top +'px';
+  }else{
+    panel.style.right='10px';
+    panel.style.bottom='10px';
   }
 }
-
-
-
 
 function drag(el){
   let sx,sy,ox,oy,dragging=false;
