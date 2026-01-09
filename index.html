@@ -147,10 +147,34 @@ button { padding:5px 10px; }
     <!-- 속성 패널 (지도 내부 포함) -->
     <div id="panel">
       <strong>선택 객체</strong>
-      <label>각도 <input id="angle" type="number"></label>
-      <label>크기 <input id="size" type="number"></label>
-      <label>글자크기 <input id="fontSize" type="number"></label>
-      <label>폭 <input id="width" type="number"></label>
+      <label>
+        각도
+        <button onclick="stepValue('angle', -1)">−</button>
+        <input id="angle" type="number" step="1">
+        <button onclick="stepValue('angle', 1)">+</button>
+      </label>
+
+      <label>
+        크기
+        <button onclick="stepValue('size', -2)">−</button>
+        <input id="size" type="number" step="2">
+        <button onclick="stepValue('size', 2)">+</button>
+      </label>
+
+      <label>
+        글자크기
+        <button onclick="stepValue('fontSize', -1)">−</button>
+        <input id="fontSize" type="number" step="1">
+        <button onclick="stepValue('fontSize', 1)">+</button>
+      </label>
+
+      <label>
+        폭
+        <button onclick="stepValue('width', -2)">−</button>
+        <input id="width" type="number" step="2">
+        <button onclick="stepValue('width', 2)">+</button>
+      </label>
+
     </div>
 
   </div>
