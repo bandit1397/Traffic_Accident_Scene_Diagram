@@ -326,6 +326,39 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
   unlockMap();
 }
+(function(){
+  const panel = document.getElementById('panel');
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+
+  panel.style.touchAction = 'none';
+
+  panel.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'INPUT') return;
+
+    dragging = true;
+    sx = e.clientX;
+    sy = e.clientY;
+
+    const r = panel.getBoundingClientRect();
+    ox = r.left;
+    oy = r.top;
+
+    panel.setPointerCapture(e.pointerId);
+  });
+
+  panel.addEventListener('pointermove', e => {
+    if (!dragging) return;
+
+    panel.style.left = (ox + e.clientX - sx) + 'px';
+    panel.style.top  = (oy + e.clientY - sy) + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  });
+
+  panel.addEventListener('pointerup', ()=>dragging=false);
+  panel.addEventListener('pointercancel', ()=>dragging=false);
+})();
+
 </script>
 </body>
 </html>
