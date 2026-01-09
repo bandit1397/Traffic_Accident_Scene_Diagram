@@ -430,9 +430,15 @@ async function savePDF(){
     const mapRect   = mapDiv.getBoundingClientRect();
     const panelRect = panel.getBoundingClientRect();
 
-    // ⭐ 지도 기준 좌표로 변환
-    ox = panelRect.left - mapRect.left;
-    oy = panelRect.top  - mapRect.top;
+    /* ✅ 핵심 ① transform 제거 */
+    panel.style.transform = 'none';
+
+    /* ✅ 핵심 ② 현재 보이는 위치를 left/top으로 고정 */
+    panel.style.left = (panelRect.left - mapRect.left) + 'px';
+    panel.style.top  = (panelRect.top  - mapRect.top)  + 'px';
+
+    ox = parseFloat(panel.style.left);
+    oy = parseFloat(panel.style.top);
 
     panel.setPointerCapture(e.pointerId);
     e.preventDefault();
@@ -443,14 +449,11 @@ async function savePDF(){
 
     panel.style.left = (ox + e.clientX - sx) + 'px';
     panel.style.top  = (oy + e.clientY - sy) + 'px';
-    panel.style.right = 'auto';
-    panel.style.bottom = 'auto';
   });
 
   panel.addEventListener('pointerup', ()=>dragging=false);
   panel.addEventListener('pointercancel', ()=>dragging=false);
 })();
-
 
 </script>
 </body>
