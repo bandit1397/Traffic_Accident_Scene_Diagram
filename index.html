@@ -410,6 +410,8 @@ async function savePDF(){
 }
 (function(){
   const panel = document.getElementById('panel');
+  const mapDiv = document.getElementById('map');
+
   let sx=0, sy=0, ox=0, oy=0, dragging=false;
 
   panel.style.touchAction = 'none';
@@ -421,11 +423,15 @@ async function savePDF(){
     sx = e.clientX;
     sy = e.clientY;
 
-    const r = panel.getBoundingClientRect();
-    ox = r.left;
-    oy = r.top;
+    const mapRect   = mapDiv.getBoundingClientRect();
+    const panelRect = panel.getBoundingClientRect();
+
+    // ⭐ 지도 기준 좌표로 변환
+    ox = panelRect.left - mapRect.left;
+    oy = panelRect.top  - mapRect.top;
 
     panel.setPointerCapture(e.pointerId);
+    e.preventDefault();
   });
 
   panel.addEventListener('pointermove', e => {
@@ -440,6 +446,7 @@ async function savePDF(){
   panel.addEventListener('pointerup', ()=>dragging=false);
   panel.addEventListener('pointercancel', ()=>dragging=false);
 })();
+
 
 </script>
 </body>
