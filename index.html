@@ -1,4 +1,4 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -68,6 +68,7 @@ button { padding:5px 10px; }
   z-index:1000;
 }
 
+/* ===== 속성 패널 ===== */
 /* ===== 속성 패널 (지도 내부 기준) ===== */
 #panel {
   position: absolute;
@@ -93,24 +94,9 @@ button { padding:5px 10px; }
   margin-top:6px;
 }
 
-.range-row{
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.range-row button{
-  width: 26px;
-  height: 26px;
-  font-size: 16px;
-  line-height: 1;
-  touch-action: manipulation;
-}
-
-.range-row input[type="range"]{
-  flex: 1;
+#panel input[type="range"]{
+  width: 100%;
   margin-top: 4px;
-  height: 28px;
 }
 
 /* ===== 모바일 ===== */
@@ -166,35 +152,26 @@ button { padding:5px 10px; }
       <strong>선택 객체</strong>
       <label>
         각도
-        <div class="range-row">
-          <button onclick="stepValue('angle', -5)">−</button>
-          <input id="angle" type="range" min="-180" max="180" step="5" value="0">
-          <button onclick="stepValue('angle', 5)">+</button>
-        </div>
+        <input id="angle" type="range"
+               min="-180" max="180" step="1" value="0">
       </label>
+
       <label>
         크기
-        <div class="range-row">
-          <button onclick="stepValue('size', -2)">−</button>
-          <input id="size" type="range" min="10" max="200" step="2" value="32">
-          <button onclick="stepValue('size', 2)">+</button>
-        </div>
+        <input id="size" type="range"
+               min="10" max="150" step="1" value="32">
       </label>
+
       <label>
         글자크기
-        <div class="range-row">
-          <button onclick="stepValue('fontSize', -1)">−</button>
-          <input id="fontSize" type="range" min="8" max="40" step="1" value="14">
-          <button onclick="stepValue('fontSize', 1)">+</button>
-        </div>
+        <input id="fontSize" type="range"
+               min="8" max="48" step="1" value="14">
       </label>
+
       <label>
         폭
-        <div class="range-row">
-          <button onclick="stepValue('width', -2)">−</button>
-          <input id="width" type="range" min="10" max="300" step="2" value="40">
-          <button onclick="stepValue('width', 2)">+</button>
-        </div>
+        <input id="width" type="range"
+               min="10" max="300" step="2" value="60">
       </label>
 
     </div>
