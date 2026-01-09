@@ -280,16 +280,22 @@ function drag(el){
   let sx,sy,ox,oy,dragging=false;
   el.style.touchAction='none';
 
-  el.addEventListener('pointerdown',e=>{
+  el.addEventListener('pointerdown', e => {
     select(el);
-    if (el.tagName === 'INPUT') return;
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left);
-    oy=parseFloat(el.style.top);
-    dragging=true;
+
+    const isInput = el.tagName === 'INPUT';
+
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(el.style.left);
+    oy = parseFloat(el.style.top);
+    dragging = true;
+
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();
+
+    if (!isInput) e.preventDefault();
   });
+
 
   el.addEventListener('pointermove',e=>{
     if(!dragging) return;
