@@ -219,11 +219,13 @@ function centerPos(){
 }
 
 function select(el){
-  if (selected === el) return;   // 🔑 같은 객체 재선택 방지
+  if (selected === el) return;
 
   selected = el;
 
-  panel.style.display = 'block';
+  // ⭐⭐⭐ 패널 표시 핵심
+  panel.style.visibility = 'visible';
+  panel.style.opacity = '1';
 
   if (window.innerWidth <= 768) {
     const mapRect = mapDiv.getBoundingClientRect();
@@ -246,7 +248,7 @@ function select(el){
 
     panel.style.left   = left + 'px';
     panel.style.top    = top  + 'px';
-    panel.style.right = 'auto';
+    panel.style.right  = 'auto';
     panel.style.bottom = 'auto';
   } else {
     panel.style.position = 'fixed';
@@ -254,6 +256,7 @@ function select(el){
     panel.style.bottom = '10px';
   }
 }
+
 
 
 
