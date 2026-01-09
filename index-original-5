@@ -75,19 +75,19 @@ button { padding:5px 10px; }
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-}
 
   background: #fff;
   border: 1px solid #333;
   padding: 10px;
   width: 200px;
 
-  display: block;            /* 항상 존재 */
-  visibility: hidden;        /* 처음엔 숨김 */
+  display: block;
+  visibility: hidden;
   opacity: 0;
 
   z-index: 3000;
 }
+
 
 
 #panel label {
@@ -221,6 +221,7 @@ const icons={
 const mapDiv=leafletMap.getContainer();
 const panel=document.getElementById('panel');
 let selected=null;
+let panelInitialized = false;
 
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
@@ -279,15 +280,22 @@ function drag(el){
   let sx,sy,ox,oy,dragging=false;
   el.style.touchAction='none';
 
-  el.addEventListener('pointerdown',e=>{
+  el.addEventListener('pointerdown', e => {
     select(el);
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left);
-    oy=parseFloat(el.style.top);
-    dragging=true;
+
+    const isInput = el.tagName === 'INPUT';
+
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(el.style.left);
+    oy = parseFloat(el.style.top);
+    dragging = true;
+
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();
+
+    if (!isInput) e.preventDefault();
   });
+
 
   el.addEventListener('pointermove',e=>{
     if(!dragging) return;
