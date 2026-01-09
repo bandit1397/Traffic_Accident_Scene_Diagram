@@ -71,10 +71,11 @@ button { padding:5px 10px; }
 /* ===== 속성 패널 ===== */
 /* ===== 속성 패널 (지도 내부 기준) ===== */
 #panel {
-  position: absolute;        /* ⭐ 핵심 */
-  left: 10px;                /* 지도 좌측 */
-  top: 50%;                  /* 세로 중앙 */
-  transform: translateY(-50%);
+  position: absolute;
+  left: 10px;
+  top: 120px;           /* 🔥 고정값 */
+  z-index: 1000;
+}
 
   background: #fff;
   border: 1px solid #333;
