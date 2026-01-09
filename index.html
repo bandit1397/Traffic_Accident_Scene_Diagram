@@ -432,6 +432,18 @@ width.oninput=e=>{
     selected.style.width=e.target.value+'px';
 };
 
+function stepValue(id, delta){
+  const input = document.getElementById(id);
+  if(!selected) return;
+
+  const step = parseFloat(input.step) || 1;
+  const val  = parseFloat(input.value) || 0;
+
+  input.value = val + delta;
+  input.dispatchEvent(new Event('input'));
+}
+
+
 /* ===== PDF ===== */
 async function savePDF(){
   lockMap();
