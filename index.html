@@ -265,11 +265,14 @@ function select(el){
     panel.style.top    = top  + 'px';
     panel.style.right  = 'auto';
     panel.style.bottom = 'auto';
+    
   } else {
-    panel.style.position = 'fixed';
-    panel.style.right = '10px';
-    panel.style.bottom = '10px';
+    panel.style.position = 'absolute';
+    panel.style.left = '10px';
+    panel.style.top = '50%';
+    panel.style.transform = 'translateY(-50%)';
   }
+
 }
 
 function drag(el){
