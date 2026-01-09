@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Traffic Accident Scene Diagram</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<style>
+body { margin:0; background:#eee; font-family:sans-serif; }
+
+#container {
+  position: relative;
+  width:210mm;
+  min-height:297mm;
+  margin:20px auto;
+  padding:10mm;
+  background:#fff;
+  border:1px solid #ccc;
+}
+
+h1 { text-align:center; }
+
+#map {
+  width:100%;
+  height:600px;
+  border:1px solid #888;
+  position:relative;
+}
+
+/* ===== 컨트롤 ===== */
+#controls {
+  display:flex;
+  justify-content:center;
+  gap:6px;
+  margin-top:8px;
+  overflow-x:auto;
+  padding:2px 0;
+}
+
+#controls::-webkit-scrollbar { height:4px; }
+#controls::-webkit-scrollbar-thumb {
+  background:#888;
+  border-radius:2px;
+}
+
+button { padding:5px 10px; }
+
+/* ===== 객체 ===== */
+.icon, .arrow {
+  position:absolute;
+  cursor:move;
+  z-index:1000;
+}
+
+.arrow { transform-origin:center; }
+
+.textbox {
+  position:absolute;
+  border:1px solid #333;
+  background:#fff;
+  padding:2px;
+  resize:both;
+  cursor:move;
+  z-index:1000;
+}
+
+/* ===== 속성 패널 ===== */
+#panel {
+  position: fixed;
+  right: 10px;
+  bottom: 10px;
+  background: #fff;
+  border: 1px solid #333;
+  padding: 10px;
+  width: 200px;
+
+  display: block;          /* 🔑 항상 존재 */
+  visibility: hidden;      /* 🔑 안 보이게만 */
+  opacity: 0;
+
+  z-index: 3000;
+}
+
+#panel label {
+  font-size:12px;
+  display:block;
+  margin-top:6px;
+}
+
+/* ===== 모바일 ===== */
+@media (max-width: 768px){
+  #controls {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  #controls button {
+    flex: 1 1 30%;
+    min-width: 80px;
+    min-height: 40px;
+    font-size: 14px;
+  }
+
+  /* ✅ 속성 패널 모바일 슬림화 */
+  #panel {
+    position: absolute;        /* 기존 유지 */
+    right: auto;
+    bottom: auto;
+
+    width: 105px;              /* ⭐ 패널 폭 조절 */
+    padding: 6px;              /* ⭐ 내부 여백 축소 */
+
+    border-radius: 6px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+  }
+
+  #panel label {
+    font-size: 12px;           /* ⭐ 글자 작게 */
+  }
+
+  #panel input {
+    width: 42px;               /* ⭐ 핵심: 패널 안에서 안 밀리게 */
+    font-size: 12px;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="container">
+  <h1>교통사고 현장약도</h1>
+
+  <div id="map"></div>
+
+  <div id="controls">
+    <button onclick="addIcon('person')">사람</button>
+    <button onclick="addIcon('car')">자동차</button>
+    <button onclick="addIcon('bike')">자전거</button>
+    <button onclick="addIcon('moto')">오토바이</button>
+    <button onclick="addArrow()">화살표</button>
+    <button onclick="addText()">문자</button>
+    <button onclick="toggleMap()">지도 잠금 / 해제</button>
+    <button onclick="savePDF()">PDF</button>
+  </div>
+</div>
+
+<!-- 속성 패널 -->
+<div id="panel">
+  <strong>선택 객체</strong>
+  <label>각도 <input id="angle" type="number"></label>
+  <label>크기 <input id="size" type="number"></label>
+  <label>글자크기 <input id="fontSize" type="number"></label>
+  <label>폭 <input id="width" type="number"></label>
+</div>
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+/* ===== 지도 ===== */
+const leafletMap = L.map('map',{
+  maxZoom:19,
+  zoomSnap:0.25,
+  wheelPxPerZoomLevel:40
+}).setView([37.5665,126.978],18);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+  maxZoom:19,
+  attribution:'© OpenStreetMap'
+}).addTo(leafletMap);
+
+/* ===== 지도 잠금 ===== */
+let mapLocked=false;
+function lockMap(){
+  leafletMap.dragging.disable();
+  leafletMap.touchZoom.disable();
+  leafletMap.doubleClickZoom.disable();
+  leafletMap.scrollWheelZoom.disable();
+  leafletMap.boxZoom.disable();
+  leafletMap.keyboard.disable();
+  if(leafletMap.tap) leafletMap.tap.disable();
+  mapLocked=true;
+}
+function unlockMap(){
+  leafletMap.dragging.enable();
+  leafletMap.touchZoom.enable();
+  leafletMap.doubleClickZoom.enable();
+  leafletMap.scrollWheelZoom.enable();
+  leafletMap.boxZoom.enable();
+  leafletMap.keyboard.enable();
+  if(leafletMap.tap) leafletMap.tap.enable();
+  mapLocked=false;
+}
+function toggleMap(){ mapLocked ? unlockMap() : lockMap(); }
+
+/* ===== 공통 ===== */
+const icons={
+  person:'icons/person.png',
+  car:'icons/car.png',
+  bike:'icons/bike.png',
+  moto:'icons/moto.png',
+  arrow:'icons/arrow.png'
+};
+
+const mapDiv=leafletMap.getContainer();
+const panel=document.getElementById('panel');
+let selected=null;
+
+function centerPos(){
+  const r=mapDiv.getBoundingClientRect();
+  return {x:r.width/2-16,y:r.height/2-16};
+}
+
+function select(el){
+  if (selected === el) return;
+
+  selected = el;
+
+  // 🔑 패널 보이게 (항상)
+  panel.style.visibility = 'visible';
+  panel.style.opacity = '1';
+
+  // 🔑 이미 패널이 한 번 위치 잡혔으면 다시 계산 ❌
+  if (panelInitialized) return;
+
+  panelInitialized = true;
+
+  if (window.innerWidth <= 768) {
+    const mapRect = mapDiv.getBoundingClientRect();
+    const elRect  = el.getBoundingClientRect();
+    const pw = panel.offsetWidth;
+    const ph = panel.offsetHeight;
+    const m  = 8;
+
+    let left = elRect.right - mapRect.left + m;
+    let top  = elRect.top   - mapRect.top;
+
+    if (left + pw > mapRect.width) {
+      left = elRect.left - mapRect.left - pw - m;
+    }
+
+    if (top < 0) top = 0;
+    if (top + ph > mapRect.height) {
+      top = mapRect.height - ph;
+    }
+
+    panel.style.left   = left + 'px';
+    panel.style.top    = top  + 'px';
+    panel.style.right  = 'auto';
+    panel.style.bottom = 'auto';
+  } else {
+    panel.style.position = 'fixed';
+    panel.style.right = '10px';
+    panel.style.bottom = '10px';
+  }
+}
+
+
+
+
+function drag(el){
+  let sx,sy,ox,oy,dragging=false;
+  el.style.touchAction='none';
+
+  el.addEventListener('pointerdown',e=>{
+    select(el);
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left);
+    oy=parseFloat(el.style.top);
+    dragging=true;
+    el.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  el.addEventListener('pointermove',e=>{
+    if(!dragging) return;
+    el.style.left=(ox+e.clientX-sx)+'px';
+    el.style.top =(oy+e.clientY-sy)+'px';
+  });
+
+  el.addEventListener('pointerup',()=>dragging=false);
+}
+
+function enableDelete(el){
+  el.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    if(confirm('이 객체를 삭제하시겠습니까?')) el.remove();
+  });
+}
+
+/* ===== 객체 추가 ===== */
+function addIcon(type){
+  const p=centerPos();
+  const img=document.createElement('img');
+  img.src=icons[type];
+  img.className='icon';
+  img.style.left=p.x+'px';
+  img.style.top =p.y+'px';
+  img.style.width='32px';
+  mapDiv.appendChild(img);
+  drag(img); enableDelete(img);
+}
+
+function addArrow(){
+  const p=centerPos();
+  const a=document.createElement('img');
+  a.src=icons.arrow;
+  a.className='arrow';
+  a.style.left=p.x+'px';
+  a.style.top =p.y+'px';
+  a.style.width='32px';
+  mapDiv.appendChild(a);
+  drag(a); enableDelete(a);
+}
+
+function addText(){
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top =p.y+'px';
+  t.style.fontSize='14px';
+  t.style.width='14px';
+  mapDiv.appendChild(t);
+  drag(t); enableDelete(t);
+}
+
+/* ===== 패널 입력 ===== */
+angle.oninput=e=>{
+  if(selected) selected.style.transform=`rotate(${e.target.value}deg)`;
+};
+size.oninput=e=>{
+  if(selected&&selected.tagName==='IMG')
+    selected.style.width=e.target.value+'px';
+};
+fontSize.oninput=e=>{
+  if(selected&&selected.tagName==='INPUT')
+    selected.style.fontSize=e.target.value+'px';
+};
+width.oninput=e=>{
+  if(selected&&selected.tagName==='INPUT')
+    selected.style.width=e.target.value+'px';
+};
+
+/* ===== PDF ===== */
+async function savePDF(){
+  lockMap();
+  const canvas=await html2canvas(container,{useCORS:true});
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvas.height*w/canvas.width;
+  pdf.addImage(canvas.toDataURL(),'PNG',0,0,w,h);
+  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
+  unlockMap();
+}
+(function(){
+  const panel = document.getElementById('panel');
+  let sx=0, sy=0, ox=0, oy=0, dragging=false;
+
+  panel.style.touchAction = 'none';
+
+  panel.addEventListener('pointerdown', e => {
+    if (e.target.tagName === 'INPUT') return;
+
+    dragging = true;
+    sx = e.clientX;
+    sy = e.clientY;
+
+    const r = panel.getBoundingClientRect();
+    ox = r.left;
+    oy = r.top;
+
+    panel.setPointerCapture(e.pointerId);
+  });
+
+  panel.addEventListener('pointermove', e => {
+    if (!dragging) return;
+
+    panel.style.left = (ox + e.clientX - sx) + 'px';
+    panel.style.top  = (oy + e.clientY - sy) + 'px';
+    panel.style.right = 'auto';
+    panel.style.bottom = 'auto';
+  });
+
+  panel.addEventListener('pointerup', ()=>dragging=false);
+  panel.addEventListener('pointercancel', ()=>dragging=false);
+})();
+
+</script>
+</body>
+</html>
