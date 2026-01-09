@@ -244,32 +244,45 @@ function select(el){
   selected = el;
   panel.style.display = 'block';
 
+  // 📱 스마트폰
   if (window.innerWidth <= 768) {
 
-    const container = document.getElementById('container');
-    const cRect = container.getBoundingClientRect();
+    const mapRect = mapDiv.getBoundingClientRect();
+    const elRect  = el.getBoundingClientRect();
 
     const panelWidth  = panel.offsetWidth || 200;
     const panelHeight = panel.offsetHeight || 180;
+    const margin = 8;
 
-    // ✅ 컨테이너 좌측 + 세로 중앙
-    const left = 10;  // 컨테이너 안쪽 여백
-    const top  = (cRect.height / 2) - (panelHeight / 2);
+    // ▶ 기본 : 객체 오른쪽
+    let left = elRect.right - mapRect.left + margin;
+    let top  = elRect.top   - mapRect.top;
+
+    // ▶ 오른쪽이 넘치면 왼쪽
+    if (left + panelWidth > mapRect.width) {
+      left = elRect.left - mapRect.left - panelWidth - margin;
+    }
+
+    // ▶ 위/아래 넘침 방지
+    if (top < 0) top = 0;
+    if (top + panelHeight > mapRect.height) {
+      top = mapRect.height - panelHeight;
+    }
 
     panel.style.position = 'absolute';
     panel.style.left = left + 'px';
-    panel.style.top  = top + 'px';
-
+    panel.style.top  = top  + 'px';
     panel.style.right = 'auto';
     panel.style.bottom = 'auto';
 
   } else {
-    // PC 기존 유지
+    // 🖥 PC
     panel.style.position = 'fixed';
     panel.style.right = '10px';
     panel.style.bottom = '10px';
   }
 }
+
 
 
 
