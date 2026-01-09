@@ -221,6 +221,7 @@ const icons={
 const mapDiv=leafletMap.getContainer();
 const panel=document.getElementById('panel');
 let selected=null;
+let panelInitialized = false;
 
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
