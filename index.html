@@ -13,6 +13,7 @@
 body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
+  position: relative;   /* ⭐⭐⭐ 이 줄 반드시 필요 */
   width:210mm;
   min-height:297mm;
   margin:20px auto;
@@ -134,29 +135,30 @@ button { padding:5px 10px; }
 <body>
 
 <div id="container">
-<h1>교통사고 현장약도</h1>
+  <h1>교통사고 현장약도</h1>
 
-<div id="map"></div>
+  <div id="map"></div>
 
-<div id="controls">
-  <button onclick="addIcon('person')">사람</button>
-  <button onclick="addIcon('car')">자동차</button>
-  <button onclick="addIcon('bike')">자전거</button>
-  <button onclick="addIcon('moto')">오토바이</button>
-  <button onclick="addArrow()">화살표</button>
-  <button onclick="addText()">문자</button>
-  <button onclick="toggleMap()">지도 잠금 / 해제</button>
-  <button onclick="savePDF()">PDF</button>
-</div>
-</div>
+  <div id="controls">
+    <button onclick="addIcon('person')">사람</button>
+    <button onclick="addIcon('car')">자동차</button>
+    <button onclick="addIcon('bike')">자전거</button>
+    <button onclick="addIcon('moto')">오토바이</button>
+    <button onclick="addArrow()">화살표</button>
+    <button onclick="addText()">문자</button>
+    <button onclick="toggleMap()">지도 잠금 / 해제</button>
+    <button onclick="savePDF()">PDF</button>
+  </div>
 
-<!-- 속성 패널 -->
-<div id="panel">
-<strong>선택 객체</strong>
-<label>각도 <input id="angle" type="number"></label>
-<label>크기 <input id="size" type="number"></label>
-<label>글자크기 <input id="fontSize" type="number"></label>
-<label>폭 <input id="width" type="number"></label>
+  <!-- ✅ 속성 패널을 container 안으로 이동 -->
+  <div id="panel">
+    <strong>선택 객체</strong>
+    <label>각도 <input id="angle" type="number"></label>
+    <label>크기 <input id="size" type="number"></label>
+    <label>글자크기 <input id="fontSize" type="number"></label>
+    <label>폭 <input id="width" type="number"></label>
+  </div>
+
 </div>
 
 <!-- PDF -->
