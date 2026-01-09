@@ -219,19 +219,11 @@ function centerPos(){
 }
 
 function select(el){
+  if (selected === el) return;   // 🔑 같은 객체 재선택 방지
+
   selected = el;
 
-  /* 🔑 패널 표시 (display 사용 ❌) */
-  panel.style.visibility = 'visible';
-  panel.style.opacity = '1';
-
-  /* 🔑 높이 강제 초기화 (모바일 버그 차단) */
-  panel.style.height = 'auto';
-  panel.style.minHeight = 'unset';
-  panel.style.maxHeight = 'none';
-
-  /* 🔑 강제 reflow */
-  panel.offsetHeight;
+  panel.style.display = 'block';
 
   if (window.innerWidth <= 768) {
     const mapRect = mapDiv.getBoundingClientRect();
@@ -252,8 +244,8 @@ function select(el){
       top = mapRect.height - ph;
     }
 
-    panel.style.left = left + 'px';
-    panel.style.top  = top  + 'px';
+    panel.style.left   = left + 'px';
+    panel.style.top    = top  + 'px';
     panel.style.right = 'auto';
     panel.style.bottom = 'auto';
   } else {
@@ -262,6 +254,7 @@ function select(el){
     panel.style.bottom = '10px';
   }
 }
+
 
 
 function drag(el){
