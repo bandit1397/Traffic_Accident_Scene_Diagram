@@ -223,9 +223,14 @@ function select(el){
 
   selected = el;
 
-  // ⭐⭐⭐ 패널 표시 핵심
+  // 🔑 패널 보이게 (항상)
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
+
+  // 🔑 이미 패널이 한 번 위치 잡혔으면 다시 계산 ❌
+  if (panelInitialized) return;
+
+  panelInitialized = true;
 
   if (window.innerWidth <= 768) {
     const mapRect = mapDiv.getBoundingClientRect();
