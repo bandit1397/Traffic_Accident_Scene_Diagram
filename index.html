@@ -69,17 +69,25 @@ button { padding:5px 10px; }
 }
 
 /* ===== 속성 패널 ===== */
+/* ===== 속성 패널 (지도 내부 기준) ===== */
 #panel {
-  position:fixed;
-  right:10px;
-  bottom:10px;
-  background:#fff;
-  border:1px solid #333;
-  padding:10px;
-  width:200px;
-  display:none;
-  z-index:3000;
+  position: absolute;        /* ⭐ 핵심 */
+  left: 10px;                /* 지도 좌측 */
+  top: 50%;                  /* 세로 중앙 */
+  transform: translateY(-50%);
+
+  background: #fff;
+  border: 1px solid #333;
+  padding: 10px;
+  width: 200px;
+
+  display: block;            /* 항상 존재 */
+  visibility: hidden;        /* 처음엔 숨김 */
+  opacity: 0;
+
+  z-index: 3000;
 }
+
 
 #panel label {
   font-size:12px;
@@ -132,7 +140,19 @@ button { padding:5px 10px; }
 <div id="container">
   <h1>교통사고 현장약도</h1>
 
-  <div id="map"></div>
+  <div id="map">
+    <!-- Leaflet map 또는 배경 지도 -->
+
+    <!-- 속성 패널 (지도 내부 포함) -->
+    <div id="panel">
+      <strong>선택 객체</strong>
+      <label>각도 <input id="angle" type="number"></label>
+      <label>크기 <input id="size" type="number"></label>
+      <label>글자크기 <input id="fontSize" type="number"></label>
+      <label>폭 <input id="width" type="number"></label>
+    </div>
+
+  </div>
 
   <div id="controls">
     <button onclick="addIcon('person')">사람</button>
@@ -146,14 +166,6 @@ button { padding:5px 10px; }
   </div>
 </div>
 
-<!-- 속성 패널 -->
-<div id="panel">
-  <strong>선택 객체</strong>
-  <label>각도 <input id="angle" type="number"></label>
-  <label>크기 <input id="size" type="number"></label>
-  <label>글자크기 <input id="fontSize" type="number"></label>
-  <label>폭 <input id="width" type="number"></label>
-</div>
 
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
