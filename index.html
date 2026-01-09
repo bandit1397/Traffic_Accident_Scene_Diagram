@@ -282,6 +282,7 @@ function drag(el){
 
   el.addEventListener('pointerdown',e=>{
     select(el);
+    if (el.tagName === 'INPUT') return;
     sx=e.clientX; sy=e.clientY;
     ox=parseFloat(el.style.left);
     oy=parseFloat(el.style.top);
