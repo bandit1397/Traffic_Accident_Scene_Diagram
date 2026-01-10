@@ -390,27 +390,29 @@ mapDiv.addEventListener('pointerup', e => {
 /* ===== 자유곡선 삭제 기능 ===== */
 let freeLines = []; // 그린 선 저장
 
-// 선택 후 클릭해서 지우기
 mapDiv.addEventListener('click', e => {
-  if(!drawMode) return;
+  if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
 
-  // 지도 클릭 위치
   const latlng = leafletMap.mouseEventToLatLng(e);
 
-  // 배열에 있는 선 중 지도 클릭 위치와 가까운 선 찾기
-  for(let i=0;i<freeLines.length;i++){
+  for(let i = 0; i < freeLines.length; i++){
     const line = freeLines[i];
     const latlngs = line.getLatLngs();
+
     for(const pt of latlngs){
-      if(leafletMap.latLngToContainerPoint(pt).distanceTo(leafletMap.latLngToContainerPoint(latlng)) < 5){
-        // 삭제
+      const d = leafletMap
+        .latLngToContainerPoint(pt)
+        .distanceTo(leafletMap.latLngToContainerPoint(latlng));
+
+      if(d < 6){   // 허용 오차(px)
         leafletMap.removeLayer(line);
-        freeLines.splice(i,1);
+        freeLines.splice(i, 1);
         return;
       }
     }
   }
 });
+
 
 
 /* ===== PDF ===== */
