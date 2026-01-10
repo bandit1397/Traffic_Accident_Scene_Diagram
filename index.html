@@ -323,27 +323,41 @@ function select(el){
 }
 
 function drag(el){
-  let sx,sy,ox,oy,dragging=false;
-  el.style.touchAction='none';
+  let sx, sy, ox, oy, dragging = false;
+  el.style.touchAction = 'none';
 
-  el.addEventListener('pointerdown', e=>{
+  el.addEventListener('pointerdown', e => {
     select(el);
-    const isInput = el.tagName==='INPUT';
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
-    dragging=true;
+
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(el.style.left);
+    oy = parseFloat(el.style.top);
+
+    dragging = true;
     el.setPointerCapture(e.pointerId);
-    if(!isInput) e.preventDefault();
+
+    lockScroll();                 // 🔒 스크롤 잠금
+    e.preventDefault();
   });
 
-  el.addEventListener('pointermove', e=>{
+  el.addEventListener('pointermove', e => {
     if(!dragging) return;
-    el.style.left=(ox+e.clientX-sx)+'px';
-    el.style.top =(oy+e.clientY-sy)+'px';
+
+    el.style.left = (ox + e.clientX - sx) + 'px';
+    el.style.top  = (oy + e.clientY - sy) + 'px';
   });
 
-  el.addEventListener('pointerup', ()=>dragging=false);
+  function endDrag(){
+    if(!dragging) return;
+    dragging = false;
+    unlockScroll();               // 🔓 스크롤 해제
+  }
+
+  el.addEventListener('pointerup', endDrag);
+  el.addEventListener('pointercancel', endDrag);
 }
+
 
 function enableDelete(el){
   el.addEventListener('contextmenu', e=>{
