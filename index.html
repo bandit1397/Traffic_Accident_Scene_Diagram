@@ -476,17 +476,15 @@ mapDiv.addEventListener('pointerup', () => {
   currentLine = null;
 });
 
-/* ===== 점 → 점 직선 생성 (여기에!) ===== */
+/* ===== 점 → 점 직선 생성 ===== */
 leafletMap.on('click', e => {
   if (!linePointMode) return;
 
   if (!firstPoint) {
-    // ① 첫 번째 점
     firstPoint = e.latlng;
     return;
   }
 
-  // ② 두 번째 점 → 직선 생성
   const secondPoint = e.latlng;
 
   const line = L.polyline(
@@ -499,12 +497,11 @@ leafletMap.on('click', e => {
 
   pointLines.push(line);
 
-  // 🔺 화살표 생성
-  createArrow(firstPoint, secondPoint);
+  // 🔹 화살표 생성 안 함
 
-  // 초기화
   firstPoint = null;
 });
+
 
 /* ===== 자유곡선 삭제 기능 ===== */
 mapDiv.addEventListener('click', e => {
