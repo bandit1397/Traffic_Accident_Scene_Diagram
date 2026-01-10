@@ -252,6 +252,17 @@ function unlockMap(){
 }
 function toggleMap(){ mapLocked ? unlockMap() : lockMap(); }
 
+/* ===== 점→점 직선 모드 토글 ===== */
+function togglePointLine(){
+  linePointMode = !linePointMode;
+  drawMode = false;        // 자유곡선 비활성화
+  mapLocked = linePointMode;
+  firstPoint = null;
+
+  alert(linePointMode ? '직선 모드 ON (두 점을 클릭)' : '직선 모드 OFF');
+}
+
+
 /* ===== 공통 ===== */
 const icons={
   person:'icons/person.png',
