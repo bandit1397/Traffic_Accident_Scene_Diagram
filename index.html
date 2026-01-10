@@ -12,14 +12,6 @@
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
-/* ===== 화면 스크롤 잠금 ===== */
-html.scroll-lock,
-body.scroll-lock {
-  overflow: hidden;
-  height: 100%;
-  overscroll-behavior: none;
-}
-
 #container {
   position: relative;
   width:210mm;
@@ -162,7 +154,6 @@ button { padding:5px 10px; }
     <button onclick="addArrow()">화살표</button>
     <button onclick="addText()">문자</button>
     <button onclick="toggleMap()">지도 잠금 / 해제</button>
-    <button onclick="screenLocked ? unlockScreenScroll() : lockScreenScroll()">화면 스크롤 잠금</button>
     <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
     <input type="color" id="lineColor" value="#ff0000"title="선 색상">
     <input type="range" id="lineWidth" min="1" max="15" value="3" title="선 굵기">
@@ -483,44 +474,6 @@ async function savePDF(){
   panel.addEventListener('pointerup', ()=>dragging=false);
   panel.addEventListener('pointercancel', ()=>dragging=false);
 })();
-
-/* ===== 화면 스크롤 잠금 / 해제 ===== */
-let screenLocked = false;
-let savedScrollX = 0;
-let savedScrollY = 0;
-
-function lockScreenScroll(){
-  if(screenLocked) return;
-
-  savedScrollX = window.scrollX;
-  savedScrollY = window.scrollY;
-
-  document.documentElement.classList.add('scroll-lock');
-  document.body.classList.add('scroll-lock');
-
-  // 모바일 터치 스크롤 강제 차단
-  document.addEventListener('touchmove', preventScroll, { passive: false });
-
-  screenLocked = true;
-}
-
-function unlockScreenScroll(){
-  if(!screenLocked) return;
-
-  document.documentElement.classList.remove('scroll-lock');
-  document.body.classList.remove('scroll-lock');
-
-  document.removeEventListener('touchmove', preventScroll);
-
-  window.scrollTo(savedScrollX, savedScrollY);
-  screenLocked = false;
-}
-
-function preventScroll(e){
-  e.preventDefault();
-}
-
-
 </script>
 </body>
 </html>
