@@ -438,7 +438,6 @@ let freeLines = [];                // 그려진 모든 자유곡선
 let linePointMode = false;     // 점→점 직선 모드
 let firstPoint = null;         // 첫 번째 클릭 좌표
 let pointLines = [];           // 생성된 직선들
-let arrowMarkers = [];         // 화살표들
 
 /* ===== 자유곡선 UI 연결 ===== */
 document.getElementById('lineWidth').addEventListener('input', e => {
@@ -526,32 +525,6 @@ mapDiv.addEventListener('click', e => {
     }
   }
 });
-
-/* ===== 화살표 생성 ===== */
-function createArrow(start, end){
-  const angle =
-    Math.atan2(
-      end.lat - start.lat,
-      end.lng - start.lng
-    ) * 180 / Math.PI;
-
-  const arrowIcon = L.divIcon({
-    className: '',
-    html: `
-      <img src="icons/arrow.png"
-           style="
-             width:24px;
-             transform: rotate(${angle}deg);
-           ">
-    `,
-    iconSize: [24,24],
-    iconAnchor: [12,12]
-  });
-
-  const marker = L.marker(end, { icon: arrowIcon }).addTo(leafletMap);
-  arrowMarkers.push(marker);
-}
-
 
 /* ===== PDF ===== */
 async function savePDF(){
