@@ -186,6 +186,7 @@ button { padding:5px 10px; }
     <button onclick="addArrow()">화살표</button>
     <button onclick="addText()">문자</button>
     <button onclick="toggleMap()">지도 잠금 / 해제</button>
+    <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
     <button onclick="savePDF()">PDF</button>
   </div>
 </div>
@@ -202,6 +203,42 @@ const leafletMap = L.map('map',{
   zoomSnap:0.25,
   wheelPxPerZoomLevel:40
 }).setView([37.5665,126.978],18);
+
+/* ===== 지도 잠금/해제 ===== */
+let mapLocked=false;
+function lockMap(){ ... }
+function unlockMap(){ ... }
+function toggleMap(){ ... }
+
+/* ===== 아이콘/텍스트/화살표 함수 ===== */
+function drag(el){ ... }
+function enableDelete(el){ ... }
+function addIcon(type){ ... }
+function addArrow(){ ... }
+function addText(){ ... }
+
+/* ===== 자유곡선 그리기 코드 ===== */
+let drawMode = false;  // 자유곡선 모드 ON/OFF
+let drawing = false;
+let currentLine = null;
+
+mapDiv.addEventListener('pointerdown', e => {
+  if (!drawMode) return;          // drawMode 체크
+  drawing = true;
+  const point = leafletMap.mouseEventToLatLng(e);
+  currentLine = L.polyline([point], {color: 'red', weight: 3}).addTo(leafletMap);
+});
+
+mapDiv.addEventListener('pointermove', e => {
+  if (!drawing || !currentLine) return;
+  const point = leafletMap.mouseEventToLatLng(e);
+  currentLine.addLatLng(point);
+});
+
+mapDiv.addEventListener('pointerup', e => {
+  drawing = false;
+  currentLine = null;
+});
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19,
