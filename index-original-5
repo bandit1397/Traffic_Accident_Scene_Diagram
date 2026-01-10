@@ -76,9 +76,10 @@ h1 { text-align:center; }
 
 /* ===== 좌측 고정 도구 패널 ===== */
 #toolbox {
-  position: static;   /* 중요 */
-  z-index: 5000;
+  position: static;      /* Leaflet이 위치 관리 */
+  width: auto;
 }
+
 /* Leaflet 컨트롤 스타일 */
 .leaflet-control.toolbox {
   background: transparent;
@@ -101,15 +102,18 @@ h1 { text-align:center; }
   border: 1px solid #333;
   border-radius: 10px;
   padding: 6px;
-  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+
+  width: 120px;        /* ⭐ 핵심 */
+  max-width: 70vw;     /* 모바일 안전 */
 }
 
 #toolContent button {
   width: 100%;
-  min-height: 36px;
+  min-height: 32px;
   margin: 2px 0;
+  font-size: 13px;
 }
-
+  
 #toolContent label {
   font-size: 12px;
   display: block;
@@ -122,11 +126,11 @@ h1 { text-align:center; }
 
 /* ===== 모바일 ===== */
 @media (max-width: 768px){
-  #panel {
+  #toolContent {
     width: 105px;
-    padding: 6px;
   }
 }
+  
 </style>
 </head>
 
