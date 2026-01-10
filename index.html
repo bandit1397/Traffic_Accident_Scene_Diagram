@@ -494,13 +494,15 @@ leafletMap.on('click', e => {
     }
   ).addTo(leafletMap);
 
+  // 🔥 직선 클릭 시 삭제
+  line.on('click', ev => {
+    L.DomEvent.stopPropagation(ev); // 지도 클릭 방지
+    deletePointLine(line);
+  });
+
   pointLines.push(line);
-
-  // 🔹 화살표 생성 안 함
-
   firstPoint = null;
 });
-
 
 /* ===== 자유곡선 삭제 기능 ===== */
 mapDiv.addEventListener('click', e => {
