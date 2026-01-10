@@ -161,6 +161,7 @@ button { padding:5px 10px; }
     <button onclick="addArrow()">화살표</button>
     <button onclick="addText()">문자</button>
     <button onclick="toggleMap()">지도 잠금 / 해제</button>
+    <button onclick="screenLocked ? unlockScreenScroll() : lockScreenScroll()">화면 스크롤 잠금</button>
     <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
     <input type="color" id="lineColor" value="#ff0000"title="선 색상">
     <input type="range" id="lineWidth" min="1" max="15" value="3" title="선 굵기">
@@ -481,6 +482,26 @@ async function savePDF(){
   panel.addEventListener('pointerup', ()=>dragging=false);
   panel.addEventListener('pointercancel', ()=>dragging=false);
 })();
+
+/* ===== 화면 스크롤 잠금 / 해제 ===== */
+let screenLocked = false;
+let savedScrollY = 0;
+
+function lockScreenScroll(){
+  if(screenLocked) return;
+  savedScrollY = window.scrollY;
+  document.body.classList.add('scroll-lock');
+  document.body.style.top = `-${savedScrollY}px`;
+  screenLocked = true;
+}
+
+function unlockScreenScroll(){
+  if(!screenLocked) return;
+  document.body.classList.remove('scroll-lock');
+  document.body.style.top = '';
+  window.scrollTo(0, savedScrollY);
+  screenLocked = false;
+}
 </script>
 </body>
 </html>
