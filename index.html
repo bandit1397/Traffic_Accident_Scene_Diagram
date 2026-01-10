@@ -69,22 +69,18 @@ button { padding:5px 10px; }
 }
 
 /* ===== 속성 패널 ===== */
-/* ===== 속성 패널 (지도 내부 기준) ===== */
 #panel {
   position: absolute;
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-
   background: #fff;
   border: 1px solid #333;
   padding: 10px;
   width: 200px;
-
   display: block;
   visibility: hidden;
   opacity: 0;
-
   z-index: 3000;
 }
 
@@ -113,69 +109,41 @@ button { padding:5px 10px; }
     font-size: 14px;
   }
 
-  /* ✅ 속성 패널 모바일 슬림화 */
   #panel {
-    position: absolute;        /* 기존 유지 */
-    right: auto;
-    bottom: auto;
-
-    width: 105px;              /* ⭐ 패널 폭 조절 */
-    padding: 6px;              /* ⭐ 내부 여백 축소 */
-
+    position: absolute;
+    width: 105px;
+    padding: 6px;
     border-radius: 6px;
     box-shadow: 0 2px 6px rgba(0,0,0,.25);
   }
 
-  #panel label {
-    font-size: 12px;           /* ⭐ 글자 작게 */
-  }
-
-  #panel input {
-    width: 42px;               /* ⭐ 핵심: 패널 안에서 안 밀리게 */
-    font-size: 12px;
-  }
+  #panel label { font-size:12px; }
+  #panel input { width:42px; font-size:12px; }
 }
-
 </style>
 </head>
-
 <body>
 
 <div id="container">
   <h1>교통사고 현장약도</h1>
 
   <div id="map">
-    <!-- Leaflet map 또는 배경 지도 -->
-
     <!-- 속성 패널 (지도 내부 포함) -->
     <div id="panel">
       <strong>선택 객체</strong>
-      <label>
-        각도
-        <input id="angle" type="range"
-               min="-180" max="180" step="1" value="0">
+      <label>각도
+        <input id="angle" type="range" min="-180" max="180" step="1" value="0">
       </label>
-
-      <label>
-        크기
-        <input id="size" type="range"
-               min="10" max="150" step="1" value="32">
+      <label>크기
+        <input id="size" type="range" min="10" max="150" step="1" value="32">
       </label>
-
-      <label>
-        글자크기
-        <input id="fontSize" type="range"
-               min="8" max="48" step="1" value="14">
+      <label>글자크기
+        <input id="fontSize" type="range" min="8" max="48" step="1" value="14">
       </label>
-
-      <label>
-        폭
-        <input id="width" type="range"
-               min="10" max="300" step="2" value="60">
+      <label>폭
+        <input id="width" type="range" min="10" max="300" step="2" value="60">
       </label>
-
     </div>
-
   </div>
 
   <div id="controls">
@@ -191,8 +159,6 @@ button { padding:5px 10px; }
   </div>
 </div>
 
-
-<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -204,48 +170,12 @@ const leafletMap = L.map('map',{
   wheelPxPerZoomLevel:40
 }).setView([37.5665,126.978],18);
 
-/* ===== 지도 잠금/해제 ===== */
-let mapLocked=false;
-function lockMap(){ ... }
-function unlockMap(){ ... }
-function toggleMap(){ ... }
-
-/* ===== 아이콘/텍스트/화살표 함수 ===== */
-function drag(el){ ... }
-function enableDelete(el){ ... }
-function addIcon(type){ ... }
-function addArrow(){ ... }
-function addText(){ ... }
-
-/* ===== 자유곡선 그리기 코드 ===== */
-let drawMode = false;  // 자유곡선 모드 ON/OFF
-let drawing = false;
-let currentLine = null;
-
-mapDiv.addEventListener('pointerdown', e => {
-  if (!drawMode) return;          // drawMode 체크
-  drawing = true;
-  const point = leafletMap.mouseEventToLatLng(e);
-  currentLine = L.polyline([point], {color: 'red', weight: 3}).addTo(leafletMap);
-});
-
-mapDiv.addEventListener('pointermove', e => {
-  if (!drawing || !currentLine) return;
-  const point = leafletMap.mouseEventToLatLng(e);
-  currentLine.addLatLng(point);
-});
-
-mapDiv.addEventListener('pointerup', e => {
-  drawing = false;
-  currentLine = null;
-});
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   maxZoom:19,
   attribution:'© OpenStreetMap'
 }).addTo(leafletMap);
 
-/* ===== 지도 잠금 ===== */
+/* ===== 지도 잠금/해제 ===== */
 let mapLocked=false;
 function lockMap(){
   leafletMap.dragging.disable();
@@ -278,110 +208,83 @@ const icons={
   arrow:'icons/arrow.png'
 };
 
-const mapDiv=leafletMap.getContainer();
+const mapDiv = leafletMap.getContainer();
 const panel=document.getElementById('panel');
 let selected=null;
-let panelInitialized = false;
+let panelInitialized=false;
 
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
-  return {x:r.width/2-16,y:r.height/2-16};
+  return {x:r.width/2-16, y:r.height/2-16};
 }
 
 function select(el){
-  if (selected === el) return;
+  if(selected===el) return;
+  selected=el;
+  panel.style.display='block';
+  panel.style.visibility='visible';
+  panel.style.opacity='1';
 
-  selected = el;
-
-  // 🔑 패널 보이게 (항상)
-  panel.style.display = 'block';    
-  panel.style.visibility = 'visible';
-  panel.style.opacity = '1';
-
-   /* ✅ 슬라이더 값 동기화 */
   angle.value = el.style.transform
-    ? (el.style.transform.match(/-?\d+/)?.[0] || 0)
+    ? (el.style.transform.match(/-?\d+/)?.[0]||0)
     : 0;
-
-  if(el.tagName === 'IMG'){
-    size.value = parseFloat(el.style.width) || 32;
+  if(el.tagName==='IMG') size.value = parseFloat(el.style.width)||32;
+  if(el.tagName==='INPUT'){
+    fontSize.value = parseFloat(el.style.fontSize)||14;
+    width.value    = parseFloat(el.style.width)||60;
   }
 
-  if(el.tagName === 'INPUT'){
-    fontSize.value = parseFloat(el.style.fontSize) || 14;
-    width.value    = parseFloat(el.style.width)    || 60;
-  }
+  if(panelInitialized) return;
+  panelInitialized=true;
 
-  // 🔑 이미 패널이 한 번 위치 잡혔으면 다시 계산 ❌
-  if (panelInitialized) return;
-
-  panelInitialized = true;
-
-  if (window.innerWidth <= 768) {
+  if(window.innerWidth<=768){
     const mapRect = mapDiv.getBoundingClientRect();
-    const elRect  = el.getBoundingClientRect();
+    const elRect = el.getBoundingClientRect();
     const pw = panel.offsetWidth;
     const ph = panel.offsetHeight;
-    const m  = 8;
-
-    let left = elRect.right - mapRect.left + m;
-    let top  = elRect.top   - mapRect.top;
-
-    if (left + pw > mapRect.width) {
-      left = elRect.left - mapRect.left - pw - m;
-    }
-
-    if (top < 0) top = 0;
-    if (top + ph > mapRect.height) {
-      top = mapRect.height - ph;
-    }
-
-    panel.style.left   = left + 'px';
-    panel.style.top    = top  + 'px';
-    panel.style.right  = 'auto';
-    panel.style.bottom = 'auto';
-    
+    const m = 8;
+    let left = elRect.right-mapRect.left+m;
+    let top = elRect.top-mapRect.top;
+    if(left+pw>mapRect.width) left = elRect.left-mapRect.left-pw-m;
+    if(top<0) top=0;
+    if(top+ph>mapRect.height) top=mapRect.height-ph;
+    panel.style.left=left+'px';
+    panel.style.top=top+'px';
+    panel.style.right='auto';
+    panel.style.bottom='auto';
   } else {
-    panel.style.position = 'absolute';
-    panel.style.left = '10px';
-    panel.style.top = '50%';
-    panel.style.transform = 'translateY(-50%)';
+    panel.style.position='absolute';
+    panel.style.left='10px';
+    panel.style.top='50%';
+    panel.style.transform='translateY(-50%)';
   }
-
 }
 
 function drag(el){
   let sx,sy,ox,oy,dragging=false;
   el.style.touchAction='none';
 
-  el.addEventListener('pointerdown', e => {
+  el.addEventListener('pointerdown', e=>{
     select(el);
-
-    const isInput = el.tagName === 'INPUT';
-
-    sx = e.clientX;
-    sy = e.clientY;
-    ox = parseFloat(el.style.left);
-    oy = parseFloat(el.style.top);
-    dragging = true;
-
+    const isInput = el.tagName==='INPUT';
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
+    dragging=true;
     el.setPointerCapture(e.pointerId);
-
-    if (!isInput) e.preventDefault();
+    if(!isInput) e.preventDefault();
   });
 
-
-  el.addEventListener('pointermove',e=>{
+  el.addEventListener('pointermove', e=>{
     if(!dragging) return;
     el.style.left=(ox+e.clientX-sx)+'px';
     el.style.top =(oy+e.clientY-sy)+'px';
   });
 
-  el.addEventListener('pointerup',()=>dragging=false);
+  el.addEventListener('pointerup', ()=>dragging=false);
 }
 
 function enableDelete(el){
-  el.addEventListener('contextmenu',e=>{
+  el.addEventListener('contextmenu', e=>{
     e.preventDefault();
     if(confirm('이 객체를 삭제하시겠습니까?')) el.remove();
   });
@@ -394,7 +297,7 @@ function addIcon(type){
   img.src=icons[type];
   img.className='icon';
   img.style.left=p.x+'px';
-  img.style.top =p.y+'px';
+  img.style.top=p.y+'px';
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img); enableDelete(img);
@@ -406,81 +309,77 @@ function addArrow(){
   a.src=icons.arrow;
   a.className='arrow';
   a.style.left=p.x+'px';
-  a.style.top =p.y+'px';
+  a.style.top=p.y+'px';
   a.style.width='32px';
   mapDiv.appendChild(a);
   drag(a); enableDelete(a);
 }
 
 function addText(){
-  const p = centerPos();
-  const t = document.createElement('input');
-  t.className = 'textbox';
-  t.placeholder = '텍스트';
-  t.style.left = p.x + 'px';
-  t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
-  t.style.height = 'auto';
-  t.style.minHeight = '20px';
-  t.style.padding = '0 4px';
-  t.style.textAlign = 'center';
-  t.style.width = '14px'; // 초기 폭
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top=p.y+'px';
+  t.style.fontSize='14px';
+  t.style.height='auto';
+  t.style.minHeight='20px';
+  t.style.padding='0 4px';
+  t.style.textAlign='center';
+  t.style.width='14px';
   mapDiv.appendChild(t);
 
-  drag(t);
-  enableDelete(t);
+  drag(t); enableDelete(t);
 
-  // -----------------------------
-  // 폭 계산 함수
-  // -----------------------------
-  const adjustSize = () => {
-    const fs = parseFloat(window.getComputedStyle(t).fontSize) || 14;
-    const text = t.value || t.placeholder || '한';
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.font = `${fs}px sans-serif`;
-    const textWidth = ctx.measureText(text).width;
-    t.style.width = (textWidth + 8) + 'px'; // 좌우 4px 여백 포함
-    t.style.height = (fs + 4) + 'px'; // 높이: 글자 크기 + 4px
+  const adjustSize=()=>{
+    const fs=parseFloat(window.getComputedStyle(t).fontSize)||14;
+    const text=t.value||t.placeholder||'한';
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    ctx.font=`${fs}px sans-serif`;
+    const textWidth=ctx.measureText(text).width;
+    t.style.width=(textWidth+8)+'px';
+    t.style.height=(fs+4)+'px';
   };
 
-  // -----------------------------
-  // 이벤트
-  // -----------------------------
   t.addEventListener('input', adjustSize);
   t.addEventListener('change', adjustSize);
-
-  // fontSize 패널 입력에서 즉시 적용
-  const fontInput = document.getElementById('fontSize');
-  fontInput.addEventListener('input', () => {
-    if(selected === t){
-      t.style.fontSize = fontInput.value + 'px';
-      adjustSize(); // 바로 폭 조절
-    }
-  });
-
-  // 클릭/터치 시에도 폭 재조정
   t.addEventListener('pointerdown', adjustSize);
 
-  adjustSize(); // 초기 적용
+  const fontInput=document.getElementById('fontSize');
+  fontInput.addEventListener('input', ()=>{
+    if(selected===t){ t.style.fontSize=fontInput.value+'px'; adjustSize();}
+  });
+
+  adjustSize();
 }
 
 /* ===== 패널 입력 ===== */
-angle.oninput=e=>{
-  if(selected) selected.style.transform=`rotate(${e.target.value}deg)`;
-};
-size.oninput=e=>{
-  if(selected&&selected.tagName==='IMG')
-    selected.style.width=e.target.value+'px';
-};
-fontSize.oninput=e=>{
-  if(selected&&selected.tagName==='INPUT')
-    selected.style.fontSize=e.target.value+'px';
-};
-width.oninput=e=>{
-  if(selected&&selected.tagName==='INPUT')
-    selected.style.width=e.target.value+'px';
-};
+angle.oninput=e=>{ if(selected) selected.style.transform=`rotate(${e.target.value}deg)`; };
+size.oninput=e=>{ if(selected&&selected.tagName==='IMG') selected.style.width=e.target.value+'px'; };
+fontSize.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.fontSize=e.target.value+'px'; };
+width.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.width=e.target.value+'px'; };
+
+/* ===== 자유곡선 그리기 ===== */
+let drawMode=false;
+let drawing=false;
+let currentLine=null;
+
+mapDiv.addEventListener('pointerdown', e=>{
+  if(!drawMode) return;
+  drawing=true;
+  const point = leafletMap.mouseEventToLatLng(e);
+  currentLine = L.polyline([point], {color:'red', weight:3}).addTo(leafletMap);
+});
+mapDiv.addEventListener('pointermove', e=>{
+  if(!drawing||!currentLine) return;
+  const point = leafletMap.mouseEventToLatLng(e);
+  currentLine.addLatLng(point);
+});
+mapDiv.addEventListener('pointerup', e=>{
+  drawing=false; currentLine=null;
+});
 
 /* ===== PDF ===== */
 async function savePDF(){
@@ -494,49 +393,33 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
   unlockMap();
 }
+
+/* ===== 속성 패널 드래그 ===== */
 (function(){
-  const panel = document.getElementById('panel');
-  const mapDiv = document.getElementById('map');
-
+  const panel=document.getElementById('panel');
   let sx=0, sy=0, ox=0, oy=0, dragging=false;
-
-  panel.style.touchAction = 'none';
-
-  panel.addEventListener('pointerdown', e => {
-    if (e.target.tagName === 'INPUT') return;
-
-    dragging = true;
-    sx = e.clientX;
-    sy = e.clientY;
-
-    const mapRect   = mapDiv.getBoundingClientRect();
-    const panelRect = panel.getBoundingClientRect();
-
-    /* ✅ 핵심 ① transform 제거 */
-    panel.style.transform = 'none';
-
-    /* ✅ 핵심 ② 현재 보이는 위치를 left/top으로 고정 */
-    panel.style.left = (panelRect.left - mapRect.left) + 'px';
-    panel.style.top  = (panelRect.top  - mapRect.top)  + 'px';
-
-    ox = parseFloat(panel.style.left);
-    oy = parseFloat(panel.style.top);
-
+  panel.style.touchAction='none';
+  panel.addEventListener('pointerdown', e=>{
+    if(e.target.tagName==='INPUT') return;
+    dragging=true;
+    sx=e.clientX; sy=e.clientY;
+    const mapRect=mapDiv.getBoundingClientRect();
+    const panelRect=panel.getBoundingClientRect();
+    panel.style.transform='none';
+    panel.style.left=(panelRect.left-mapRect.left)+'px';
+    panel.style.top=(panelRect.top-mapRect.top)+'px';
+    ox=parseFloat(panel.style.left); oy=parseFloat(panel.style.top);
     panel.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
-
-  panel.addEventListener('pointermove', e => {
-    if (!dragging) return;
-
-    panel.style.left = (ox + e.clientX - sx) + 'px';
-    panel.style.top  = (oy + e.clientY - sy) + 'px';
+  panel.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    panel.style.left=(ox+e.clientX-sx)+'px';
+    panel.style.top=(oy+e.clientY-sy)+'px';
   });
-
   panel.addEventListener('pointerup', ()=>dragging=false);
   panel.addEventListener('pointercancel', ()=>dragging=false);
 })();
-
 </script>
 </body>
 </html>
