@@ -155,7 +155,10 @@ button { padding:5px 10px; }
     <button onclick="addText()">문자</button>
     <button onclick="toggleMap()">지도 잠금 / 해제</button>
     <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
+    <input type="color" id="lineColor" value="#ff0000"title="선 색상">
+    <input type="range" id="lineWidth" min="1" max="15" value="3" title="선 굵기">
     <button onclick="savePDF()">PDF</button>
+
   </div>
 </div>
 
@@ -362,34 +365,51 @@ fontSize.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.fo
 width.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.width=e.target.value+'px'; };
 
 /* ===== 자유곡선 그리기 코드 ===== */
-let drawMode = false;  // 자유곡선 모드 ON/OFF
-let drawing = false;
-let currentLine = null;
+let currentLineWidth = 3;          // 선 굵기
+let currentLineColor = '#ff0000';  // 선 색상
 
+let drawMode = false;              // 자유곡선 모드 ON/OFF
+let drawing = false;               // 현재 그리고 있는 중인지
+let currentLine = null;            // 현재 그리는 선
+let freeLines = [];                // 그려진 모든 자유곡선
+
+/* ===== 자유곡선 UI 연결 ===== */
+document.getElementById('lineWidth').addEventListener('input', e => {
+  currentLineWidth = Number(e.target.value);
+});
+
+document.getElementById('lineColor').addEventListener('input', e => {
+  currentLineColor = e.target.value;
+});
+
+/* ===== 자유곡선 그리기 코드 ===== */
 mapDiv.addEventListener('pointerdown', e => {
-  if (!drawMode) return;          // drawMode 체크
+  if (!drawMode) return;
   drawing = true;
   const point = leafletMap.mouseEventToLatLng(e);
-  currentLine = L.polyline([point], {color: 'red', weight: 3}).addTo(leafletMap);
+  currentLine = L.polyline(
+    [point],
+    {
+      color: currentLineColor,
+      weight: currentLineWidth,
+      lineCap: 'round',
+      lineJoin: 'round'
+    }
+  ).addTo(leafletMap);
 });
 
 mapDiv.addEventListener('pointermove', e => {
   if (!drawing || !currentLine) return;
-  const point = leafletMap.mouseEventToLatLng(e);
-  currentLine.addLatLng(point);
+  currentLine.addLatLng(leafletMap.mouseEventToLatLng(e));
 });
 
-mapDiv.addEventListener('pointerup', e => {
-  if(drawing && currentLine){
-    freeLines.push(currentLine);  // 여기서 저장
-  }
+mapDiv.addEventListener('pointerup', () => {
+  if (drawing && currentLine) freeLines.push(currentLine);
   drawing = false;
   currentLine = null;
 });
 
 /* ===== 자유곡선 삭제 기능 ===== */
-let freeLines = []; // 그린 선 저장
-
 mapDiv.addEventListener('click', e => {
   if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
 
