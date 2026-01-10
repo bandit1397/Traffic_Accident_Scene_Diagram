@@ -476,6 +476,36 @@ mapDiv.addEventListener('pointerup', () => {
   currentLine = null;
 });
 
+/* ===== 점 → 점 직선 생성 (여기에!) ===== */
+leafletMap.on('click', e => {
+  if (!linePointMode) return;
+
+  if (!firstPoint) {
+    // ① 첫 번째 점
+    firstPoint = e.latlng;
+    return;
+  }
+
+  // ② 두 번째 점 → 직선 생성
+  const secondPoint = e.latlng;
+
+  const line = L.polyline(
+    [firstPoint, secondPoint],
+    {
+      color: currentLineColor,
+      weight: currentLineWidth
+    }
+  ).addTo(leafletMap);
+
+  pointLines.push(line);
+
+  // 🔺 화살표 생성
+  createArrow(firstPoint, secondPoint);
+
+  // 초기화
+  firstPoint = null;
+});
+
 /* ===== 자유곡선 삭제 기능 ===== */
 mapDiv.addEventListener('click', e => {
   if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
@@ -500,6 +530,30 @@ mapDiv.addEventListener('click', e => {
   }
 });
 
+/* ===== 화살표 생성 ===== */
+function createArrow(start, end){
+  const angle =
+    Math.atan2(
+      end.lat - start.lat,
+      end.lng - start.lng
+    ) * 180 / Math.PI;
+
+  const arrowIcon = L.divIcon({
+    className: '',
+    html: `
+      <img src="icons/arrow.png"
+           style="
+             width:24px;
+             transform: rotate(${angle}deg);
+           ">
+    `,
+    iconSize: [24,24],
+    iconAnchor: [12,12]
+  });
+
+  const marker = L.marker(end, { icon: arrowIcon }).addTo(leafletMap);
+  arrowMarkers.push(marker);
+}
 
 
 /* ===== PDF ===== */
