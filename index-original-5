@@ -174,6 +174,7 @@ h1 { text-align:center; }
 
     <button onclick="toggleMap()">지도 잠금/해제</button>
     <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
+    <button onclick="togglePointLine()">직선(점→점)</button>
 
     <label>
       선색
@@ -250,6 +251,17 @@ function unlockMap(){
   mapLocked=false;
 }
 function toggleMap(){ mapLocked ? unlockMap() : lockMap(); }
+
+/* ===== 점→점 직선 모드 토글 ===== */
+function togglePointLine(){
+  linePointMode = !linePointMode;
+  drawMode = false;        // 자유곡선 비활성화
+  mapLocked = linePointMode;
+  firstPoint = null;
+
+  alert(linePointMode ? '직선 모드 ON (두 점을 클릭)' : '직선 모드 OFF');
+}
+
 
 /* ===== 공통 ===== */
 const icons={
@@ -422,6 +434,17 @@ let drawing = false;               // 현재 그리고 있는 중인지
 let currentLine = null;            // 현재 그리는 선
 let freeLines = [];                // 그려진 모든 자유곡선
 
+/* ===== 점 → 점 직선 모드 ===== */
+let linePointMode = false;     // 점→점 직선 모드
+let firstPoint = null;         // 첫 번째 클릭 좌표
+let pointLines = [];           // 생성된 직선들
+
+/* ===== 점 → 점 직선 삭제 함수 ===== */
+function deletePointLine(line){
+  leafletMap.removeLayer(line);
+  pointLines = pointLines.filter(l => l !== line);
+}
+
 /* ===== 자유곡선 UI 연결 ===== */
 document.getElementById('lineWidth').addEventListener('input', e => {
   currentLineWidth = Number(e.target.value);
@@ -458,6 +481,35 @@ mapDiv.addEventListener('pointerup', () => {
   currentLine = null;
 });
 
+/* ===== 점 → 점 직선 생성 ===== */
+leafletMap.on('click', e => {
+  if (!linePointMode) return;
+
+  if (!firstPoint) {
+    firstPoint = e.latlng;
+    return;
+  }
+
+  const secondPoint = e.latlng;
+
+  const line = L.polyline(
+    [firstPoint, secondPoint],
+    {
+      color: currentLineColor,
+      weight: currentLineWidth
+    }
+  ).addTo(leafletMap);
+
+  // 🔥 직선 클릭 시 삭제
+  line.on('click', ev => {
+    L.DomEvent.stopPropagation(ev); // 지도 클릭 방지
+    deletePointLine(line);
+  });
+
+  pointLines.push(line);
+  firstPoint = null;
+});
+
 /* ===== 자유곡선 삭제 기능 ===== */
 mapDiv.addEventListener('click', e => {
   if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
@@ -481,8 +533,6 @@ mapDiv.addEventListener('click', e => {
     }
   }
 });
-
-
 
 /* ===== PDF ===== */
 async function savePDF(){
