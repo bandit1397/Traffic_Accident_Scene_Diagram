@@ -361,25 +361,57 @@ size.oninput=e=>{ if(selected&&selected.tagName==='IMG') selected.style.width=e.
 fontSize.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.fontSize=e.target.value+'px'; };
 width.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.width=e.target.value+'px'; };
 
-/* ===== 자유곡선 그리기 ===== */
-let drawMode=false;
-let drawing=false;
-let currentLine=null;
+/* ===== 자유곡선 그리기 코드 ===== */
+let drawMode = false;  // 자유곡선 모드 ON/OFF
+let drawing = false;
+let currentLine = null;
 
-mapDiv.addEventListener('pointerdown', e=>{
-  if(!drawMode) return;
-  drawing=true;
+mapDiv.addEventListener('pointerdown', e => {
+  if (!drawMode) return;          // drawMode 체크
+  drawing = true;
   const point = leafletMap.mouseEventToLatLng(e);
-  currentLine = L.polyline([point], {color:'red', weight:3}).addTo(leafletMap);
+  currentLine = L.polyline([point], {color: 'red', weight: 3}).addTo(leafletMap);
 });
-mapDiv.addEventListener('pointermove', e=>{
-  if(!drawing||!currentLine) return;
+
+mapDiv.addEventListener('pointermove', e => {
+  if (!drawing || !currentLine) return;
   const point = leafletMap.mouseEventToLatLng(e);
   currentLine.addLatLng(point);
 });
-mapDiv.addEventListener('pointerup', e=>{
-  drawing=false; currentLine=null;
+
+mapDiv.addEventListener('pointerup', e => {
+  if(drawing && currentLine){
+    freeLines.push(currentLine);  // 여기서 저장
+  }
+  drawing = false;
+  currentLine = null;
 });
+
+/* ===== 자유곡선 삭제 기능 ===== */
+let freeLines = []; // 그린 선 저장
+
+// 선택 후 클릭해서 지우기
+mapDiv.addEventListener('click', e => {
+  if(!drawMode) return;
+
+  // 지도 클릭 위치
+  const latlng = leafletMap.mouseEventToLatLng(e);
+
+  // 배열에 있는 선 중 지도 클릭 위치와 가까운 선 찾기
+  for(let i=0;i<freeLines.length;i++){
+    const line = freeLines[i];
+    const latlngs = line.getLatLngs();
+    for(const pt of latlngs){
+      if(leafletMap.latLngToContainerPoint(pt).distanceTo(leafletMap.latLngToContainerPoint(latlng)) < 5){
+        // 삭제
+        leafletMap.removeLayer(line);
+        freeLines.splice(i,1);
+        return;
+      }
+    }
+  }
+});
+
 
 /* ===== PDF ===== */
 async function savePDF(){
