@@ -202,6 +202,27 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
   attribution:'© OpenStreetMap'
 }).addTo(leafletMap);
 
+/* ===== 좌측 상단 도구 패널을 Leaflet 컨트롤로 고정 ===== */
+const ToolControl = L.Control.extend({
+  options: {
+    position: 'topleft'   // 줌 +/- 위치
+  },
+
+  onAdd: function () {
+    const div = document.getElementById('toolbox');
+
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.disableScrollPropagation(div);
+
+    div.classList.add('toolbox'); // ← 이 줄 중요
+
+    return div;
+  }
+});
+
+leafletMap.addControl(new ToolControl());
+
+
 /* ===== 지도 잠금/해제 ===== */
 let mapLocked=false;
 function lockMap(){
