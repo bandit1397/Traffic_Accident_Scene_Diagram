@@ -194,6 +194,16 @@ h1 { text-align:center; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
+function lockScroll(){
+  document.body.style.overflow = 'hidden';
+  document.body.style.touchAction = 'none';
+}
+
+function unlockScroll(){
+  document.body.style.overflow = '';
+  document.body.style.touchAction = '';
+}
+ 
 /* ===== 지도 ===== */
 const leafletMap = L.map('map',{
   maxZoom:19,
