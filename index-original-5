@@ -88,12 +88,15 @@ button { padding:5px 10px; }
   z-index: 3000;
 }
 
-
-
 #panel label {
   font-size:12px;
   display:block;
   margin-top:6px;
+}
+
+#panel input[type="range"]{
+  width: 100%;
+  margin-top: 4px;
 }
 
 /* ===== 모바일 ===== */
@@ -147,10 +150,30 @@ button { padding:5px 10px; }
     <!-- 속성 패널 (지도 내부 포함) -->
     <div id="panel">
       <strong>선택 객체</strong>
-      <label>각도 <input id="angle" type="number"></label>
-      <label>크기 <input id="size" type="number"></label>
-      <label>글자크기 <input id="fontSize" type="number"></label>
-      <label>폭 <input id="width" type="number"></label>
+      <label>
+        각도
+        <input id="angle" type="range"
+               min="-180" max="180" step="1" value="0">
+      </label>
+
+      <label>
+        크기
+        <input id="size" type="range"
+               min="10" max="150" step="1" value="32">
+      </label>
+
+      <label>
+        글자크기
+        <input id="fontSize" type="range"
+               min="8" max="48" step="1" value="14">
+      </label>
+
+      <label>
+        폭
+        <input id="width" type="range"
+               min="10" max="300" step="2" value="60">
+      </label>
+
     </div>
 
   </div>
@@ -237,6 +260,20 @@ function select(el){
   panel.style.display = 'block';    
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
+
+   /* ✅ 슬라이더 값 동기화 */
+  angle.value = el.style.transform
+    ? (el.style.transform.match(/-?\d+/)?.[0] || 0)
+    : 0;
+
+  if(el.tagName === 'IMG'){
+    size.value = parseFloat(el.style.width) || 32;
+  }
+
+  if(el.tagName === 'INPUT'){
+    fontSize.value = parseFloat(el.style.fontSize) || 14;
+    width.value    = parseFloat(el.style.width)    || 60;
+  }
 
   // 🔑 이미 패널이 한 번 위치 잡혔으면 다시 계산 ❌
   if (panelInitialized) return;
