@@ -471,6 +471,15 @@ async function savePDF(){
   unlockMap();
 }
 
+/* 3️⃣ ☰ 도구 토글 코드 */
+const toggleBtn = document.getElementById('toolToggle');
+const toolContent = document.getElementById('toolContent');
+toggleBtn.addEventListener('click', () => {
+  toolContent.style.display =
+    toolContent.style.display === 'block' ? 'none' : 'block';
+});
+
+
 /* ===== 속성 패널 드래그 ===== */
 (function(){
   const panel=document.getElementById('panel');
