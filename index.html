@@ -13,10 +13,11 @@
 body { margin:0; background:#eee; font-family:sans-serif; }
 
 /* ===== 화면 스크롤 잠금 ===== */
+html.scroll-lock,
 body.scroll-lock {
-  position: fixed;
-  width: 100%;
   overflow: hidden;
+  height: 100%;
+  overscroll-behavior: none;
 }
 
 #container {
