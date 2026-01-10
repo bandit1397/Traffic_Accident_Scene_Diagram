@@ -410,8 +410,6 @@ mapDiv.addEventListener('pointerup', () => {
 });
 
 /* ===== 자유곡선 삭제 기능 ===== */
-let freeLines = []; // 그린 선 저장
-
 mapDiv.addEventListener('click', e => {
   if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
 
