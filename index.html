@@ -76,11 +76,12 @@ h1 { text-align:center; }
 
 /* ===== 좌측 고정 도구 패널 ===== */
 #toolbox {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
+  position: static;   /* 중요 */
   z-index: 5000;
+}
+/* Leaflet 컨트롤 스타일 */
+.leaflet-control.toolbox {
+  background: transparent;
 }
 
 #toolToggle {
