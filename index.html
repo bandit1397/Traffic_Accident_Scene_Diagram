@@ -439,6 +439,12 @@ let linePointMode = false;     // 점→점 직선 모드
 let firstPoint = null;         // 첫 번째 클릭 좌표
 let pointLines = [];           // 생성된 직선들
 
+/* ===== 점 → 점 직선 삭제 함수 ===== */
+function deletePointLine(line){
+  leafletMap.removeLayer(line);
+  pointLines = pointLines.filter(l => l !== line);
+}
+
 /* ===== 자유곡선 UI 연결 ===== */
 document.getElementById('lineWidth').addEventListener('input', e => {
   currentLineWidth = Number(e.target.value);
