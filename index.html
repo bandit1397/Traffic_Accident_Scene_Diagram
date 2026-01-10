@@ -31,31 +31,12 @@ h1 { text-align:center; }
   position:relative;
 }
 
-/* ===== 컨트롤 ===== */
-#controls {
-  display:flex;
-  justify-content:center;
-  gap:6px;
-  margin-top:8px;
-  overflow-x:auto;
-  padding:2px 0;
-}
-
-#controls::-webkit-scrollbar { height:4px; }
-#controls::-webkit-scrollbar-thumb {
-  background:#888;
-  border-radius:2px;
-}
-
-button { padding:5px 10px; }
-
 /* ===== 객체 ===== */
 .icon, .arrow {
   position:absolute;
   cursor:move;
   z-index:1000;
 }
-
 .arrow { transform-origin:center; }
 
 .textbox {
@@ -78,7 +59,6 @@ button { padding:5px 10px; }
   border: 1px solid #333;
   padding: 10px;
   width: 200px;
-  display: block;
   visibility: hidden;
   opacity: 0;
   z-index: 3000;
@@ -91,37 +71,64 @@ button { padding:5px 10px; }
 }
 
 #panel input[type="range"]{
+  width:100%;
+}
+
+/* ===== 좌측 고정 도구 패널 ===== */
+#toolbox {
+  position: fixed;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5000;
+}
+
+#toolToggle {
+  width: 44px;
+  height: 44px;
+  font-size: 22px;
+  border-radius: 8px;
+  background: #333;
+  color: #fff;
+  border: none;
+}
+
+#toolContent {
+  display: none;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 6px;
+  box-shadow: 0 4px 10px rgba(0,0,0,.3);
+}
+
+#toolContent button {
   width: 100%;
+  min-height: 36px;
+  margin: 2px 0;
+}
+
+#toolContent label {
+  font-size: 12px;
+  display: block;
   margin-top: 4px;
+}
+
+#toolContent hr {
+  margin: 6px 0;
 }
 
 /* ===== 모바일 ===== */
 @media (max-width: 768px){
-  #controls {
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-
-  #controls button {
-    flex: 1 1 30%;
-    min-width: 80px;
-    min-height: 40px;
-    font-size: 14px;
-  }
-
   #panel {
-    position: absolute;
     width: 105px;
     padding: 6px;
-    border-radius: 6px;
-    box-shadow: 0 2px 6px rgba(0,0,0,.25);
   }
-
-  #panel label { font-size:12px; }
-  #panel input { width:42px; font-size:12px; }
 }
 </style>
 </head>
+
 <body>
 
 <div id="container">
@@ -146,21 +153,37 @@ button { padding:5px 10px; }
     </div>
   </div>
 
-  <div id="controls">
+  <!-- ===== 좌측 도구 패널 ===== -->
+<div id="toolbox">
+  <button id="toolToggle">☰</button>
+
+  <div id="toolContent">
     <button onclick="addIcon('person')">사람</button>
     <button onclick="addIcon('car')">자동차</button>
     <button onclick="addIcon('bike')">자전거</button>
     <button onclick="addIcon('moto')">오토바이</button>
     <button onclick="addArrow()">화살표</button>
     <button onclick="addText()">문자</button>
-    <button onclick="toggleMap()">지도 잠금 / 해제</button>
-    <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
-    <input type="color" id="lineColor" value="#ff0000"title="선 색상">
-    <input type="range" id="lineWidth" min="1" max="15" value="3" title="선 굵기">
-    <button onclick="savePDF()">PDF</button>
 
+    <hr>
+
+    <button onclick="toggleMap()">지도 잠금/해제</button>
+    <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
+
+    <label>
+      선색
+      <input type="color" id="lineColor" value="#ff0000">
+    </label>
+
+    <label>
+      굵기
+      <input type="range" id="lineWidth" min="1" max="15" value="3">
+    </label>
+
+    <button onclick="savePDF()">PDF</button>
   </div>
 </div>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
