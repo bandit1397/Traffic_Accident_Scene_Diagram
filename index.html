@@ -194,16 +194,6 @@ h1 { text-align:center; }
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-function lockScroll(){
-  document.body.style.overflow = 'hidden';
-  document.body.style.touchAction = 'none';
-}
-
-function unlockScroll(){
-  document.body.style.overflow = '';
-  document.body.style.touchAction = '';
-}
- 
 /* ===== 지도 ===== */
 const leafletMap = L.map('map',{
   maxZoom:19,
@@ -323,41 +313,27 @@ function select(el){
 }
 
 function drag(el){
-  let sx, sy, ox, oy, dragging = false;
-  el.style.touchAction = 'none';
+  let sx,sy,ox,oy,dragging=false;
+  el.style.touchAction='none';
 
-  el.addEventListener('pointerdown', e => {
+  el.addEventListener('pointerdown', e=>{
     select(el);
-
-    sx = e.clientX;
-    sy = e.clientY;
-    ox = parseFloat(el.style.left);
-    oy = parseFloat(el.style.top);
-
-    dragging = true;
+    const isInput = el.tagName==='INPUT';
+    sx=e.clientX; sy=e.clientY;
+    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
+    dragging=true;
     el.setPointerCapture(e.pointerId);
-
-    lockScroll();                 // 🔒 스크롤 잠금
-    e.preventDefault();
+    if(!isInput) e.preventDefault();
   });
 
-  el.addEventListener('pointermove', e => {
+  el.addEventListener('pointermove', e=>{
     if(!dragging) return;
-
-    el.style.left = (ox + e.clientX - sx) + 'px';
-    el.style.top  = (oy + e.clientY - sy) + 'px';
+    el.style.left=(ox+e.clientX-sx)+'px';
+    el.style.top =(oy+e.clientY-sy)+'px';
   });
 
-  function endDrag(){
-    if(!dragging) return;
-    dragging = false;
-    unlockScroll();               // 🔓 스크롤 해제
-  }
-
-  el.addEventListener('pointerup', endDrag);
-  el.addEventListener('pointercancel', endDrag);
+  el.addEventListener('pointerup', ()=>dragging=false);
 }
-
 
 function enableDelete(el){
   el.addEventListener('contextmenu', e=>{
