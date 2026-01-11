@@ -247,10 +247,12 @@ function centerPos(){
 }
 
 function select(el){
-  selected=el;
-  panel.style.visibility='visible';
-  panel.style.opacity='1';
+  if(el === panel) return;
+  selected = el;
+  panel.style.visibility = 'visible';
+  panel.style.opacity = '1';
 }
+
 
 /* ===== 드래그 ===== */
 function drag(handle, target = handle){
@@ -463,12 +465,12 @@ const fontSizeInput = document.getElementById('fontSize');
 const widthInput = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
   selected.style.transform = `rotate(${angleInput.value}deg)`; 
 });
 
 sizeInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
   selected.style.width = sizeInput.value + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
 });
@@ -479,7 +481,8 @@ fontSizeInput.addEventListener('input', ()=> {
 });
 
 widthInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
+
   if(selected.tagName === 'INPUT') {
     selected.style.width = widthInput.value + 'px';
   } else if(selected.classList.contains('arrow')) {
