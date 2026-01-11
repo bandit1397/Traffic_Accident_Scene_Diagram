@@ -356,6 +356,34 @@ function addText(){
   mapDiv.appendChild(t);
   drag(t);
 
+  /* 🔹 모바일 탭 → 편집 */
+let touchMoved = false;
+
+t.addEventListener('pointerdown', () => {
+  touchMoved = false;
+});
+
+t.addEventListener('pointermove', () => {
+  touchMoved = true;   // 이동하면 편집 취소
+});
+
+t.addEventListener('pointerup', () => {
+  if (touchMoved) return;        // 드래그 중이면 무시
+  if (t.isEditing) return;
+
+  // 모바일에서 편집 시작
+  t.isEditing = true;
+  t.readOnly = false;
+  t.focus();
+  adjustSize();
+
+  // 모바일 키보드 확실히 띄우기
+  setTimeout(() => {
+    t.setSelectionRange(t.value.length, t.value.length);
+  }, 0);
+});
+
+
   /* 🔹 자동 폭 계산 */
   const adjustSize = ()=>{
     t.style.width = '1px';
