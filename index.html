@@ -258,6 +258,7 @@ const icons={
 };
 
 let selected=null;
+let panelInitialized = false;
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
   return {x:r.width/2-16, y:r.height/2-16};
