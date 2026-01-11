@@ -239,21 +239,44 @@ function select(el){
 
 /* ===== 드래그 ===== */
 function drag(el){
-  let sx,sy,ox,oy,dragging=false;
+  let sx, sy, ox, oy, dragging = false;
+
+  // 모바일 스크롤 방지
+  el.style.touchAction = 'none';
+
   el.addEventListener('pointerdown', e=>{
     select(el);
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
-    dragging=true;
+    sx = e.clientX; 
+    sy = e.clientY;
+    ox = parseFloat(el.style.left) || 0; 
+    oy = parseFloat(el.style.top) || 0;
+    dragging = true;
+
+    // 드래그 중 스크롤 방지
+    document.body.style.overflow = 'hidden';
+
     el.setPointerCapture(e.pointerId);
+    e.preventDefault();  // 모바일에서 화면 터치 스크롤 막기
   });
+
   el.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    el.style.left=(ox+e.clientX-sx)+'px';
-    el.style.top =(oy+e.clientY-sy)+'px';
+    el.style.left = (ox + e.clientX - sx) + 'px';
+    el.style.top  = (oy + e.clientY - sy) + 'px';
   });
-  el.addEventListener('pointerup', ()=>dragging=false);
+
+  el.addEventListener('pointerup', ()=>{
+    dragging = false;
+    // 드래그 끝나면 스크롤 복구
+    document.body.style.overflow = '';
+  });
+
+  el.addEventListener('pointercancel', ()=>{
+    dragging = false;
+    document.body.style.overflow = '';
+  });
 }
+
 
 /* ===== 객체 ===== */
 function addIcon(type){
