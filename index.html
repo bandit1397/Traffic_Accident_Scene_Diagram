@@ -177,13 +177,24 @@ h1 { text-align:center; }
         <button onclick="addIcon('moto')">오토바이</button>
         <button onclick="addArrow()">화살표</button>
         <button onclick="addText()">문자</button>
+
         <hr>
+
         <button onclick="drawMode=!drawMode">자유곡선</button>
         <button onclick="togglePointLine()">직선(점→점)</button>
         <label>선색 <input type="color" id="lineColor" value="#ff0000"></label>
         <label>굵기 <input type="range" id="lineWidth" min="1" max="15" value="3"></label>
         <button onclick="savePDF()">PDF</button>
+
+        <hr>
+
+        <!-- ① PC/스마트폰에서 이미지 선택 -->
+        <label style="font-size:12px; display:block; margin-top:6px;">
+          배경 이미지 불러오기
+          <input type="file" id="bgInput" accept="image/*">
+        </label>
       </div>
+
     </div>
 
   </div>
