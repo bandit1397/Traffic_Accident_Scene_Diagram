@@ -378,6 +378,7 @@ toolToggle.onclick=()=>{
 const bgMap = document.getElementById('bgMap');
 const bgInput = document.getElementById('bgInput');
 
+// 배경 이미지 선택 코드 끝
 bgInput.addEventListener('change', e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -388,6 +389,39 @@ bgInput.addEventListener('change', e=>{
   }
   reader.readAsDataURL(file);
 });
+
+/* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
+const angleInput = document.getElementById('angle');
+const sizeInput = document.getElementById('size');
+const fontSizeInput = document.getElementById('fontSize');
+const widthInput = document.getElementById('width');
+
+angleInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.transform = `rotate(${angleInput.value}deg)`; 
+});
+
+sizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.width = sizeInput.value + 'px';
+  if(selected.tagName === 'IMG') selected.style.height = 'auto';
+});
+
+fontSizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+});
+
+widthInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') {
+    selected.style.width = widthInput.value + 'px';
+  } else if(selected.classList.contains('arrow')) {
+    selected.style.width = widthInput.value + 'px';
+    selected.style.height = 'auto';
+  }
+});
+
 
 </script>
 
