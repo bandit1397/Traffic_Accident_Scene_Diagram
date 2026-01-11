@@ -316,6 +316,7 @@ function addText(){
   t.type = 'text';
   t.className = 'textbox';
   t.placeholder = '텍스트';
+  t.readOnly = true;           // ⭐ 핵심
 
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
@@ -328,15 +329,24 @@ function addText(){
   drag(t);
 
   const adjustSize = () => {
-    t.style.width = '1px';                 // ← 중요
+    t.style.width = '1px';
     t.style.width = (t.scrollWidth + 6) + 'px';
   };
 
   t.addEventListener('input', adjustSize);
-  t.addEventListener('focus', adjustSize);
+
+  // 🔹 더블탭 → 편집
+  t.addEventListener('dblclick', ()=>{
+    t.readOnly = false;
+    t.focus();
+  });
+
+  // 🔹 편집 종료 → 이동 모드
+  t.addEventListener('blur', ()=>{
+    t.readOnly = true;
+  });
 
   adjustSize();
-  t.focus();
 }
 
 
