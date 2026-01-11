@@ -254,47 +254,46 @@ function select(el){
 }
 
 /* ===== 드래그 ===== */
-function drag(el){
+function drag(handle, target = handle){
   let sx, sy, ox, oy, dragging = false;
 
-  el.style.touchAction = 'none';
+  handle.style.touchAction = 'none';
 
-  el.addEventListener('pointerdown', e=>{
-    select(el);
+  handle.addEventListener('pointerdown', e=>{
+    // ⭐ 선택은 항상 target 기준
+    if(typeof select === 'function'){
+      select(target);
+    }
 
-    // ✋ 텍스트 편집 중이면 드래그 금지
-    if(el.classList.contains('textbox') && el.isEditing){
-      return;   // ← preventDefault 안 함 (중요)
+    // ✋ 텍스트 편집 중이면 이동 금지
+    if(target.classList.contains('textbox') && target.isEditing){
+      return; // preventDefault ❌
     }
 
     sx = e.clientX;
     sy = e.clientY;
-    ox = parseFloat(el.style.left) || 0;
-    oy = parseFloat(el.style.top) || 0;
+    ox = parseFloat(target.style.left) || 0;
+    oy = parseFloat(target.style.top) || 0;
     dragging = true;
 
-    el.setPointerCapture(e.pointerId);
+    handle.setPointerCapture(e.pointerId);
 
-    // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
-    if(!el.classList.contains('textbox')){
+    // ⭐ textbox 편집을 막지 않기 위함
+    if(!target.classList.contains('textbox')){
       e.preventDefault();
     }
   });
 
-  el.addEventListener('pointermove', e=>{
+  handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    el.style.left = (ox + e.clientX - sx) + 'px';
-    el.style.top  = (oy + e.clientY - sy) + 'px';
+    target.style.left = (ox + e.clientX - sx) + 'px';
+    target.style.top  = (oy + e.clientY - sy) + 'px';
   });
 
-  el.addEventListener('pointerup', ()=>{
-    dragging = false;
-  });
-
-  el.addEventListener('pointercancel', ()=>{
-    dragging = false;  
-  });
+  handle.addEventListener('pointerup', ()=> dragging = false);
+  handle.addEventListener('pointercancel', ()=> dragging = false);
 }
+
 
 
 
