@@ -304,30 +304,44 @@ function addArrow(){
 }
 
 function addText(){
-  const p = centerPos();
-  const t = document.createElement('input');
-  t.className = 'textbox';
-  t.type = 'text';          // 반드시 type 지정
-  t.value = '';             // 초기값
-  t.style.left = p.x + 'px';
-  t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
-  t.style.width = '100px';  // 기본 폭
-  t.style.height = '24px';  // 기본 높이
-  t.style.padding = '2px';
-  t.style.background = '#fff';
-  t.style.border = '1px solid #333';
-  t.style.position = 'absolute';
-  t.style.cursor = 'move';
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top=p.y+'px';
+  t.style.fontSize='14px';
+  t.style.height='auto';
+  t.style.minHeight='20px';
+  t.style.padding='0 4px';
+  t.style.textAlign='center';
+  t.style.width='14px';
   mapDiv.appendChild(t);
-  drag(t);
-  
-  // 드래그와 입력 충돌 방지: 입력중이면 드래그 중지
-  t.addEventListener('pointerdown', e=>{
-    e.stopPropagation();  // 부모 캔버스로 이벤트 전파 방지
-  });
-}
 
+  drag(t); enableDelete(t);
+
+  const adjustSize=()=>{
+    const fs=parseFloat(window.getComputedStyle(t).fontSize)||14;
+    const text=t.value||t.placeholder||'한';
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    ctx.font=`${fs}px sans-serif`;
+    const textWidth=ctx.measureText(text).width;
+    t.style.width=(textWidth+8)+'px';
+    t.style.height=(fs+4)+'px';
+  };
+
+  t.addEventListener('input', adjustSize);
+  t.addEventListener('change', adjustSize);
+  t.addEventListener('pointerdown', adjustSize);
+
+  const fontInput=document.getElementById('fontSize');
+  fontInput.addEventListener('input', ()=>{
+    if(selected===t){ t.style.fontSize=fontInput.value+'px'; adjustSize();}
+  });
+
+  adjustSize();
+}
 
 /* ===== 선 ===== */
 let drawMode=false;
