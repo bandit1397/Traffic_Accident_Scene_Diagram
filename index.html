@@ -265,21 +265,8 @@ function drag(handle, target = handle){
 
   handle.style.touchAction = 'none';
 
-  const move = e => {
-    if(!dragging) return;
-    target.style.left = (ox + e.clientX - sx) + 'px';
-    target.style.top  = (oy + e.clientY - sy) + 'px';
-  };
-
-  const up = () => {
-    dragging = false;
-    document.removeEventListener('pointermove', move);
-    document.removeEventListener('pointerup', up);
-    document.removeEventListener('pointercancel', up);
-  };
-
   handle.addEventListener('pointerdown', e=>{
-    // 선택 처리
+    // 선택
     if(typeof select === 'function'){
       select(target);
     }
@@ -289,18 +276,33 @@ function drag(handle, target = handle){
       return;
     }
 
-    e.preventDefault();
-
     dragging = true;
     sx = e.clientX;
     sy = e.clientY;
     ox = parseFloat(target.style.left) || 0;
     oy = parseFloat(target.style.top) || 0;
 
-    // ⭐ 핵심: document 기준으로 이동 감시
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
-    document.addEventListener('pointercancel', up);
+    // ⭐⭐⭐ 핵심
+    handle.setPointerCapture(e.pointerId);
+
+    e.preventDefault();
+  });
+
+  handle.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+
+    target.style.left = (ox + e.clientX - sx) + 'px';
+    target.style.top  = (oy + e.clientY - sy) + 'px';
+  });
+
+  handle.addEventListener('pointerup', e=>{
+    dragging = false;
+    handle.releasePointerCapture(e.pointerId);
+  });
+
+  handle.addEventListener('pointercancel', e=>{
+    dragging = false;
+    handle.releasePointerCapture(e.pointerId);
   });
 }
 
