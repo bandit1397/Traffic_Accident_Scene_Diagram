@@ -248,9 +248,9 @@ function drag(el){
   el.addEventListener('pointerdown', e=>{
     select(el);
 
-    // ✋ 텍스트 + 편집 중이면 드래그 금지
+    // ✋ 텍스트 편집 중이면 드래그 금지
     if(el.classList.contains('textbox') && el.isEditing){
-      return;
+      return;   // ← preventDefault 안 함 (중요)
     }
 
     sx = e.clientX;
@@ -261,7 +261,11 @@ function drag(el){
 
     document.body.style.overflow = 'hidden';
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();
+
+    // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
+    if(!el.classList.contains('textbox')){
+      e.preventDefault();
+    }
   });
 
   el.addEventListener('pointermove', e=>{
