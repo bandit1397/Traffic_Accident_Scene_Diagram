@@ -252,11 +252,13 @@ function drag(el){
     oy = parseFloat(el.style.top) || 0;
     dragging = true;
 
-    // 드래그 중 스크롤 방지
-    document.body.style.overflow = 'hidden';
+    // 텍스트박스는 스크롤 방지 제외
+    if(!el.classList.contains('textbox')){
+      document.body.style.overflow = 'hidden';
+    }
 
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();  // 모바일에서 화면 터치 스크롤 막기
+    e.preventDefault();  // 터치 드래그 중 기본 동작 막기
   });
 
   el.addEventListener('pointermove', e=>{
