@@ -26,6 +26,7 @@ h1 { text-align:center; }
   border:1px solid #888;
   position:relative;
   overflow:hidden;
+  touch-action: none; 
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -72,7 +73,6 @@ h1 { text-align:center; }
   position:absolute;
   left:10px;
   top:50%;
-  transform:translateY(-50%);
   background:#fff;
   border:1px solid #333;
   padding:10px;
@@ -80,6 +80,17 @@ h1 { text-align:center; }
   visibility:hidden;
   opacity:0;
   z-index:3000;
+}
+
+#panelHeader {
+  font-weight: bold;
+  margin-bottom: 6px;
+  cursor: move;
+  user-select: none;
+}
+
+#panel, #panelHeader {
+  touch-action: none;
 }
 
 #panel label {
@@ -154,7 +165,8 @@ h1 { text-align:center; }
 
     <!-- ③ 속성 패널 -->
     <div id="panel">
-      <strong>선택 객체</strong>
+      <div id="panelHeader">선택 객체</div>
+
       <label>각도
         <input id="angle" type="range" min="-180" max="180" value="0">
       </label>
@@ -168,6 +180,7 @@ h1 { text-align:center; }
         <input id="width" type="range" min="10" max="300" value="60">
       </label>
     </div>
+
 
     <!-- 도구 -->
     <div id="toolbox">
@@ -210,6 +223,10 @@ const mapDiv = document.getElementById('map');
 const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
+  
+const panelHeader = document.getElementById('panelHeader');
+drag(panelHeader, panel);
+
 
 function resizeCanvas(){
   canvas.width = mapDiv.clientWidth;
@@ -234,56 +251,62 @@ function centerPos(){
 }
 
 function select(el){
-  selected=el;
-  panel.style.visibility='visible';
-  panel.style.opacity='1';
+  if(el === panel) return;
+  selected = el;
+  panel.style.visibility = 'visible';
+  panel.style.opacity = '1';
 }
+
 
 /* ===== 드래그 ===== */
-function drag(el){
-  let sx, sy, ox, oy, dragging = false;
+function drag(handle, target = handle){
+  let sx = 0, sy = 0, ox = 0, oy = 0;
+  let dragging = false;
 
-  el.style.touchAction = 'none';
+  handle.style.touchAction = 'none';
 
-  el.addEventListener('pointerdown', e=>{
-    select(el);
-
-    // ✋ 텍스트 편집 중이면 드래그 금지
-    if(el.classList.contains('textbox') && el.isEditing){
-      return;   // ← preventDefault 안 함 (중요)
+  handle.addEventListener('pointerdown', e=>{
+    // 선택
+    if(typeof select === 'function'){
+      select(target);
     }
 
+    // 텍스트 편집 중이면 이동 금지
+    if(target.classList.contains('textbox') && target.isEditing){
+      return;
+    }
+
+    dragging = true;
     sx = e.clientX;
     sy = e.clientY;
-    ox = parseFloat(el.style.left) || 0;
-    oy = parseFloat(el.style.top) || 0;
-    dragging = true;
+    ox = parseFloat(target.style.left) || 0;
+    oy = parseFloat(target.style.top) || 0;
 
-    document.body.style.overflow = 'hidden';
-    el.setPointerCapture(e.pointerId);
+    // ⭐⭐⭐ 핵심
+    handle.setPointerCapture(e.pointerId);
 
-    // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
-    if(!el.classList.contains('textbox')){
-      e.preventDefault();
-    }
+    e.preventDefault();
   });
 
-  el.addEventListener('pointermove', e=>{
+  handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    el.style.left = (ox + e.clientX - sx) + 'px';
-    el.style.top  = (oy + e.clientY - sy) + 'px';
+
+    target.style.left = (ox + e.clientX - sx) + 'px';
+    target.style.top  = (oy + e.clientY - sy) + 'px';
   });
 
-  el.addEventListener('pointerup', ()=>{
+  handle.addEventListener('pointerup', e=>{
     dragging = false;
-    document.body.style.overflow = '';
+    handle.releasePointerCapture(e.pointerId);
   });
 
-  el.addEventListener('pointercancel', ()=>{
+  handle.addEventListener('pointercancel', e=>{
     dragging = false;
-    document.body.style.overflow = '';
+    handle.releasePointerCapture(e.pointerId);
   });
 }
+
+
 
 
 
@@ -454,12 +477,12 @@ const fontSizeInput = document.getElementById('fontSize');
 const widthInput = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
   selected.style.transform = `rotate(${angleInput.value}deg)`; 
 });
 
 sizeInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
   selected.style.width = sizeInput.value + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
 });
@@ -470,7 +493,8 @@ fontSizeInput.addEventListener('input', ()=> {
 });
 
 widthInput.addEventListener('input', ()=> {
-  if(!selected) return;
+  if(!selected || selected === panel) return;
+
   if(selected.tagName === 'INPUT') {
     selected.style.width = widthInput.value + 'px';
   } else if(selected.classList.contains('arrow')) {
