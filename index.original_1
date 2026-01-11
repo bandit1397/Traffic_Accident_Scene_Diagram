@@ -5,14 +5,11 @@
 <title>Traffic Accident Scene Diagram</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
+  position: relative;
   width:210mm;
   min-height:297mm;
   margin:20px auto;
@@ -28,58 +25,61 @@ h1 { text-align:center; }
   height:600px;
   border:1px solid #888;
   position:relative;
+  overflow:hidden;
 }
 
-#controls {
-  display:flex;
-  justify-content:center;
-  gap:6px;
-  margin-top:8px;
-  overflow-x: auto;  /* ← 추가 */
-  padding: 2px 0;    /* ← 추가 */
+/* ===== 카카오 지도 이미지 ===== */
+#bgMap {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  user-select:none;
+  pointer-events:none;
+  z-index:1;
 }
 
-#controls::-webkit-scrollbar {
-  height: 4px;       /* 스크롤바 높이 */
+/* ===== 자유곡선 캔버스 ===== */
+#drawCanvas {
+  position:absolute;
+  inset:0;
+  z-index:500;
 }
-#controls::-webkit-scrollbar-thumb {
-  background: #888;  /* 스크롤바 색상 */
-  border-radius: 2px;
-}
 
-
-button { padding:5px 10px; }
-
+/* ===== 객체 ===== */
 .icon, .arrow {
   position:absolute;
   cursor:move;
   z-index:1000;
 }
-
 .arrow { transform-origin:center; }
 
 .textbox {
   position:absolute;
   border:1px solid #333;
   background:#fff;
-  padding:2px;
-  resize:both;
-  overflow:auto;
+  padding:2px 4px;
   cursor:move;
   z-index:1000;
+
+  resize:none;          /* ⭐ 제거 */
+  white-space:nowrap;  /* ⭐ 한 줄 유지 */
 }
 
-/* 속성 패널 */
+/* ===== 속성 패널 ===== */
 #panel {
-  position:fixed;
-  right:10px;
-  bottom:10px;
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
   background:#fff;
   border:1px solid #333;
   padding:10px;
   width:200px;
-  display:none;
-  z-index:2000;
+  visibility:hidden;
+  opacity:0;
+  z-index:3000;
 }
 
 #panel label {
@@ -88,133 +88,138 @@ button { padding:5px 10px; }
   margin-top:6px;
 }
 
-/* =========================
-   모바일 대응 스타일
-========================= */
-@media(max-width:768px){
-  #controls {
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 4px;
-    margin-top: 6px;
-  }
-
-  #controls button {
-    flex: 1 1 30%;
-    min-width: 80px;
-    min-height: 40px;   /* ✅ 터치용 높이 확보 */
-    padding: 10px 5px;
-    font-size: 14px;
-  }
-
-  /* 속성 패널 모바일에서는 전체 화면 하단에 나타나도록 */
-  #panel {
-    width: 100%;
-    right: 0;
-    bottom: 0;
-    border-radius: 0;
-    display: none;
-    padding: 10px;
-    box-shadow: 0 -2px 6px rgba(0,0,0,0.2);
-  }
-
-  #panel label {
-    font-size: 14px;
-  }
+#panel input[type="range"]{
+  width:100%;
 }
 
+/* ===== 도구 패널 ===== */
+#toolbox {
+  position:absolute;
+  top:10px;
+  left:10px;
+  z-index:4000;
+}
 
+#toolToggle {
+  width:44px;
+  height:44px;
+  font-size:22px;
+  border-radius:8px;
+  background:#333;
+  color:#fff;
+  border:none;
+}
+
+#toolContent {
+  display:none;
+  margin-top:6px;
+  background:#fff;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:6px;
+  width:120px;
+}
+
+#toolContent button {
+  width:100%;
+  min-height:32px;
+  margin:2px 0;
+  font-size:13px;
+}
+
+#toolContent label {
+  font-size:12px;
+  display:block;
+  margin-top:4px;
+}
+
+#toolContent hr {
+  margin:6px 0;
+}
 </style>
 </head>
 
 <body>
 
 <div id="container">
-<h1>교통사고 현장약도</h1>
+  <h1>교통사고 현장약도</h1>
 
-<div id="map"></div>
+  <div id="map">
 
-<div id="controls">
-  <button onclick="addIcon('person')">사람</button>
-  <button onclick="addIcon('car')">자동차</button>
-  <button onclick="addIcon('bike')">자전거</button>
-  <button onclick="addIcon('moto')">오토바이</button>
-  <button onclick="addArrow()">화살표</button>
-  <button onclick="addText()">문자</button>
-  <button onclick="toggleMap()">지도 잠금 / 해제</button>
-  <button onclick="savePDF()">PDF</button>
+    <!-- ① 카카오 지도 캡처 -->
+    <img id="bgMap" src="kakao_capture.jpg" alt="kakao map">
+
+    <!-- ② 자유곡선 캔버스 -->
+    <canvas id="drawCanvas"></canvas>
+
+    <!-- ③ 속성 패널 -->
+    <div id="panel">
+      <strong>선택 객체</strong>
+      <label>각도
+        <input id="angle" type="range" min="-180" max="180" value="0">
+      </label>
+      <label>크기
+        <input id="size" type="range" min="10" max="150" value="32">
+      </label>
+      <label>글자크기
+        <input id="fontSize" type="range" min="8" max="48" value="14">
+      </label>
+      <label>폭
+        <input id="width" type="range" min="10" max="300" value="60">
+      </label>
+    </div>
+
+    <!-- 도구 -->
+    <div id="toolbox">
+      <button id="toolToggle">☰</button>
+      <div id="toolContent">
+        <button onclick="addIcon('person')">사람</button>
+        <button onclick="addIcon('car')">자동차</button>
+        <button onclick="addIcon('bike')">자전거</button>
+        <button onclick="addIcon('moto')">오토바이</button>
+        <button onclick="addArrow()">화살표</button>
+        <button onclick="addText()">문자</button>
+
+        <hr>
+
+        <button onclick="drawMode=!drawMode">자유곡선</button>
+        <button onclick="togglePointLine()">직선(점→점)</button>
+        <label>선색 <input type="color" id="lineColor" value="#ff0000"></label>
+        <label>굵기 <input type="range" id="lineWidth" min="1" max="15" value="3"></label>
+        <button onclick="savePDF()">PDF</button>
+
+        <hr>
+
+        <!-- ① PC/스마트폰에서 이미지 선택 -->
+        <label style="font-size:12px; display:block; margin-top:6px;">
+          배경 이미지 불러오기
+          <input type="file" id="bgInput" accept="image/*">
+        </label>
+      </div>
+
+    </div>
+
+  </div>
 </div>
-</div>
 
-<!-- 속성 패널 -->
-<div id="panel">
-<strong>선택 객체</strong>
-<label>각도 <input id="angle" type="number"></label>
-<label>크기 <input id="size" type="number"></label>
-<label>글자크기 <input id="fontSize" type="number"></label>
-<label>폭 <input id="width" type="number"></label>
-</div>
-
-<!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-/* =========================
-   지도 생성
-========================= */
-const leafletMap = L.map('map', {
-  maxZoom: 19,
-  zoomSnap: 0.25,
-  wheelPxPerZoomLevel: 40
-}).setView([37.5665, 126.978], 18);
+const mapDiv = document.getElementById('map');
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
 
-L.tileLayer(
-  'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  { maxZoom: 19, attribution: '© OpenStreetMap' }
-).addTo(leafletMap);
-
-/* =========================
-   지도 잠금 / 해제
-========================= */
-let mapLocked = false;
-
-function lockMap(){
-  // 드래그
-  leafletMap.dragging.disable();
-  
-  // 터치 관련
-  leafletMap.touchZoom.disable();  // 핀치 줌 막기
-  leafletMap.doubleClickZoom.disable();
-  leafletMap.scrollWheelZoom.disable();
-  leafletMap.boxZoom.disable();
-  leafletMap.keyboard.disable();
-  if (leafletMap.tap) leafletMap.tap.disable();
-
-  mapLocked = true;
+function resizeCanvas(){
+  canvas.width = mapDiv.clientWidth;
+  canvas.height = mapDiv.clientHeight;
 }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
-function unlockMap(){
-  leafletMap.dragging.enable();
-  leafletMap.touchZoom.enable();   // 핀치 줌 허용
-  leafletMap.doubleClickZoom.enable();
-  leafletMap.scrollWheelZoom.enable();
-  leafletMap.boxZoom.enable();
-  leafletMap.keyboard.enable();
-  if (leafletMap.tap) leafletMap.tap.enable();
-
-  mapLocked = false;
-}
-
-
-function toggleMap(){
-  mapLocked ? unlockMap() : lockMap();
-}
-
-/* =========================
-   아이콘 경로
-========================= */
-const icons = {
+/* ===== 공통 ===== */
+const icons={
   person:'icons/person.png',
   car:'icons/car.png',
   bike:'icons/bike.png',
@@ -222,100 +227,68 @@ const icons = {
   arrow:'icons/arrow.png'
 };
 
-const mapDiv = leafletMap.getContainer();
-let selected = null;
-const panel = document.getElementById('panel');
-
-/* =========================
-   공통
-========================= */
+let selected=null;
 function centerPos(){
-  const r = mapDiv.getBoundingClientRect();
-  return { x:r.width/2-16, y:r.height/2-16 };
+  const r=mapDiv.getBoundingClientRect();
+  return {x:r.width/2-16, y:r.height/2-16};
 }
 
-// 모바일: 선택 시 패널 표시/숨김
 function select(el){
-  selected = el;
-
-  // PC는 항상 표시, 모바일은 토글
-  if(window.innerWidth <= 768){
-    panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-  } else {
-    panel.style.display = 'block';
-  }
+  selected=el;
+  panel.style.visibility='visible';
+  panel.style.opacity='1';
 }
 
-
+/* ===== 드래그 ===== */
 function drag(el){
-  let startX = 0, startY = 0;
-  let origX = 0, origY = 0;
-  let dragging = false;
-  let holdTimer = null;
+  let sx, sy, ox, oy, dragging = false;
 
   el.style.touchAction = 'none';
 
-  el.addEventListener('pointerdown', e => {
-
+  el.addEventListener('pointerdown', e=>{
     select(el);
-    el.style.zIndex = 3000;
 
-    startX = e.clientX;
-    startY = e.clientY;
-    origX = parseFloat(el.style.left);
-    origY = parseFloat(el.style.top);
-
-    // 🔑 INPUT은 길게 눌러야 이동
-    if (el.tagName === 'INPUT') {
-      holdTimer = setTimeout(() => {
-        dragging = true;
-        el.setPointerCapture(e.pointerId);
-      }, 200); // 0.2초
-      return;
+    // ✋ 텍스트 편집 중이면 드래그 금지
+    if(el.classList.contains('textbox') && el.isEditing){
+      return;   // ← preventDefault 안 함 (중요)
     }
 
-    // 아이콘/화살표는 즉시 이동
-    e.preventDefault();
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(el.style.left) || 0;
+    oy = parseFloat(el.style.top) || 0;
     dragging = true;
+
+    document.body.style.overflow = 'hidden';
     el.setPointerCapture(e.pointerId);
-  });
 
-  el.addEventListener('pointermove', e => {
-    if(!dragging) return;
-
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-
-    el.style.left = (origX + dx) + 'px';
-    el.style.top  = (origY + dy) + 'px';
-  });
-
-  el.addEventListener('pointerup', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
-  });
-
-  el.addEventListener('pointercancel', () => {
-    dragging = false;
-    clearTimeout(holdTimer);
-  });
-}
-
-
-function enableDelete(el){
-  // PC: 우클릭
-  el.addEventListener('contextmenu', e => {
-    e.preventDefault();
-    if (confirm('이 객체를 삭제하시겠습니까?')) {
-      el.remove();
+    // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
+    if(!el.classList.contains('textbox')){
+      e.preventDefault();
     }
   });
+
+  el.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    el.style.left = (ox + e.clientX - sx) + 'px';
+    el.style.top  = (oy + e.clientY - sy) + 'px';
+  });
+
+  el.addEventListener('pointerup', ()=>{
+    dragging = false;
+    document.body.style.overflow = '';
+  });
+
+  el.addEventListener('pointercancel', ()=>{
+    dragging = false;
+    document.body.style.overflow = '';
+  });
 }
 
 
-/* =========================
-   객체 추가
-========================= */
+
+
+/* ===== 객체 ===== */
 function addIcon(type){
   const p=centerPos();
   const img=document.createElement('img');
@@ -326,136 +299,187 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
-  enableDelete(img);   // ✅ 추가
 }
-
 
 function addArrow(){
   const p=centerPos();
-  const a=document.createElement('img');
-  a.src=icons.arrow;
-  a.className='arrow';
-  a.style.left=p.x+'px';
-  a.style.top=p.y+'px';
-  a.style.width='32px';
-  mapDiv.appendChild(a);
-  drag(a);
-  enableDelete(a);     // ✅ 추가
+  const img=document.createElement('img');
+  img.src=icons.arrow;
+  img.className='arrow';
+  img.style.left=p.x+'px';
+  img.style.top=p.y+'px';
+  img.style.width='32px';
+  mapDiv.appendChild(img);
+  drag(img);
 }
-
 
 function addText(){
   const p = centerPos();
   const t = document.createElement('input');
+
+  t.type = 'text';
   t.className = 'textbox';
   t.placeholder = '텍스트';
+
+  t.isEditing = false;       // ⭐ 상태 플래그
+  t.readOnly = true;
+
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
   t.style.fontSize = '14px';
-  t.style.height = 'auto';
-  t.style.minHeight = '20px';
-  t.style.padding = '0 4px';
   t.style.textAlign = 'center';
-  t.style.width = '14px'; // 초기 폭
+  t.style.width = '12px';
+
   mapDiv.appendChild(t);
-
   drag(t);
-  enableDelete(t);
 
-  // -----------------------------
-  // 폭 계산 함수
-  // -----------------------------
-  const adjustSize = () => {
-    const fs = parseFloat(window.getComputedStyle(t).fontSize) || 14;
-    const text = t.value || t.placeholder || '한';
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    ctx.font = `${fs}px sans-serif`;
-    const textWidth = ctx.measureText(text).width;
-    t.style.width = (textWidth + 8) + 'px'; // 좌우 4px 여백 포함
-    t.style.height = (fs + 4) + 'px'; // 높이: 글자 크기 + 4px
+  /* 🔹 자동 폭 계산 */
+  const adjustSize = ()=>{
+    t.style.width = '1px';
+    t.style.width = (t.scrollWidth + 6) + 'px';
   };
 
-  // -----------------------------
-  // 이벤트
-  // -----------------------------
-  t.addEventListener('input', adjustSize);
-  t.addEventListener('change', adjustSize);
+  /* 🔹 더블클릭 → 편집 */
+  t.addEventListener('dblclick', ()=>{
+    t.isEditing = true;
+    t.readOnly = false;
+    t.focus();
+    adjustSize();
+  });
 
-  // fontSize 패널 입력에서 즉시 적용
+  /* 🔹 입력 중 자동 확대 */
+  t.addEventListener('input', adjustSize);
+
+  /* 🔹 포커스 해제 → 이동 */
+  t.addEventListener('blur', ()=>{
+    t.isEditing = false;
+    t.readOnly = true;
+    adjustSize();
+  });
+
+  /* 🔹 폰트 슬라이더 연동 */
   const fontInput = document.getElementById('fontSize');
-  fontInput.addEventListener('input', () => {
+  fontInput.addEventListener('input', ()=>{
     if(selected === t){
       t.style.fontSize = fontInput.value + 'px';
-      adjustSize(); // 바로 폭 조절
+      adjustSize();
     }
   });
 
-  // 클릭/터치 시에도 폭 재조정
-  t.addEventListener('pointerdown', adjustSize);
-
-  adjustSize(); // 초기 적용
+  adjustSize();
 }
 
 
 
+/* ===== 선 ===== */
+let drawMode=false;
+let drawing=false;
+let firstPoint=null;
+let currentLineWidth=3;
+let currentLineColor='#ff0000';
 
-// =========================
-// ✅ 여기에 추가
-// 속성 패널 입력 적용
-// =========================
+canvas.addEventListener('pointerdown', e=>{
+  if(!drawMode) return;
+  drawing=true;
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX,e.offsetY);
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!drawing) return;
+  ctx.lineTo(e.offsetX,e.offsetY);
+  ctx.strokeStyle=currentLineColor;
+  ctx.lineWidth=currentLineWidth;
+  ctx.stroke();
+});
+canvas.addEventListener('pointerup', ()=>drawing=false);
 
-// 각도 입력
-document.getElementById('angle').addEventListener('input', e => {
-  if (!selected) return;
-  const deg = parseFloat(e.target.value) || 0;
-  selected.style.transform = `rotate(${deg}deg)`;
+function togglePointLine(){
+  firstPoint=null;
+  drawMode=false;
+  canvas.onclick=e=>{
+    if(!firstPoint){
+      firstPoint={x:e.offsetX,y:e.offsetY};
+    }else{
+      ctx.beginPath();
+      ctx.moveTo(firstPoint.x,firstPoint.y);
+      ctx.lineTo(e.offsetX,e.offsetY);
+      ctx.strokeStyle=currentLineColor;
+      ctx.lineWidth=currentLineWidth;
+      ctx.stroke();
+      firstPoint=null;
+    }
+  };
+}
+
+document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
+document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
+
+/* ===== PDF ===== */
+async function savePDF(){
+  const canvasImg=await html2canvas(container);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvasImg.height*w/canvasImg.width;
+  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
+}
+
+/* ===== 도구 토글 ===== */
+toolToggle.onclick=()=>{
+  toolContent.style.display=
+    toolContent.style.display==='block'?'none':'block';
+};
+
+/* ===== 배경 이미지 선택 ===== */
+const bgMap = document.getElementById('bgMap');
+const bgInput = document.getElementById('bgInput');
+
+// 배경 이미지 선택 코드 끝
+bgInput.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    bgMap.src = evt.target.result;  // 선택한 이미지로 변경
+  }
+  reader.readAsDataURL(file);
 });
 
-// 크기 입력 (아이콘/화살표)
-document.getElementById('size').addEventListener('input', e => {
-  if (!selected) return;
-  const s = parseFloat(e.target.value) || 32;
-  if (selected.tagName === 'IMG') {
-    selected.style.width = s + 'px';
+/* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
+const angleInput = document.getElementById('angle');
+const sizeInput = document.getElementById('size');
+const fontSizeInput = document.getElementById('fontSize');
+const widthInput = document.getElementById('width');
+
+angleInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.transform = `rotate(${angleInput.value}deg)`; 
+});
+
+sizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.width = sizeInput.value + 'px';
+  if(selected.tagName === 'IMG') selected.style.height = 'auto';
+});
+
+fontSizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+});
+
+widthInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') {
+    selected.style.width = widthInput.value + 'px';
+  } else if(selected.classList.contains('arrow')) {
+    selected.style.width = widthInput.value + 'px';
     selected.style.height = 'auto';
   }
 });
 
-// 글자크기 (문자 박스)
-document.getElementById('fontSize').addEventListener('input', e => {
-  if (!selected) return;
-  const fs = parseFloat(e.target.value) || 12;
-  if (selected.tagName === 'INPUT') {
-    selected.style.fontSize = fs + 'px';
-  }
-});
 
-// 폭 (문자 박스)
-document.getElementById('width').addEventListener('input', e => {
-  if (!selected) return;
-  const w = parseFloat(e.target.value) || 100;
-  if (selected.tagName === 'INPUT') {
-    selected.style.width = w + 'px';
-  }
-});
-
-
-
-/* =========================
-   PDF 저장
-========================= */
-async function savePDF(){
-  lockMap();
-  const canvas = await html2canvas(container,{useCORS:true});
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
-  const w = pdf.internal.pageSize.getWidth();
-  const h = canvas.height * w / canvas.width;
-  pdf.addImage(canvas.toDataURL(),'PNG',0,0,w,h);
-  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
-  unlockMap();
-}
 </script>
 
 </body>
