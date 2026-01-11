@@ -26,6 +26,7 @@ h1 { text-align:center; }
   border:1px solid #888;
   position:relative;
   overflow:hidden;
+  touch-action: none; 
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -259,7 +260,6 @@ function drag(el){
     oy = parseFloat(el.style.top) || 0;
     dragging = true;
 
-    document.body.style.overflow = 'hidden';
     el.setPointerCapture(e.pointerId);
 
     // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
@@ -276,12 +276,10 @@ function drag(el){
 
   el.addEventListener('pointerup', ()=>{
     dragging = false;
-    document.body.style.overflow = '';
   });
 
   el.addEventListener('pointercancel', ()=>{
-    dragging = false;
-    document.body.style.overflow = '';
+    dragging = false;  
   });
 }
 
