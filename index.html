@@ -256,44 +256,48 @@ function select(el){
 
 /* ===== 드래그 ===== */
 function drag(handle, target = handle){
-  let sx, sy, ox, oy, dragging = false;
+  let sx = 0, sy = 0, ox = 0, oy = 0;
+  let dragging = false;
 
   handle.style.touchAction = 'none';
 
+  const move = e => {
+    if(!dragging) return;
+    target.style.left = (ox + e.clientX - sx) + 'px';
+    target.style.top  = (oy + e.clientY - sy) + 'px';
+  };
+
+  const up = () => {
+    dragging = false;
+    document.removeEventListener('pointermove', move);
+    document.removeEventListener('pointerup', up);
+    document.removeEventListener('pointercancel', up);
+  };
+
   handle.addEventListener('pointerdown', e=>{
-    // ⭐ 선택은 항상 target 기준
+    // 선택 처리
     if(typeof select === 'function'){
       select(target);
     }
 
-    // ✋ 텍스트 편집 중이면 이동 금지
+    // 텍스트 편집 중이면 이동 금지
     if(target.classList.contains('textbox') && target.isEditing){
-      return; // preventDefault ❌
+      return;
     }
 
+    dragging = true;
     sx = e.clientX;
     sy = e.clientY;
     ox = parseFloat(target.style.left) || 0;
     oy = parseFloat(target.style.top) || 0;
-    dragging = true;
 
-    handle.setPointerCapture(e.pointerId);
-
-    // ⭐ textbox 편집을 막지 않기 위함
-    if(!target.classList.contains('textbox')){
-      e.preventDefault();
-    }
+    // ⭐ 핵심: document 기준으로 이동 감시
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+    document.addEventListener('pointercancel', up);
   });
-
-  handle.addEventListener('pointermove', e=>{
-    if(!dragging) return;
-    target.style.left = (ox + e.clientX - sx) + 'px';
-    target.style.top  = (oy + e.clientY - sy) + 'px';
-  });
-
-  handle.addEventListener('pointerup', ()=> dragging = false);
-  handle.addEventListener('pointercancel', ()=> dragging = false);
 }
+
 
 
 
