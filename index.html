@@ -241,28 +241,25 @@ function select(el){
 function drag(el){
   let sx, sy, ox, oy, dragging = false;
 
-  // INPUT은 터치 기본 동작 허용
-  el.style.touchAction = el.classList.contains('textbox') ? 'auto' : 'none';
+  el.style.touchAction = 'none';
 
   el.addEventListener('pointerdown', e=>{
     select(el);
 
-    // 📌 텍스트박스면 "드래그 시작만 하지 않고 입력 우선"
-    if(el.classList.contains('textbox')){
-      el.focus();          // ✅ 포커스 강제
-      return;              // ✅ 여기서 종료 (드래그 X)
+    // ✋ 텍스트 + 편집 중이면 드래그 금지
+    if(el.classList.contains('textbox') && el.isEditing){
+      return;
     }
 
-    sx = e.clientX; 
+    sx = e.clientX;
     sy = e.clientY;
-    ox = parseFloat(el.style.left) || 0; 
+    ox = parseFloat(el.style.left) || 0;
     oy = parseFloat(el.style.top) || 0;
     dragging = true;
 
     document.body.style.overflow = 'hidden';
-
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();    // ← 아이콘/화살표만 차단
+    e.preventDefault();
   });
 
   el.addEventListener('pointermove', e=>{
@@ -281,6 +278,7 @@ function drag(el){
     document.body.style.overflow = '';
   });
 }
+
 
 
 
@@ -316,7 +314,8 @@ function addText(){
   t.type = 'text';
   t.className = 'textbox';
   t.placeholder = '텍스트';
-  t.readOnly = true;           // ⭐ 핵심
+
+  t.isEditing = false;     // ⭐ 상태 변수
 
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
@@ -328,26 +327,30 @@ function addText(){
   mapDiv.appendChild(t);
   drag(t);
 
+  // 자동 폭 조절
   const adjustSize = () => {
     t.style.width = '1px';
     t.style.width = (t.scrollWidth + 6) + 'px';
   };
-
   t.addEventListener('input', adjustSize);
 
-  // 🔹 더블탭 → 편집
+  // 🔹 더블탭 → 편집 모드
   t.addEventListener('dblclick', ()=>{
+    t.isEditing = true;
     t.readOnly = false;
     t.focus();
   });
 
-  // 🔹 편집 종료 → 이동 모드
+  // 🔹 포커스 해제 → 이동 모드
   t.addEventListener('blur', ()=>{
+    t.isEditing = false;
     t.readOnly = true;
   });
 
+  t.readOnly = true;
   adjustSize();
 }
+
 
 
 /* ===== 선 ===== */
