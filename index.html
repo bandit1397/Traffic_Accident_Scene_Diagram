@@ -241,24 +241,28 @@ function select(el){
 function drag(el){
   let sx, sy, ox, oy, dragging = false;
 
-  // 모바일 스크롤 방지
-  el.style.touchAction = 'none';
+  // INPUT은 터치 기본 동작 허용
+  el.style.touchAction = el.classList.contains('textbox') ? 'auto' : 'none';
 
   el.addEventListener('pointerdown', e=>{
     select(el);
+
+    // 📌 텍스트박스면 "드래그 시작만 하지 않고 입력 우선"
+    if(el.classList.contains('textbox')){
+      el.focus();          // ✅ 포커스 강제
+      return;              // ✅ 여기서 종료 (드래그 X)
+    }
+
     sx = e.clientX; 
     sy = e.clientY;
     ox = parseFloat(el.style.left) || 0; 
     oy = parseFloat(el.style.top) || 0;
     dragging = true;
 
-    // 텍스트박스는 스크롤 방지 제외
-    if(!el.classList.contains('textbox')){
-      document.body.style.overflow = 'hidden';
-    }
+    document.body.style.overflow = 'hidden';
 
     el.setPointerCapture(e.pointerId);
-    e.preventDefault();  // 터치 드래그 중 기본 동작 막기
+    e.preventDefault();    // ← 아이콘/화살표만 차단
   });
 
   el.addEventListener('pointermove', e=>{
@@ -269,7 +273,6 @@ function drag(el){
 
   el.addEventListener('pointerup', ()=>{
     dragging = false;
-    // 드래그 끝나면 스크롤 복구
     document.body.style.overflow = '';
   });
 
@@ -278,6 +281,7 @@ function drag(el){
     document.body.style.overflow = '';
   });
 }
+
 
 
 /* ===== 객체 ===== */
