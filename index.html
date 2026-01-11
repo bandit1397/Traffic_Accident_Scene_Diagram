@@ -221,7 +221,9 @@ const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
   
-drag(panel);
+const panelHeader = document.getElementById('panelHeader');
+drag(panelHeader, panel);
+
 
 function resizeCanvas(){
   canvas.width = mapDiv.clientWidth;
