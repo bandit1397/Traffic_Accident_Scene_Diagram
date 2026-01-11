@@ -308,46 +308,42 @@ function addArrow(){
 }
 
 function addText(){
-  const p = centerPos();
-  const t = document.createElement('input');
-
-  t.type = 'text';
-  t.className = 'textbox';
-  t.placeholder = '텍스트';
-
-  t.isEditing = false;     // ⭐ 상태 변수
-
-  t.style.left = p.x + 'px';
-  t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
-  t.style.padding = '2px 4px';
-  t.style.textAlign = 'center';
-  t.style.width = '10px';
-
+  const p=centerPos();
+  const t=document.createElement('input');
+  t.className='textbox';
+  t.placeholder='텍스트';
+  t.style.left=p.x+'px';
+  t.style.top=p.y+'px';
+  t.style.fontSize='14px';
+  t.style.height='auto';
+  t.style.minHeight='20px';
+  t.style.padding='0 4px';
+  t.style.textAlign='center';
+  t.style.width='14px';
   mapDiv.appendChild(t);
-  drag(t);
 
-  // 자동 폭 조절
-  const adjustSize = () => {
-    t.style.width = '1px';
-    t.style.width = (t.scrollWidth + 6) + 'px';
+  drag(t); enableDelete(t);
+
+  const adjustSize=()=>{
+    const fs=parseFloat(window.getComputedStyle(t).fontSize)||14;
+    const text=t.value||t.placeholder||'한';
+    const canvas=document.createElement('canvas');
+    const ctx=canvas.getContext('2d');
+    ctx.font=`${fs}px sans-serif`;
+    const textWidth=ctx.measureText(text).width;
+    t.style.width=(textWidth+8)+'px';
+    t.style.height=(fs+4)+'px';
   };
+
   t.addEventListener('input', adjustSize);
+  t.addEventListener('change', adjustSize);
+  t.addEventListener('pointerdown', adjustSize);
 
-  // 🔹 더블탭 → 편집 모드
-  t.addEventListener('dblclick', ()=>{
-    t.isEditing = true;
-    t.readOnly = false;
-    t.focus();
+  const fontInput=document.getElementById('fontSize');
+  fontInput.addEventListener('input', ()=>{
+    if(selected===t){ t.style.fontSize=fontInput.value+'px'; adjustSize();}
   });
 
-  // 🔹 포커스 해제 → 이동 모드
-  t.addEventListener('blur', ()=>{
-    t.isEditing = false;
-    t.readOnly = true;
-  });
-
-  t.readOnly = true;
   adjustSize();
 }
 
