@@ -59,10 +59,12 @@ h1 { text-align:center; }
   position:absolute;
   border:1px solid #333;
   background:#fff;
-  padding:2px;
-  resize:both;
+  padding:2px 4px;
   cursor:move;
   z-index:1000;
+
+  resize:none;          /* ⭐ 제거 */
+  white-space:nowrap;  /* ⭐ 한 줄 유지 */
 }
 
 /* ===== 속성 패널 ===== */
@@ -308,40 +310,56 @@ function addArrow(){
 }
 
 function addText(){
-  const p=centerPos();
-  const t=document.createElement('input');
-  t.className='textbox';
-  t.placeholder='텍스트';
-  t.style.left=p.x+'px';
-  t.style.top=p.y+'px';
-  t.style.fontSize='14px';
-  t.style.height='auto';
-  t.style.minHeight='20px';
-  t.style.padding='0 4px';
-  t.style.textAlign='center';
-  t.style.width='14px';
+  const p = centerPos();
+  const t = document.createElement('input');
+
+  t.type = 'text';
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+
+  t.isEditing = false;       // ⭐ 상태 플래그
+  t.readOnly = true;
+
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.style.fontSize = '14px';
+  t.style.textAlign = 'center';
+  t.style.width = '12px';
+
   mapDiv.appendChild(t);
+  drag(t);
 
-  drag(t); enableDelete(t);
-
-  const adjustSize=()=>{
-    const fs=parseFloat(window.getComputedStyle(t).fontSize)||14;
-    const text=t.value||t.placeholder||'한';
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d');
-    ctx.font=`${fs}px sans-serif`;
-    const textWidth=ctx.measureText(text).width;
-    t.style.width=(textWidth+8)+'px';
-    t.style.height=(fs+4)+'px';
+  /* 🔹 자동 폭 계산 */
+  const adjustSize = ()=>{
+    t.style.width = '1px';
+    t.style.width = (t.scrollWidth + 6) + 'px';
   };
 
-  t.addEventListener('input', adjustSize);
-  t.addEventListener('change', adjustSize);
-  t.addEventListener('pointerdown', adjustSize);
+  /* 🔹 더블클릭 → 편집 */
+  t.addEventListener('dblclick', ()=>{
+    t.isEditing = true;
+    t.readOnly = false;
+    t.focus();
+    adjustSize();
+  });
 
-  const fontInput=document.getElementById('fontSize');
+  /* 🔹 입력 중 자동 확대 */
+  t.addEventListener('input', adjustSize);
+
+  /* 🔹 포커스 해제 → 이동 */
+  t.addEventListener('blur', ()=>{
+    t.isEditing = false;
+    t.readOnly = true;
+    adjustSize();
+  });
+
+  /* 🔹 폰트 슬라이더 연동 */
+  const fontInput = document.getElementById('fontSize');
   fontInput.addEventListener('input', ()=>{
-    if(selected===t){ t.style.fontSize=fontInput.value+'px'; adjustSize();}
+    if(selected === t){
+      t.style.fontSize = fontInput.value + 'px';
+      adjustSize();
+    }
   });
 
   adjustSize();
