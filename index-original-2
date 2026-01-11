@@ -59,10 +59,12 @@ h1 { text-align:center; }
   position:absolute;
   border:1px solid #333;
   background:#fff;
-  padding:2px;
-  resize:both;
+  padding:2px 4px;
   cursor:move;
   z-index:1000;
+
+  resize:none;          /* ⭐ 제거 */
+  white-space:nowrap;  /* ⭐ 한 줄 유지 */
 }
 
 /* ===== 속성 패널 ===== */
@@ -239,21 +241,52 @@ function select(el){
 
 /* ===== 드래그 ===== */
 function drag(el){
-  let sx,sy,ox,oy,dragging=false;
+  let sx, sy, ox, oy, dragging = false;
+
+  el.style.touchAction = 'none';
+
   el.addEventListener('pointerdown', e=>{
     select(el);
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
-    dragging=true;
+
+    // ✋ 텍스트 편집 중이면 드래그 금지
+    if(el.classList.contains('textbox') && el.isEditing){
+      return;   // ← preventDefault 안 함 (중요)
+    }
+
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(el.style.left) || 0;
+    oy = parseFloat(el.style.top) || 0;
+    dragging = true;
+
+    document.body.style.overflow = 'hidden';
     el.setPointerCapture(e.pointerId);
+
+    // ⭐ textbox는 preventDefault 금지 (모바일 키보드용)
+    if(!el.classList.contains('textbox')){
+      e.preventDefault();
+    }
   });
+
   el.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    el.style.left=(ox+e.clientX-sx)+'px';
-    el.style.top =(oy+e.clientY-sy)+'px';
+    el.style.left = (ox + e.clientX - sx) + 'px';
+    el.style.top  = (oy + e.clientY - sy) + 'px';
   });
-  el.addEventListener('pointerup', ()=>dragging=false);
+
+  el.addEventListener('pointerup', ()=>{
+    dragging = false;
+    document.body.style.overflow = '';
+  });
+
+  el.addEventListener('pointercancel', ()=>{
+    dragging = false;
+    document.body.style.overflow = '';
+  });
 }
+
+
+
 
 /* ===== 객체 ===== */
 function addIcon(type){
@@ -281,15 +314,62 @@ function addArrow(){
 }
 
 function addText(){
-  const p=centerPos();
-  const t=document.createElement('input');
-  t.className='textbox';
-  t.style.left=p.x+'px';
-  t.style.top=p.y+'px';
-  t.style.fontSize='14px';
+  const p = centerPos();
+  const t = document.createElement('input');
+
+  t.type = 'text';
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+
+  t.isEditing = false;       // ⭐ 상태 플래그
+  t.readOnly = true;
+
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.style.fontSize = '14px';
+  t.style.textAlign = 'center';
+  t.style.width = '12px';
+
   mapDiv.appendChild(t);
   drag(t);
+
+  /* 🔹 자동 폭 계산 */
+  const adjustSize = ()=>{
+    t.style.width = '1px';
+    t.style.width = (t.scrollWidth + 6) + 'px';
+  };
+
+  /* 🔹 더블클릭 → 편집 */
+  t.addEventListener('dblclick', ()=>{
+    t.isEditing = true;
+    t.readOnly = false;
+    t.focus();
+    adjustSize();
+  });
+
+  /* 🔹 입력 중 자동 확대 */
+  t.addEventListener('input', adjustSize);
+
+  /* 🔹 포커스 해제 → 이동 */
+  t.addEventListener('blur', ()=>{
+    t.isEditing = false;
+    t.readOnly = true;
+    adjustSize();
+  });
+
+  /* 🔹 폰트 슬라이더 연동 */
+  const fontInput = document.getElementById('fontSize');
+  fontInput.addEventListener('input', ()=>{
+    if(selected === t){
+      t.style.fontSize = fontInput.value + 'px';
+      adjustSize();
+    }
+  });
+
+  adjustSize();
 }
+
+
 
 /* ===== 선 ===== */
 let drawMode=false;
@@ -355,6 +435,7 @@ toolToggle.onclick=()=>{
 const bgMap = document.getElementById('bgMap');
 const bgInput = document.getElementById('bgInput');
 
+// 배경 이미지 선택 코드 끝
 bgInput.addEventListener('change', e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -365,6 +446,39 @@ bgInput.addEventListener('change', e=>{
   }
   reader.readAsDataURL(file);
 });
+
+/* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
+const angleInput = document.getElementById('angle');
+const sizeInput = document.getElementById('size');
+const fontSizeInput = document.getElementById('fontSize');
+const widthInput = document.getElementById('width');
+
+angleInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.transform = `rotate(${angleInput.value}deg)`; 
+});
+
+sizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  selected.style.width = sizeInput.value + 'px';
+  if(selected.tagName === 'IMG') selected.style.height = 'auto';
+});
+
+fontSizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+});
+
+widthInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') {
+    selected.style.width = widthInput.value + 'px';
+  } else if(selected.classList.contains('arrow')) {
+    selected.style.width = widthInput.value + 'px';
+    selected.style.height = 'auto';
+  }
+});
+
 
 </script>
 
