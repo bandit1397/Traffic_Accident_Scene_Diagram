@@ -5,10 +5,6 @@
 <title>Traffic Accident Scene Diagram</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
@@ -29,6 +25,26 @@ h1 { text-align:center; }
   height:600px;
   border:1px solid #888;
   position:relative;
+  overflow:hidden;
+}
+
+/* ===== 카카오 지도 이미지 ===== */
+#bgMap {
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  user-select:none;
+  pointer-events:none;
+  z-index:1;
+}
+
+/* ===== 자유곡선 캔버스 ===== */
+#drawCanvas {
+  position:absolute;
+  inset:0;
+  z-index:500;
 }
 
 /* ===== 객체 ===== */
@@ -51,17 +67,17 @@ h1 { text-align:center; }
 
 /* ===== 속성 패널 ===== */
 #panel {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #fff;
-  border: 1px solid #333;
-  padding: 10px;
-  width: 200px;
-  visibility: hidden;
-  opacity: 0;
-  z-index: 3000;
+  position:absolute;
+  left:10px;
+  top:50%;
+  transform:translateY(-50%);
+  background:#fff;
+  border:1px solid #333;
+  padding:10px;
+  width:200px;
+  visibility:hidden;
+  opacity:0;
+  z-index:3000;
 }
 
 #panel label {
@@ -74,63 +90,50 @@ h1 { text-align:center; }
   width:100%;
 }
 
-/* ===== 좌측 고정 도구 패널 ===== */
+/* ===== 도구 패널 ===== */
 #toolbox {
-  position: static;      /* Leaflet이 위치 관리 */
-  width: auto;
-}
-
-/* Leaflet 컨트롤 스타일 */
-.leaflet-control.toolbox {
-  background: transparent;
+  position:absolute;
+  top:10px;
+  left:10px;
+  z-index:4000;
 }
 
 #toolToggle {
-  width: 44px;
-  height: 44px;
-  font-size: 22px;
-  border-radius: 8px;
-  background: #333;
-  color: #fff;
-  border: none;
+  width:44px;
+  height:44px;
+  font-size:22px;
+  border-radius:8px;
+  background:#333;
+  color:#fff;
+  border:none;
 }
 
 #toolContent {
-  display: none;
-  margin-top: 6px;
-  background: #fff;
-  border: 1px solid #333;
-  border-radius: 10px;
-  padding: 6px;
-
-  width: 120px;        /* ⭐ 핵심 */
-  max-width: 70vw;     /* 모바일 안전 */
+  display:none;
+  margin-top:6px;
+  background:#fff;
+  border:1px solid #333;
+  border-radius:10px;
+  padding:6px;
+  width:120px;
 }
 
 #toolContent button {
-  width: 100%;
-  min-height: 32px;
-  margin: 2px 0;
-  font-size: 13px;
+  width:100%;
+  min-height:32px;
+  margin:2px 0;
+  font-size:13px;
 }
-  
+
 #toolContent label {
-  font-size: 12px;
-  display: block;
-  margin-top: 4px;
+  font-size:12px;
+  display:block;
+  margin-top:4px;
 }
 
 #toolContent hr {
-  margin: 6px 0;
+  margin:6px 0;
 }
-
-/* ===== 모바일 ===== */
-@media (max-width: 768px){
-  #toolContent {
-    width: 105px;
-  }
-}
-  
 </style>
 </head>
 
@@ -140,128 +143,67 @@ h1 { text-align:center; }
   <h1>교통사고 현장약도</h1>
 
   <div id="map">
-    <!-- 속성 패널 (지도 내부 포함) -->
+
+    <!-- ① 카카오 지도 캡처 -->
+    <img id="bgMap" src="kakao_capture.jpg" alt="kakao map">
+
+    <!-- ② 자유곡선 캔버스 -->
+    <canvas id="drawCanvas"></canvas>
+
+    <!-- ③ 속성 패널 -->
     <div id="panel">
       <strong>선택 객체</strong>
       <label>각도
-        <input id="angle" type="range" min="-180" max="180" step="1" value="0">
+        <input id="angle" type="range" min="-180" max="180" value="0">
       </label>
       <label>크기
-        <input id="size" type="range" min="10" max="150" step="1" value="32">
+        <input id="size" type="range" min="10" max="150" value="32">
       </label>
       <label>글자크기
-        <input id="fontSize" type="range" min="8" max="48" step="1" value="14">
+        <input id="fontSize" type="range" min="8" max="48" value="14">
       </label>
       <label>폭
-        <input id="width" type="range" min="10" max="300" step="2" value="60">
+        <input id="width" type="range" min="10" max="300" value="60">
       </label>
     </div>
-  </div>
 
-  <!-- ===== 좌측 도구 패널 ===== -->
-<div id="toolbox">
-  <button id="toolToggle">☰</button>
+    <!-- 도구 -->
+    <div id="toolbox">
+      <button id="toolToggle">☰</button>
+      <div id="toolContent">
+        <button onclick="addIcon('person')">사람</button>
+        <button onclick="addIcon('car')">자동차</button>
+        <button onclick="addIcon('bike')">자전거</button>
+        <button onclick="addIcon('moto')">오토바이</button>
+        <button onclick="addArrow()">화살표</button>
+        <button onclick="addText()">문자</button>
+        <hr>
+        <button onclick="drawMode=!drawMode">자유곡선</button>
+        <button onclick="togglePointLine()">직선(점→점)</button>
+        <label>선색 <input type="color" id="lineColor" value="#ff0000"></label>
+        <label>굵기 <input type="range" id="lineWidth" min="1" max="15" value="3"></label>
+        <button onclick="savePDF()">PDF</button>
+      </div>
+    </div>
 
-  <div id="toolContent">
-    <button onclick="addIcon('person')">사람</button>
-    <button onclick="addIcon('car')">자동차</button>
-    <button onclick="addIcon('bike')">자전거</button>
-    <button onclick="addIcon('moto')">오토바이</button>
-    <button onclick="addArrow()">화살표</button>
-    <button onclick="addText()">문자</button>
-
-    <hr>
-
-    <button onclick="toggleMap()">지도 잠금/해제</button>
-    <button onclick="drawMode = !drawMode; mapLocked = drawMode;">자유곡선</button>
-    <button onclick="togglePointLine()">직선(점→점)</button>
-
-    <label>
-      선색
-      <input type="color" id="lineColor" value="#ff0000">
-    </label>
-
-    <label>
-      굵기
-      <input type="range" id="lineWidth" min="1" max="15" value="3">
-    </label>
-
-    <button onclick="savePDF()">PDF</button>
   </div>
 </div>
-
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-/* ===== 지도 ===== */
-const leafletMap = L.map('map',{
-  maxZoom:19,
-  zoomSnap:0.25,
-  wheelPxPerZoomLevel:40
-}).setView([37.5665,126.978],18);
+const mapDiv = document.getElementById('map');
+const canvas = document.getElementById('drawCanvas');
+const ctx = canvas.getContext('2d');
+const panel = document.getElementById('panel');
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-  maxZoom:19,
-  attribution:'© OpenStreetMap'
-}).addTo(leafletMap);
-
-/* ===== 좌측 상단 도구 패널을 Leaflet 컨트롤로 고정 ===== */
-const ToolControl = L.Control.extend({
-  options: {
-    position: 'topleft'   // 줌 +/- 위치
-  },
-
-  onAdd: function () {
-    const div = document.getElementById('toolbox');
-
-    L.DomEvent.disableClickPropagation(div);
-    L.DomEvent.disableScrollPropagation(div);
-
-    div.classList.add('toolbox'); // ← 이 줄 중요
-
-    return div;
-  }
-});
-
-leafletMap.addControl(new ToolControl());
-
-
-/* ===== 지도 잠금/해제 ===== */
-let mapLocked=false;
-function lockMap(){
-  leafletMap.dragging.disable();
-  leafletMap.touchZoom.disable();
-  leafletMap.doubleClickZoom.disable();
-  leafletMap.scrollWheelZoom.disable();
-  leafletMap.boxZoom.disable();
-  leafletMap.keyboard.disable();
-  if(leafletMap.tap) leafletMap.tap.disable();
-  mapLocked=true;
+function resizeCanvas(){
+  canvas.width = mapDiv.clientWidth;
+  canvas.height = mapDiv.clientHeight;
 }
-function unlockMap(){
-  leafletMap.dragging.enable();
-  leafletMap.touchZoom.enable();
-  leafletMap.doubleClickZoom.enable();
-  leafletMap.scrollWheelZoom.enable();
-  leafletMap.boxZoom.enable();
-  leafletMap.keyboard.enable();
-  if(leafletMap.tap) leafletMap.tap.enable();
-  mapLocked=false;
-}
-function toggleMap(){ mapLocked ? unlockMap() : lockMap(); }
-
-/* ===== 점→점 직선 모드 토글 ===== */
-function togglePointLine(){
-  linePointMode = !linePointMode;
-  drawMode = false;        // 자유곡선 비활성화
-  mapLocked = linePointMode;
-  firstPoint = null;
-
-  alert(linePointMode ? '직선 모드 ON (두 점을 클릭)' : '직선 모드 OFF');
-}
-
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 /* ===== 공통 ===== */
 const icons={
@@ -272,89 +214,37 @@ const icons={
   arrow:'icons/arrow.png'
 };
 
-const mapDiv = leafletMap.getContainer();
-const panel=document.getElementById('panel');
 let selected=null;
-let panelInitialized=false;
-
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
   return {x:r.width/2-16, y:r.height/2-16};
 }
 
 function select(el){
-  if(selected===el) return;
   selected=el;
-  panel.style.display='block';
   panel.style.visibility='visible';
   panel.style.opacity='1';
-
-  angle.value = el.style.transform
-    ? (el.style.transform.match(/-?\d+/)?.[0]||0)
-    : 0;
-  if(el.tagName==='IMG') size.value = parseFloat(el.style.width)||32;
-  if(el.tagName==='INPUT'){
-    fontSize.value = parseFloat(el.style.fontSize)||14;
-    width.value    = parseFloat(el.style.width)||60;
-  }
-
-  if(panelInitialized) return;
-  panelInitialized=true;
-
-  if(window.innerWidth<=768){
-    const mapRect = mapDiv.getBoundingClientRect();
-    const elRect = el.getBoundingClientRect();
-    const pw = panel.offsetWidth;
-    const ph = panel.offsetHeight;
-    const m = 8;
-    let left = elRect.right-mapRect.left+m;
-    let top = elRect.top-mapRect.top;
-    if(left+pw>mapRect.width) left = elRect.left-mapRect.left-pw-m;
-    if(top<0) top=0;
-    if(top+ph>mapRect.height) top=mapRect.height-ph;
-    panel.style.left=left+'px';
-    panel.style.top=top+'px';
-    panel.style.right='auto';
-    panel.style.bottom='auto';
-  } else {
-    panel.style.position='absolute';
-    panel.style.left='10px';
-    panel.style.top='50%';
-    panel.style.transform='translateY(-50%)';
-  }
 }
 
+/* ===== 드래그 ===== */
 function drag(el){
   let sx,sy,ox,oy,dragging=false;
-  el.style.touchAction='none';
-
   el.addEventListener('pointerdown', e=>{
     select(el);
-    const isInput = el.tagName==='INPUT';
     sx=e.clientX; sy=e.clientY;
     ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
     dragging=true;
     el.setPointerCapture(e.pointerId);
-    if(!isInput) e.preventDefault();
   });
-
   el.addEventListener('pointermove', e=>{
     if(!dragging) return;
     el.style.left=(ox+e.clientX-sx)+'px';
     el.style.top =(oy+e.clientY-sy)+'px';
   });
-
   el.addEventListener('pointerup', ()=>dragging=false);
 }
 
-function enableDelete(el){
-  el.addEventListener('contextmenu', e=>{
-    e.preventDefault();
-    if(confirm('이 객체를 삭제하시겠습니까?')) el.remove();
-  });
-}
-
-/* ===== 객체 추가 ===== */
+/* ===== 객체 ===== */
 function addIcon(type){
   const p=centerPos();
   const img=document.createElement('img');
@@ -364,224 +254,92 @@ function addIcon(type){
   img.style.top=p.y+'px';
   img.style.width='32px';
   mapDiv.appendChild(img);
-  drag(img); enableDelete(img);
+  drag(img);
 }
 
 function addArrow(){
   const p=centerPos();
-  const a=document.createElement('img');
-  a.src=icons.arrow;
-  a.className='arrow';
-  a.style.left=p.x+'px';
-  a.style.top=p.y+'px';
-  a.style.width='32px';
-  mapDiv.appendChild(a);
-  drag(a); enableDelete(a);
+  const img=document.createElement('img');
+  img.src=icons.arrow;
+  img.className='arrow';
+  img.style.left=p.x+'px';
+  img.style.top=p.y+'px';
+  img.style.width='32px';
+  mapDiv.appendChild(img);
+  drag(img);
 }
 
 function addText(){
   const p=centerPos();
   const t=document.createElement('input');
   t.className='textbox';
-  t.placeholder='텍스트';
   t.style.left=p.x+'px';
   t.style.top=p.y+'px';
   t.style.fontSize='14px';
-  t.style.height='auto';
-  t.style.minHeight='20px';
-  t.style.padding='0 4px';
-  t.style.textAlign='center';
-  t.style.width='14px';
   mapDiv.appendChild(t);
+  drag(t);
+}
 
-  drag(t); enableDelete(t);
+/* ===== 선 ===== */
+let drawMode=false;
+let drawing=false;
+let firstPoint=null;
+let currentLineWidth=3;
+let currentLineColor='#ff0000';
 
-  const adjustSize=()=>{
-    const fs=parseFloat(window.getComputedStyle(t).fontSize)||14;
-    const text=t.value||t.placeholder||'한';
-    const canvas=document.createElement('canvas');
-    const ctx=canvas.getContext('2d');
-    ctx.font=`${fs}px sans-serif`;
-    const textWidth=ctx.measureText(text).width;
-    t.style.width=(textWidth+8)+'px';
-    t.style.height=(fs+4)+'px';
+canvas.addEventListener('pointerdown', e=>{
+  if(!drawMode) return;
+  drawing=true;
+  ctx.beginPath();
+  ctx.moveTo(e.offsetX,e.offsetY);
+});
+canvas.addEventListener('pointermove', e=>{
+  if(!drawing) return;
+  ctx.lineTo(e.offsetX,e.offsetY);
+  ctx.strokeStyle=currentLineColor;
+  ctx.lineWidth=currentLineWidth;
+  ctx.stroke();
+});
+canvas.addEventListener('pointerup', ()=>drawing=false);
+
+function togglePointLine(){
+  firstPoint=null;
+  drawMode=false;
+  canvas.onclick=e=>{
+    if(!firstPoint){
+      firstPoint={x:e.offsetX,y:e.offsetY};
+    }else{
+      ctx.beginPath();
+      ctx.moveTo(firstPoint.x,firstPoint.y);
+      ctx.lineTo(e.offsetX,e.offsetY);
+      ctx.strokeStyle=currentLineColor;
+      ctx.lineWidth=currentLineWidth;
+      ctx.stroke();
+      firstPoint=null;
+    }
   };
-
-  t.addEventListener('input', adjustSize);
-  t.addEventListener('change', adjustSize);
-  t.addEventListener('pointerdown', adjustSize);
-
-  const fontInput=document.getElementById('fontSize');
-  fontInput.addEventListener('input', ()=>{
-    if(selected===t){ t.style.fontSize=fontInput.value+'px'; adjustSize();}
-  });
-
-  adjustSize();
 }
 
-/* ===== 패널 입력 ===== */
-angle.oninput=e=>{ if(selected) selected.style.transform=`rotate(${e.target.value}deg)`; };
-size.oninput=e=>{ if(selected&&selected.tagName==='IMG') selected.style.width=e.target.value+'px'; };
-fontSize.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.fontSize=e.target.value+'px'; };
-width.oninput=e=>{ if(selected&&selected.tagName==='INPUT') selected.style.width=e.target.value+'px'; };
-
-/* ===== 자유곡선 그리기 코드 ===== */
-let currentLineWidth = 3;          // 선 굵기
-let currentLineColor = '#ff0000';  // 선 색상
-
-let drawMode = false;              // 자유곡선 모드 ON/OFF
-let drawing = false;               // 현재 그리고 있는 중인지
-let currentLine = null;            // 현재 그리는 선
-let freeLines = [];                // 그려진 모든 자유곡선
-
-/* ===== 점 → 점 직선 모드 ===== */
-let linePointMode = false;     // 점→점 직선 모드
-let firstPoint = null;         // 첫 번째 클릭 좌표
-let pointLines = [];           // 생성된 직선들
-
-/* ===== 점 → 점 직선 삭제 함수 ===== */
-function deletePointLine(line){
-  leafletMap.removeLayer(line);
-  pointLines = pointLines.filter(l => l !== line);
-}
-
-/* ===== 자유곡선 UI 연결 ===== */
-document.getElementById('lineWidth').addEventListener('input', e => {
-  currentLineWidth = Number(e.target.value);
-});
-
-document.getElementById('lineColor').addEventListener('input', e => {
-  currentLineColor = e.target.value;
-});
-
-/* ===== 자유곡선 그리기 코드 ===== */
-mapDiv.addEventListener('pointerdown', e => {
-  if (!drawMode) return;
-  drawing = true;
-  const point = leafletMap.mouseEventToLatLng(e);
-  currentLine = L.polyline(
-    [point],
-    {
-      color: currentLineColor,
-      weight: currentLineWidth,
-      lineCap: 'round',
-      lineJoin: 'round'
-    }
-  ).addTo(leafletMap);
-});
-
-mapDiv.addEventListener('pointermove', e => {
-  if (!drawing || !currentLine) return;
-  currentLine.addLatLng(leafletMap.mouseEventToLatLng(e));
-});
-
-mapDiv.addEventListener('pointerup', () => {
-  if (drawing && currentLine) freeLines.push(currentLine);
-  drawing = false;
-  currentLine = null;
-});
-
-/* ===== 점 → 점 직선 생성 ===== */
-leafletMap.on('click', e => {
-  if (!linePointMode) return;
-
-  if (!firstPoint) {
-    firstPoint = e.latlng;
-    return;
-  }
-
-  const secondPoint = e.latlng;
-
-  const line = L.polyline(
-    [firstPoint, secondPoint],
-    {
-      color: currentLineColor,
-      weight: currentLineWidth
-    }
-  ).addTo(leafletMap);
-
-  // 🔥 직선 클릭 시 삭제
-  line.on('click', ev => {
-    L.DomEvent.stopPropagation(ev); // 지도 클릭 방지
-    deletePointLine(line);
-  });
-
-  pointLines.push(line);
-  firstPoint = null;
-});
-
-/* ===== 자유곡선 삭제 기능 ===== */
-mapDiv.addEventListener('click', e => {
-  if(drawMode) return;   // 🔑 그리는 중엔 삭제 금지
-
-  const latlng = leafletMap.mouseEventToLatLng(e);
-
-  for(let i = 0; i < freeLines.length; i++){
-    const line = freeLines[i];
-    const latlngs = line.getLatLngs();
-
-    for(const pt of latlngs){
-      const d = leafletMap
-        .latLngToContainerPoint(pt)
-        .distanceTo(leafletMap.latLngToContainerPoint(latlng));
-
-      if(d < 6){   // 허용 오차(px)
-        leafletMap.removeLayer(line);
-        freeLines.splice(i, 1);
-        return;
-      }
-    }
-  }
-});
+document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
+document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
 
 /* ===== PDF ===== */
 async function savePDF(){
-  lockMap();
-  const canvas=await html2canvas(container,{useCORS:true});
+  const canvasImg=await html2canvas(container);
   const {jsPDF}=window.jspdf;
   const pdf=new jsPDF('p','mm','a4');
   const w=pdf.internal.pageSize.getWidth();
-  const h=canvas.height*w/canvas.width;
-  pdf.addImage(canvas.toDataURL(),'PNG',0,0,w,h);
+  const h=canvasImg.height*w/canvasImg.width;
+  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
-  unlockMap();
 }
 
-/* 3️⃣ ☰ 도구 토글 코드 */
-const toggleBtn = document.getElementById('toolToggle');
-const toolContent = document.getElementById('toolContent');
-toggleBtn.addEventListener('click', () => {
-  toolContent.style.display =
-    toolContent.style.display === 'block' ? 'none' : 'block';
-});
-
-
-/* ===== 속성 패널 드래그 ===== */
-(function(){
-  const panel=document.getElementById('panel');
-  let sx=0, sy=0, ox=0, oy=0, dragging=false;
-  panel.style.touchAction='none';
-  panel.addEventListener('pointerdown', e=>{
-    if(e.target.tagName==='INPUT') return;
-    dragging=true;
-    sx=e.clientX; sy=e.clientY;
-    const mapRect=mapDiv.getBoundingClientRect();
-    const panelRect=panel.getBoundingClientRect();
-    panel.style.transform='none';
-    panel.style.left=(panelRect.left-mapRect.left)+'px';
-    panel.style.top=(panelRect.top-mapRect.top)+'px';
-    ox=parseFloat(panel.style.left); oy=parseFloat(panel.style.top);
-    panel.setPointerCapture(e.pointerId);
-    e.preventDefault();
-  });
-  panel.addEventListener('pointermove', e=>{
-    if(!dragging) return;
-    panel.style.left=(ox+e.clientX-sx)+'px';
-    panel.style.top=(oy+e.clientY-sy)+'px';
-  });
-  panel.addEventListener('pointerup', ()=>dragging=false);
-  panel.addEventListener('pointercancel', ()=>dragging=false);
-})();
+/* ===== 도구 토글 ===== */
+toolToggle.onclick=()=>{
+  toolContent.style.display=
+    toolContent.style.display==='block'?'none':'block';
+};
 </script>
+
 </body>
 </html>
