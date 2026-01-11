@@ -255,9 +255,19 @@ function centerPos(){
 function select(el){
   if(el === panel) return;
   selected = el;
+
+  if(!panelInitialized){
+    const r = mapDiv.getBoundingClientRect();
+    panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
+    panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
+    panel.style.transform = 'none';   // 중앙 계산 후 해제
+    panelInitialized = true;
+  }
+
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
 }
+
 
 
 /* ===== 드래그 ===== */
