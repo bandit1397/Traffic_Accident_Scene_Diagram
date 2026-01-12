@@ -325,7 +325,30 @@ svg.addEventListener('pointerdown', e=>{
       svg.setPointerCapture(e.pointerId);
     }
   }
-});  
+});
+
+/* ===== 선 이동 ===== */
+svg.addEventListener('pointermove', e=>{
+  if(!selectedLine) return;
+
+  const pt = getSVGPoint(e);
+  const dx = pt.x - dragOffset.x;
+  const dy = pt.y - dragOffset.y;
+
+  const w = selectedLine.x2.baseVal.value - selectedLine.x1.baseVal.value;
+  const h = selectedLine.y2.baseVal.value - selectedLine.y1.baseVal.value;
+
+  selectedLine.setAttribute('x1', dx);
+  selectedLine.setAttribute('y1', dy);
+  selectedLine.setAttribute('x2', dx + w);
+  selectedLine.setAttribute('y2', dy + h);
+});
+
+/* ===== 이동 종료 ===== */
+svg.addEventListener('pointerup', ()=>{
+  selectedLine = null;
+});
+
   
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
