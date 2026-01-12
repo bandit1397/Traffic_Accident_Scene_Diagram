@@ -162,11 +162,15 @@ h1 { text-align:center; }
     <!-- ① 카카오 지도 캡처 -->
     <img id="bgMap" src="kakao_capture.jpg" alt="kakao map">
 
-    <!-- ② 자유곡선 캔버스 -->
+    <!-- ② 선 전용 SVG 레이어 (실선/점선용) -->
+    <svg id="lineLayer"></svg>
+
+    <!-- ③ 자유곡선 캔버스 -->
     <canvas id="drawCanvas"></canvas>
 
-    <!-- ③ 속성 패널 -->
+    <!-- ④ 속성 패널 -->
     <div id="panel">
+
       <div id="panelHeader">선택 객체</div>
 
       <label>각도
