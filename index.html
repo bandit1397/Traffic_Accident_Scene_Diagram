@@ -287,7 +287,7 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
-  canvas.style.pointerEvents = 'none';   
+  canvas.style.pointerEvents = type ? 'none' : 'auto';  
 }
 
 
