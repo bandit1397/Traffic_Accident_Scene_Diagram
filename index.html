@@ -349,6 +349,15 @@ svg.addEventListener('pointerup', ()=>{
   selectedLine = null;
 });
 
+/* ===== 좌표 변환 ===== */
+function getSVGPoint(e){
+  const r = svg.getBoundingClientRect();
+  return {
+    x: e.clientX - r.left,
+    y: e.clientY - r.top
+  };
+}  
+
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
   const line = document.createElementNS(
