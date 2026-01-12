@@ -292,6 +292,40 @@ function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
 }
+
+/* ===== 선 입력 이벤트 (← 바로 다음에 질문한 코드가 옴) ===== */
+svg.addEventListener('pointerdown', e=>{
+  const pt = getSVGPoint(e);
+
+  /* ===== 생성 ===== */
+  if(lineMode){
+    if(!startPoint){
+      startPoint = pt;
+    }else{
+      createLine(startPoint, pt, lineMode);
+      startPoint = null;
+    }
+  }
+
+  /* ===== 삭제 ===== */
+  if(deleteMode){
+    const line = findNearestLine(pt, deleteMode);
+    if(line) svg.removeChild(line);
+  }
+
+  /* ===== 이동 시작 ===== */
+  if(moveMode){
+    const line = findNearestLine(pt, moveMode);
+    if(line){
+      selectedLine = line;
+      dragOffset = {
+        x: pt.x - line.x1.baseVal.value,
+        y: pt.y - line.y1.baseVal.value
+      };
+      svg.setPointerCapture(e.pointerId);
+    }
+  }
+});  
   
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
