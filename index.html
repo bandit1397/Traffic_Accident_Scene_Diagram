@@ -387,6 +387,18 @@ function findNearestLine(pt, type){
   });
   return target;
 }
+
+/* ===== 점-선 거리 계산 ===== */
+function pointLineDistance(p, l){
+  const x1=l.x1.baseVal.value, y1=l.y1.baseVal.value;
+  const x2=l.x2.baseVal.value, y2=l.y2.baseVal.value;
+  const A=p.x-x1, B=p.y-y1, C=x2-x1, D=y2-y1;
+  const dot=A*C+B*D;
+  const len=C*C+D*D;
+  const t=Math.max(0,Math.min(1,dot/len));
+  const x=x1+t*C, y=y1+t*D;
+  return Math.hypot(p.x-x,p.y-y);
+}
   
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
