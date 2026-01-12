@@ -287,17 +287,24 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
+  canvas.style.pointerEvents = 'none';   
 }
+
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
+  canvas.style.pointerEvents = 'none';   
 }
+
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
+
+  canvas.style.pointerEvents = 'none';   
 }
+
 
 /* ===== 선 입력 이벤트 (← 바로 다음에 질문한 코드가 옴) ===== */
 svg.addEventListener('pointerdown', e=>{
