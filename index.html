@@ -779,6 +779,31 @@ angleInput.addEventListener('input', ()=> {
   selected.style.transform = `rotate(${angleInput.value}deg)`; 
 });
 
+// ▶ 여기부터 추가 (공용 함수 영역)
+function rotateLine(line, angle){
+  const x1 = line.x1.baseVal.value;
+  const y1 = line.y1.baseVal.value;
+  const x2 = line.x2.baseVal.value;
+  const y2 = line.y2.baseVal.value;
+
+  const cx = (x1 + x2) / 2;
+  const cy = (y1 + y2) / 2;
+
+  const rad = angle * Math.PI / 180;
+  const cos = Math.cos(rad);
+  const sin = Math.sin(rad);
+
+  const dx1 = x1 - cx;
+  const dy1 = y1 - cy;
+  const dx2 = x2 - cx;
+  const dy2 = y2 - cy;
+
+  line.setAttribute('x1', cx + dx1*cos - dy1*sin);
+  line.setAttribute('y1', cy + dx1*sin + dy1*cos);
+  line.setAttribute('x2', cx + dx2*cos - dy2*sin);
+  line.setAttribute('y2', cy + dx2*sin + dy2*cos);
+}
+
 sizeInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
   selected.style.width = sizeInput.value + 'px';
