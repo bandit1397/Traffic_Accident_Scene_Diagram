@@ -815,6 +815,22 @@ sizeInput.addEventListener('input', ()=> {
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
 });
 
+function scaleLine(line, scale){
+  const x1 = line.x1.baseVal.value;
+  const y1 = line.y1.baseVal.value;
+  const x2 = line.x2.baseVal.value;
+  const y2 = line.y2.baseVal.value;
+
+  const cx = (x1 + x2) / 2;
+  const cy = (y1 + y2) / 2;
+
+  line.setAttribute('x1', cx + (x1 - cx) * scale);
+  line.setAttribute('y1', cy + (y1 - cy) * scale);
+  line.setAttribute('x2', cx + (x2 - cx) * scale);
+  line.setAttribute('y2', cy + (y2 - cy) * scale);
+}
+
+
 fontSizeInput.addEventListener('input', ()=> {
   if(!selected) return;
   if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
