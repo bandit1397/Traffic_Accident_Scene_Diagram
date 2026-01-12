@@ -806,6 +806,11 @@ function rotateLine(line, angle){
 
 sizeInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
+  // 🟢 SVG 선 크기
+  if(selected.tagName === 'line'){
+    scaleLine(selected, sizeInput.value / 100);
+    return;
+  }
   selected.style.width = sizeInput.value + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
 });
