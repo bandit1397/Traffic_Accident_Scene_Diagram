@@ -138,7 +138,12 @@ h1 { text-align:center; }
   border-radius:10px;
   padding:6px;
   width:120px;
+
+  max-height: 70vh;        /* ⭐ 화면 높이의 70%까지만 */
+  overflow-y: auto;       /* ⭐ 세로 스크롤 */
+  overscroll-behavior: contain;
 }
+
 
 #toolContent button {
   width:100%;
