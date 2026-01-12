@@ -421,6 +421,12 @@ function createLine(p1, p2, type){
   }
 
   line.dataset.type = type;
+  line.addEventListener('pointerdown', e=>{
+    selected = line;
+    panel.style.visibility = 'visible';
+    panel.style.opacity = '1';
+    e.stopPropagation();   // 선 그리기/지도 클릭 방지
+  });
   svg.appendChild(line);
 }
 
