@@ -266,6 +266,17 @@ const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
 
+/* ===== 선(SVG) 시스템 ===== */
+const svg = document.getElementById('lineLayer');
+
+let lineMode = null;     // 'solid' | 'dashed' | null
+let moveMode = null;
+let deleteMode = null;
+
+let startPoint = null;
+let selectedLine = null;
+let dragOffset = {x:0,y:0};
+
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
     panel.style.visibility = 'hidden';
