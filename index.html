@@ -349,6 +349,29 @@ svg.addEventListener('pointerup', ()=>{
   selectedLine = null;
 });
 
+/* ===== 선 생성 ===== */
+function createLine(p1, p2, type){
+  const line = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'line'
+  );
+
+  line.setAttribute('x1', p1.x);
+  line.setAttribute('y1', p1.y);
+  line.setAttribute('x2', p2.x);
+  line.setAttribute('y2', p2.y);
+  line.setAttribute('stroke', currentLineColor);
+  line.setAttribute('stroke-width', currentLineWidth);
+  line.setAttribute('stroke-linecap', 'round');
+
+  if(type === 'dashed'){
+    line.setAttribute('stroke-dasharray', '8 6');
+  }
+
+  line.dataset.type = type;
+  svg.appendChild(line);
+}
+
   
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
