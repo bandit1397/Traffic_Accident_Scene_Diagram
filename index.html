@@ -299,12 +299,15 @@ function drag(handle, target = handle){
   handle.style.touchAction = 'none';
 
   handle.addEventListener('pointerdown', e=>{
-    // 선택
+
+    if(target === panel && panel.style.transform){
+      panel.style.transform = 'none';
+    }
+
     if(typeof select === 'function'){
       select(target);
     }
 
-    // 텍스트 편집 중이면 이동 금지
     if(target.classList.contains('textbox') && target.isEditing){
       return;
     }
@@ -313,13 +316,12 @@ function drag(handle, target = handle){
     sx = e.clientX;
     sy = e.clientY;
     ox = parseFloat(target.style.left) || 0;
-    oy = parseFloat(target.style.top) || 0;
+    oy = parseFloat(target.style.top)  || 0;
 
-    // ⭐⭐⭐ 핵심
     handle.setPointerCapture(e.pointerId);
-
     e.preventDefault();
   });
+
 
   handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
