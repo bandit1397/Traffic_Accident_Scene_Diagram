@@ -172,14 +172,17 @@ h1 { text-align:center; }
 
   <div id="map">
 
-    <!-- ① 카카오 지도 캡처 -->
-    <img id="bgMap" src="kakao_capture.jpg" alt="kakao map">
+    <img id="bgMap" src="kakao_capture.jpg">
 
-    <!-- ② 선 전용 SVG 레이어 (실선/점선용) -->
-    <svg id="lineLayer"></svg>
+    <svg id="lineLayer"
+         width="100%"
+         height="100%"
+         viewBox="0 0 1000 1000"
+         preserveAspectRatio="none">
+    </svg>
 
-    <!-- ③ 자유곡선 캔버스 -->
     <canvas id="drawCanvas"></canvas>
+
 
     <!-- ④ 속성 패널 -->
     <div id="panel">
