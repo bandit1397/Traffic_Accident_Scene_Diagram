@@ -772,6 +772,10 @@ const widthInput = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
+  if(selected.tagName === 'line'){
+    rotateLine(selected, angleInput.value);
+    return;
+  }
   selected.style.transform = `rotate(${angleInput.value}deg)`; 
 });
 
