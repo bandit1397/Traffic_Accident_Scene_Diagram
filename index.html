@@ -227,15 +227,24 @@ const canvas = document.getElementById('drawCanvas');
 const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
 
-function togglePanel(){                           // ← 여기
+function togglePanel(){
   if(panel.style.visibility === 'visible'){
     panel.style.visibility = 'hidden';
     panel.style.opacity = '0';
   } else {
+    // 🔹 현재 화면 기준 위치를 px로 고정
+    const r = panel.getBoundingClientRect();
+    const mapR = mapDiv.getBoundingClientRect();
+
+    panel.style.left = (r.left - mapR.left) + 'px';
+    panel.style.top  = (r.top  - mapR.top ) + 'px';
+    panel.style.transform = 'none';   // ⭐ transform 완전 제거
+
     panel.style.visibility = 'visible';
     panel.style.opacity = '1';
   }
 }
+
   
 const panelHeader = document.getElementById('panelHeader');
 drag(panelHeader, panel);
