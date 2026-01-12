@@ -372,6 +372,21 @@ function createLine(p1, p2, type){
   svg.appendChild(line);
 }
 
+/* ===== 가장 가까운 선 찾기 ===== */
+function findNearestLine(pt, type){
+  let min = 15;
+  let target = null;
+
+  [...svg.children].forEach(l=>{
+    if(l.dataset.type !== type) return;
+    const d = pointLineDistance(pt, l);
+    if(d < min){
+      min = d;
+      target = l;
+    }
+  });
+  return target;
+}
   
 function togglePanel(){
   if(panel.style.visibility === 'visible'){
