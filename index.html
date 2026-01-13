@@ -425,6 +425,11 @@ svg.addEventListener('pointerdown', e=>{
       svg.setPointerCapture(e.pointerId);
     }
   }
+  // 선 선택
+  if(!lineMode && !moveMode && !deleteMode){
+    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
+    if(line) select(line);
+  }
 });
 
 /* ===== 선 이동 ===== */
