@@ -442,11 +442,15 @@ function createLine(p1, p2, type){
 
   line.dataset.type = type;
   line.addEventListener('pointerdown', e=>{
+    if(selected) selected.classList.remove('selected-object');
     selected = line;
+    line.classList.add('selected-object');
+
     panel.style.visibility = 'visible';
     panel.style.opacity = '1';
-    e.stopPropagation();   // 선 그리기/지도 클릭 방지
+    e.stopPropagation();
   });
+
   svg.appendChild(line);
 }
 
