@@ -592,6 +592,7 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
 
 function addArrow(){
@@ -604,6 +605,8 @@ function addArrow(){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
+
 }
 
 function addText(){
@@ -625,6 +628,50 @@ function addText(){
 
   mapDiv.appendChild(t);
   drag(t);
+  enableDeleteConfirmation(t);  // 🔹 여기 추가
+
+  /* ===== 객체 삭제 확인 (PC: 우클릭 더블클릭, 모바일: 길게 누름) ===== */
+function enableDeleteConfirmation(el) {
+  let touchTimer = null;
+
+  // PC: 오른쪽 클릭 더블클릭
+  el.addEventListener('dblclick', e => {
+    if(e.button === 2) { // 우클릭
+      e.preventDefault();
+      if(confirm('이 객체를 삭제하시겠습니까?')) {
+        el.remove();
+        if(selected === el) selected = null;
+      }
+    }
+  });
+
+  // 모바일: 길게 누름 (long press)
+  el.addEventListener('pointerdown', e => {
+    if(e.pointerType === 'touch') {
+      touchTimer = setTimeout(() => {
+        if(confirm('이 객체를 삭제하시겠습니까?')) {
+          el.remove();
+          if(selected === el) selected = null;
+        }
+      }, 700); // 700ms 길게 누름
+    }
+  });
+
+  el.addEventListener('pointerup', e => {
+    if(touchTimer) {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    }
+  });
+
+  el.addEventListener('pointercancel', e => {
+    if(touchTimer) {
+      clearTimeout(touchTimer);
+      touchTimer = null;
+    }
+  });
+}
+
 
   /* 🔹 모바일 탭 → 편집 */
 let touchMoved = false;
