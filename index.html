@@ -160,6 +160,17 @@ h1 { text-align:center; }
   border:1px solid #2c7be5;
 }
 
+/* ===== 선택된 객체 표시 (빨간 테두리만) ===== */
+.selected-object {
+  outline: 2px solid red;
+  outline-offset: 2px;
+}
+
+/* SVG 선 선택 시 */
+line.selected-object {
+  stroke: red !important;
+}
+
 
 #toolContent label {
   font-size:12px;
