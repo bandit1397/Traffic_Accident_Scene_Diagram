@@ -204,8 +204,12 @@ h1 { text-align:center; }
 
       <div id="panelHeader">선택 객체</div>
 
-      <label>각도
-        <input id="angle" type="range" min="-180" max="180" value="0">
+      <<label>각도
+        <div class="rangeWrap">
+          <button class="stepBtn" data-target="angle" data-step="-1">−</button>
+          <input id="angle" type="range" min="-180" max="180" value="0">
+          <button class="stepBtn" data-target="angle" data-step="1">+</button>
+        </div>
       </label>
       <label>크기
         <input id="size" type="range" min="10" max="150" value="32">
