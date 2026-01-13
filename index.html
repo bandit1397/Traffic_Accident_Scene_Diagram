@@ -802,10 +802,11 @@ bgInput.addEventListener('change', e=>{
 });
 
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
-const angleInput = document.getElementById('angle');
-const sizeInput = document.getElementById('size');
+const angleInput    = document.getElementById('angle');
+let lineRotateAnchor = 'start';   // 'start' = x1,y1 / 'end' = x2,y2
+const sizeInput     = document.getElementById('size');
 const fontSizeInput = document.getElementById('fontSize');
-const widthInput = document.getElementById('width');
+const widthInput    = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
