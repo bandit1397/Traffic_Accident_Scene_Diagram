@@ -882,6 +882,47 @@ widthInput.addEventListener('input', ()=> {
   }
 });
 
+/* ===================================================== */
+/* ===== + / - 자동 증감 버튼 (슬라이더 기능 재사용) ===== */
+/* ===================================================== */
+
+let stepTimer = null;
+
+document.querySelectorAll('.stepBtn').forEach(btn=>{
+  const targetId = btn.dataset.target;
+  const step = parseFloat(btn.dataset.step);
+
+  const start = ()=>{
+    const input = document.getElementById(targetId);
+    if(!input) return;
+
+    const update = ()=>{
+      let v = parseFloat(input.value) + step;
+      v = Math.max(
+        parseFloat(input.min),
+        Math.min(parseFloat(input.max), v)
+      );
+      input.value = v;
+
+      // ⭐ 기존 슬라이더 로직 100% 재사용
+      input.dispatchEvent(new Event('input'));
+    };
+
+    update();                 // 즉시 1회
+    stepTimer = setInterval(update, 80); // 길게 누르면 자동
+  };
+
+  const stop = ()=>{
+    clearInterval(stepTimer);
+    stepTimer = null;
+  };
+
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
+});
+
 
 </script>
 
