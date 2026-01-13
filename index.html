@@ -284,6 +284,46 @@ h1 { text-align:center; }
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
+// ===== 여기! =====
+function enableDeleteConfirmation(el) {
+    let touchTimer = null;
+
+    el.addEventListener('dblclick', e => {
+        e.preventDefault();
+        if(confirm('이 객체를 삭제하시겠습니까?')) {
+            el.remove();
+            if(selected === el){
+                selected = null;
+                panel.style.visibility = 'hidden';
+                panel.style.opacity = '0';
+            }
+        }
+    });
+
+    el.addEventListener('pointerdown', e => {
+        if(e.pointerType === 'touch') {
+            touchTimer = setTimeout(() => {
+                if(confirm('이 객체를 삭제하시겠습니까?')) {
+                    el.remove();
+                    if(selected === el){
+                        selected = null;
+                        panel.style.visibility = 'hidden';
+                        panel.style.opacity = '0';
+                    }
+                }
+            }, 700);
+        }
+    });
+
+    el.addEventListener('pointerup', e => {
+        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    });
+
+    el.addEventListener('pointercancel', e => {
+        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    });
+}
+
 // 선 색과 두께 초기값
 let currentLineColor = document.getElementById('lineColor').value;  // 기본 빨강
 let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
