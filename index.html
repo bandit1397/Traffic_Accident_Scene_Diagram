@@ -707,21 +707,6 @@ let drawMode=false;
 let drawing=false;
 let firstPoint=null;
  
-canvas.addEventListener('pointerdown', e=>{
-  if(!drawMode) return;
-  drawing=true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX,e.offsetY);
-});
-canvas.addEventListener('pointermove', e=>{
-  if(!drawing) return;
-  ctx.lineTo(e.offsetX,e.offsetY);
-  ctx.strokeStyle=currentLineColor;
-  ctx.lineWidth=currentLineWidth;
-  ctx.stroke();
-});
-canvas.addEventListener('pointerup', ()=>drawing=false);
-
 document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
 document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
 
