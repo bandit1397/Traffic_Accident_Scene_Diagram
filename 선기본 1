@@ -153,6 +153,14 @@ h1 { text-align:center; }
   font-size:13px;
 }
 
+/* ===== 도구 버튼 선택 표시 ===== */
+#toolContent button.active {
+  background:#2c7be5 !important;
+  color:#fff !important;
+  border:1px solid #2c7be5;
+}
+
+
 #toolContent label {
   font-size:12px;
   display:block;
@@ -237,13 +245,14 @@ h1 { text-align:center; }
       <div id="toolContent">
 
         <!-- ===== 객체 ===== -->
-        <button onclick="togglePanel()">객체패널</button>
-        <button onclick="addIcon('person')">사람</button>
-        <button onclick="addIcon('car')">자동차</button>
-        <button onclick="addIcon('bike')">자전거</button>
-        <button onclick="addIcon('moto')">오토바이</button>
-        <button onclick="addArrow()">화살표</button>
-        <button onclick="addText()">문자</button>
+        <button onclick="togglePanel(); setActiveTool(this)">객체패널</button>
+        <button onclick="addIcon('person'); setActiveTool(this)">사람</button>
+        <button onclick="addIcon('car'); setActiveTool(this)">자동차</button>
+        <button onclick="addIcon('bike'); setActiveTool(this)">자전거</button>
+        <button onclick="addIcon('moto'); setActiveTool(this)">오토바이</button>
+        <button onclick="addArrow(); setActiveTool(this)">화살표</button>
+        <button onclick="addText(); setActiveTool(this)">문자</button>
+
 
         <hr>
 
@@ -268,15 +277,15 @@ h1 { text-align:center; }
         <!-- ===== 새로 추가되는 선 패널 ===== -->
         <b style="font-size:12px;">선</b>
 
-        <button onclick="setLineMode('solid')">실선 선택</button>
-        <button onclick="setLineMode('dashed')">점선 선택</button>
-        <button onclick="setLineMode(null)">선 해제</button>
+        <button onclick="setLineMode('solid'); setActiveTool(this)">실선 선택</button>
+        <button onclick="setLineMode('dashed'); setActiveTool(this)">점선 선택</button>
+        <button onclick="setLineMode(null); setActiveTool(null)">선 해제</button>
 
-        <button onclick="setMoveMode('solid')">실선 이동</button>
-        <button onclick="setMoveMode('dashed')">점선 이동</button>
+        <button onclick="setMoveMode('solid'); setActiveTool(this)">실선 이동</button>
+        <button onclick="setMoveMode('dashed'); setActiveTool(this)">점선 이동</button>
 
-        <button onclick="setDeleteMode('solid')">실선 삭제</button>
-        <button onclick="setDeleteMode('dashed')">점선 삭제</button>
+        <button onclick="setDeleteMode('solid'); setActiveTool(this)">실선 삭제</button>
+        <button onclick="setDeleteMode('dashed'); setActiveTool(this)">점선 삭제</button>
 
         <hr>
 
@@ -747,6 +756,16 @@ toolToggle.onclick=()=>{
   toolContent.style.display=
     toolContent.style.display==='block'?'none':'block';
 };
+
+/* ===== 도구 버튼 선택 표시 ===== */
+function setActiveTool(btn){
+  document
+    .querySelectorAll('#toolContent button')
+    .forEach(b=>b.classList.remove('active'));
+
+  if(btn) btn.classList.add('active');
+}
+
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
