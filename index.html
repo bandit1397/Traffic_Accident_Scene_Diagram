@@ -160,22 +160,6 @@ h1 { text-align:center; }
   border:1px solid #2c7be5;
 }
 
-/* ===== 선택된 객체 표시 (빨간 테두리만) ===== */
-.selected-object {
-  outline: 2px solid red;
-  outline-offset: 2px;
-}
-
-/* SVG 선 선택 강조 */
-line.selected-object {
-  stroke: #ff3b30 !important;
-}
-
-/* SVG 선 선택 시 */
-line.selected-object {
-  stroke: red !important;
-}
-
 
 #toolContent label {
   font-size:12px;
@@ -447,10 +431,11 @@ function createLine(p1, p2, type){
 
   line.dataset.type = type;
   line.addEventListener('pointerdown', e=>{
-    select(line);          // ⭐ 유일한 선택 처리
-    e.stopPropagation();   // 기존 기능 유지
+    selected = line;
+    panel.style.visibility = 'visible';
+    panel.style.opacity = '1';
+    e.stopPropagation();   // 선 그리기/지도 클릭 방지
   });
-
   svg.appendChild(line);
 }
 
@@ -530,13 +515,8 @@ function centerPos(){
 
 function select(el){
   if(el === panel) return;
-  if(selected){
-    selected.classList.remove('selected-object');
-  }
   selected = el;
-  if(selected){
-    selected.classList.add('selected-object');
-  }
+
   if(!panelInitialized){
     const r = mapDiv.getBoundingClientRect();
     panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
@@ -544,9 +524,12 @@ function select(el){
     panel.style.transform = 'none';   // 중앙 계산 후 해제
     panelInitialized = true;
   }
+
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
 }
+
+
 
 /* ===== 드래그 ===== */
 function drag(handle, target = handle){
