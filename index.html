@@ -552,17 +552,25 @@ function select(el){
   if(el === panel) return;
   selected = el;
 
+  // 선이면 패널 슬라이더 연동
+  if(el.tagName === 'line'){
+    // 색상/굵기 패널 슬라이더 값 업데이트
+    document.getElementById('lineColor').value = el.getAttribute('stroke');
+    document.getElementById('lineWidth').value = el.getAttribute('stroke-width');
+  }
+
   if(!panelInitialized){
     const r = mapDiv.getBoundingClientRect();
     panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
     panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
-    panel.style.transform = 'none';   // 중앙 계산 후 해제
+    panel.style.transform = 'none';
     panelInitialized = true;
   }
 
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
 }
+
 
 
 
