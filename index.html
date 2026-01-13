@@ -634,13 +634,15 @@ function addText(){
 function enableDeleteConfirmation(el) {
   let touchTimer = null;
 
-  // PC: 오른쪽 클릭 더블클릭
+  // PC: 더블클릭
   el.addEventListener('dblclick', e => {
-    if(e.button === 2) { // 우클릭
-      e.preventDefault();
-      if(confirm('이 객체를 삭제하시겠습니까?')) {
-        el.remove();
-        if(selected === el) selected = null;
+    e.preventDefault();
+    if(confirm('이 객체를 삭제하시겠습니까?')) {
+      el.remove();
+      if(selected === el){
+        selected = null;
+        panel.style.visibility = 'hidden';
+        panel.style.opacity = '0';
       }
     }
   });
@@ -651,7 +653,11 @@ function enableDeleteConfirmation(el) {
       touchTimer = setTimeout(() => {
         if(confirm('이 객체를 삭제하시겠습니까?')) {
           el.remove();
-          if(selected === el) selected = null;
+          if(selected === el){
+            selected = null;
+            panel.style.visibility = 'hidden';
+            panel.style.opacity = '0';
+          }
         }
       }, 700); // 700ms 길게 누름
     }
