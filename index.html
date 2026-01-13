@@ -526,8 +526,13 @@ function centerPos(){
 
 function select(el){
   if(el === panel) return;
+  if(selected){
+    selected.classList.remove('selected-object');
+  }
   selected = el;
-
+  if(selected){
+    selected.classList.add('selected-object');
+  }
   if(!panelInitialized){
     const r = mapDiv.getBoundingClientRect();
     panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
@@ -535,12 +540,9 @@ function select(el){
     panel.style.transform = 'none';   // 중앙 계산 후 해제
     panelInitialized = true;
   }
-
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
 }
-
-
 
 /* ===== 드래그 ===== */
 function drag(handle, target = handle){
