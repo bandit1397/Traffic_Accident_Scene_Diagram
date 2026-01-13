@@ -249,7 +249,6 @@ h1 { text-align:center; }
 
         <!-- ===== 자유곡선 / 기존 직선 ===== -->
         <button onclick="drawMode=!drawMode">자유곡선</button>
-        <button onclick="togglePointLine()">직선(점→점)</button>
 
         <label>
           선색
@@ -317,22 +316,55 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
-  canvas.style.pointerEvents = type ? 'none' : 'auto';  
+  canvas.style.pointerEvents = type ? 'none' : 'auto';
+  updateLineButtons();   // 버튼 색상 갱신
 }
-
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
-  canvas.style.pointerEvents = 'none';   
+  canvas.style.pointerEvents = 'none';
+  updateLineButtons();
 }
-
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
+  canvas.style.pointerEvents = 'none';
+  updateLineButtons();
+}
 
-  canvas.style.pointerEvents = 'none';   
+/* ===== 버튼 상태 표시 ===== */
+function updateLineButtons(){
+  const buttons = toolContent.querySelectorAll('button');
+
+  buttons.forEach(btn => {
+    btn.style.background = '#fff';   // 기본 흰색
+    btn.style.color = '#000';        // 기본 검은색
+  });
+
+  // 활성 모드에 해당하는 버튼만 강조
+  if(lineMode){
+    const btn = toolContent.querySelector(`button[onclick="setLineMode('${lineMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(moveMode){
+    const btn = toolContent.querySelector(`button[onclick="setMoveMode('${moveMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(deleteMode){
+    const btn = toolContent.querySelector(`button[onclick="setDeleteMode('${deleteMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
 }
 
 
@@ -703,24 +735,6 @@ canvas.addEventListener('pointermove', e=>{
   ctx.stroke();
 });
 canvas.addEventListener('pointerup', ()=>drawing=false);
-
-function togglePointLine(){
-  firstPoint=null;
-  drawMode=false;
-  canvas.onclick=e=>{
-    if(!firstPoint){
-      firstPoint={x:e.offsetX,y:e.offsetY};
-    }else{
-      ctx.beginPath();
-      ctx.moveTo(firstPoint.x,firstPoint.y);
-      ctx.lineTo(e.offsetX,e.offsetY);
-      ctx.strokeStyle=currentLineColor;
-      ctx.lineWidth=currentLineWidth;
-      ctx.stroke();
-      firstPoint=null;
-    }
-  };
-}
 
 document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
 document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
