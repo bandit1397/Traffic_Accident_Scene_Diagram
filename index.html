@@ -284,6 +284,10 @@ h1 { text-align:center; }
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
+// 선 색과 두께 초기값
+let currentLineColor = document.getElementById('lineColor').value;  // 기본 빨강
+let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
+
 /* ===== 선(SVG) 시스템 ===== */
 const svg = document.getElementById('lineLayer');
 
