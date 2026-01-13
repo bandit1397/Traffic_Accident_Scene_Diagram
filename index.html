@@ -764,10 +764,6 @@ t.addEventListener('pointerup', () => {
   adjustSize();
 }
 
-
-document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
-document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
-
 /* ===== PDF ===== */
 async function savePDF(){
   const canvasImg=await html2canvas(container);
