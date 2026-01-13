@@ -299,23 +299,21 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
-  canvas.style.pointerEvents = type ? 'none' : 'auto';
-  updateLineButtons();   // 버튼 색상 갱신
+  updateLineButtons();
 }
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
-  canvas.style.pointerEvents = 'none';
   updateLineButtons();
 }
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
-  canvas.style.pointerEvents = 'none';
   updateLineButtons();
 }
+
 
 /* ===== 버튼 상태 표시 ===== */
 function updateLineButtons(){
