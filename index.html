@@ -736,24 +736,6 @@ canvas.addEventListener('pointermove', e=>{
 });
 canvas.addEventListener('pointerup', ()=>drawing=false);
 
-function togglePointLine(){
-  firstPoint=null;
-  drawMode=false;
-  canvas.onclick=e=>{
-    if(!firstPoint){
-      firstPoint={x:e.offsetX,y:e.offsetY};
-    }else{
-      ctx.beginPath();
-      ctx.moveTo(firstPoint.x,firstPoint.y);
-      ctx.lineTo(e.offsetX,e.offsetY);
-      ctx.strokeStyle=currentLineColor;
-      ctx.lineWidth=currentLineWidth;
-      ctx.stroke();
-      firstPoint=null;
-    }
-  };
-}
-
 document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
 document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
 
