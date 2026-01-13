@@ -481,6 +481,21 @@ function createLine(p1, p2, type){
   svg.appendChild(line);
 }
 
+document.getElementById('lineWidth').addEventListener('input', e=>{
+  currentLineWidth = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke-width', currentLineWidth);
+  }
+});
+
+document.getElementById('lineColor').addEventListener('input', e=>{
+  currentLineColor = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke', currentLineColor);
+  }
+});
+
+
 /* ===== 가장 가까운 선 찾기 ===== */
 function findNearestLine(pt, type){
   let min = 15;
