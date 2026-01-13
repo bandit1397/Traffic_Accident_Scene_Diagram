@@ -810,7 +810,30 @@ const widthInput    = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
-  selected.style.transform = `rotate(${angleInput.value}deg)`; 
+
+  // ===== 선일 경우 (끝점 기준 회전) =====
+  if(selected.tagName === 'line'){
+    const x1 = selected.x1.baseVal.value;
+    const y1 = selected.y1.baseVal.value;
+    const x2 = selected.x2.baseVal.value;
+    const y2 = selected.y2.baseVal.value;
+
+    const anchor =
+      lineRotateAnchor === 'start'
+        ? { x: x1, y: y1 }   // 좌측 끝점
+        : { x: x2, y: y2 };  // 우측 끝점
+
+    selected.style.transformOrigin =
+      `${anchor.x}px ${anchor.y}px`;
+
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
+  }
+  // ===== 기존 객체(아이콘, 화살표, 문자) =====
+  else{
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
+  }
 });
 
 sizeInput.addEventListener('input', ()=> {
