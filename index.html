@@ -441,40 +441,6 @@ function createLine(p1, p2, type){
   svg.appendChild(line);
 }
 
-// 현재 선택된 객체 삭제
-function deleteSelectedObject() {
-  if(selected && selected !== panel){
-    mapDiv.removeChild(selected);
-    selected = null;
-  }
-}
-
-// 클릭 위치 기준 객체 삭제 (deleteMode 활성화 시) - 두 번 클릭 확인
-mapDiv.addEventListener('pointerdown', e => {
-  if(deleteMode){  // deleteMode 버튼 활성화 시
-    const children = [...mapDiv.children].filter(c =>
-      c.classList.contains('icon') ||
-      c.classList.contains('arrow') ||
-      c.classList.contains('textbox')
-    );
-
-    for(let child of children){
-      const rect = child.getBoundingClientRect();
-      if(e.clientX >= rect.left && e.clientX <= rect.right &&
-         e.clientY >= rect.top  && e.clientY <= rect.bottom){
-
-        // 두 번 클릭 확인
-        if(confirm('이 객체를 삭제하시겠습니까?')){
-          mapDiv.removeChild(child);
-          if(selected === child) selected = null;
-        }
-        break;
-      }
-    }
-  }
-});
-
-
 /* ===== 가장 가까운 선 찾기 ===== */
 function findNearestLine(pt, type){
   let min = 15;
