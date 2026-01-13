@@ -447,13 +447,8 @@ function createLine(p1, p2, type){
 
   line.dataset.type = type;
   line.addEventListener('pointerdown', e=>{
-    if(selected) selected.classList.remove('selected-object');
-    selected = line;
-    line.classList.add('selected-object');
-
-    panel.style.visibility = 'visible';
-    panel.style.opacity = '1';
-    e.stopPropagation();
+    select(line);          // ⭐ 유일한 선택 처리
+    e.stopPropagation();   // 기존 기능 유지
   });
 
   svg.appendChild(line);
