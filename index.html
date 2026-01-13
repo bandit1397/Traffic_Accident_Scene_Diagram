@@ -449,7 +449,7 @@ function deleteSelectedObject() {
   }
 }
 
-// 클릭 위치 기준 객체 삭제 (deleteMode 활성화 시)
+// 클릭 위치 기준 객체 삭제 (deleteMode 활성화 시) - 두 번 클릭 확인
 mapDiv.addEventListener('pointerdown', e => {
   if(deleteMode){  // deleteMode 버튼 활성화 시
     const children = [...mapDiv.children].filter(c =>
@@ -462,8 +462,12 @@ mapDiv.addEventListener('pointerdown', e => {
       const rect = child.getBoundingClientRect();
       if(e.clientX >= rect.left && e.clientX <= rect.right &&
          e.clientY >= rect.top  && e.clientY <= rect.bottom){
-        mapDiv.removeChild(child);
-        if(selected === child) selected = null;
+
+        // 두 번 클릭 확인
+        if(confirm('이 객체를 삭제하시겠습니까?')){
+          mapDiv.removeChild(child);
+          if(selected === child) selected = null;
+        }
         break;
       }
     }
