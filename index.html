@@ -490,13 +490,6 @@ const panelHeader = document.getElementById('panelHeader');
 drag(panelHeader, panel);
 
 
-function resizeCanvas(){
-  canvas.width = mapDiv.clientWidth;
-  canvas.height = mapDiv.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
 /* ===== 공통 ===== */
 const icons={
   person:'icons/person.png',
