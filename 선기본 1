@@ -155,9 +155,12 @@ h1 { text-align:center; }
   padding:6px;
   width:120px;
 
-  max-height: 70vh;        /* ⭐ 화면 높이의 70%까지만 */
-  overflow-y: auto;       /* ⭐ 세로 스크롤 */
+  max-height: 70vh;
+  overflow-y: auto;
   overscroll-behavior: contain;
+
+  padding-bottom: 16px;        /* ✅ PC 스크롤 잘림 방지 */
+  box-sizing: border-box;      /* ✅ 높이 계산 정확화 */
 }
 
 
