@@ -781,6 +781,7 @@ t.addEventListener('pointerup', () => {
   t.addEventListener('blur', ()=>{
     t.isEditing = false;
     t.readOnly = true;
+    t.style.borderColor = 'transparent';
     adjustSize();
   });
 
