@@ -316,6 +316,33 @@ h1 { text-align:center; }
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
+function getImageRect() {
+  const img = bgMap;
+  const map = mapDiv;
+
+  const mapW = map.clientWidth;
+  const mapH = map.clientHeight;
+  const imgRatio = img.naturalWidth / img.naturalHeight;
+  const mapRatio = mapW / mapH;
+
+  let w, h, x, y;
+
+  if (imgRatio > mapRatio) {
+    w = mapW;
+    h = mapW / imgRatio;
+    x = 0;
+    y = (mapH - h) / 2;
+  } else {
+    h = mapH;
+    w = mapH * imgRatio;
+    x = (mapW - w) / 2;
+    y = 0;
+  }
+
+  return { x, y, w, h };
+}
+
+
 // ===== 여기! =====
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
