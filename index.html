@@ -832,14 +832,34 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+
+  const container = document.getElementById('container');
+
+  // 🔹 현재 화면용 scale 값 백업
+  const prevTransform = container.style.transform;
+  const prevOrigin    = container.style.transformOrigin;
+
+  // 🔹 PDF 캡처용: 원본 크기로 복원
+  container.style.transform = 'scale(1)';
+  container.style.transformOrigin = 'top left';
+
+  // 🔹 캡처
+  const canvasImg = await html2canvas(container);
+
+  // 🔹 다시 화면용 scale 복구
+  container.style.transform = prevTransform;
+  container.style.transformOrigin = prevOrigin;
+
+  // 🔹 PDF 생성 (A4 비율 유지)
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const w = pdf.internal.pageSize.getWidth();
+  const h = canvasImg.height * w / canvasImg.width;
+
+  pdf.addImage(canvasImg.toDataURL(), 'PNG', 0, 0, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
