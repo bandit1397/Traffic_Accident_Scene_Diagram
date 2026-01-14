@@ -180,15 +180,6 @@ h1 { text-align:center; }
 #toolContent hr {
   margin:6px 0;
 }
-
-@media (max-width: 768px) {
-  #container {
-    transform: scale(0.45);
-    transform-origin: top left;
-  }
-}
-
-
 </style>
 </head>
 
@@ -277,7 +268,6 @@ h1 { text-align:center; }
         </label>
 
         <button onclick="savePDF()">PDF</button>
-        <button onclick="toggleA4View()">A4 전체보기</button>
 
         <hr>
 
@@ -970,15 +960,6 @@ document.querySelectorAll('.stepBtn').forEach(btn=>{
   btn.addEventListener('pointerleave', stop);
   btn.addEventListener('pointercancel', stop);
 });
-
-let a4Zoom = false;
-function toggleA4View(){
-  const c = document.getElementById('container');
-  a4Zoom = !a4Zoom;
-  c.style.transform = a4Zoom ? 'scale(0.45)' : 'scale(1)';
-  c.style.transformOrigin = 'top left';
-}
- 
 
 
 </script>
