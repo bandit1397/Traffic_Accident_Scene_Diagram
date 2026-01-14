@@ -66,7 +66,7 @@ h1 { text-align:center; }
 
 .textbox {
   position:absolute;
-  border:1px solid #333;
+  border:1px solid transparent;
   background:#fff;
   padding:2px 4px;
   cursor:move;
@@ -155,9 +155,12 @@ h1 { text-align:center; }
   padding:6px;
   width:120px;
 
-  max-height: 70vh;        /* ⭐ 화면 높이의 70%까지만 */
-  overflow-y: auto;       /* ⭐ 세로 스크롤 */
+  max-height: 70vh;
+  overflow-y: auto;
   overscroll-behavior: contain;
+
+  padding-bottom: 16px;        /* ✅ PC 스크롤 잘림 방지 */
+  box-sizing: border-box;      /* ✅ 높이 계산 정확화 */
 }
 
 
@@ -315,7 +318,11 @@ const panel = document.getElementById('panel');
 // ===== 여기! =====
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
+    let startX = 0, startY = 0;
+    let moved = false;
+    const MOVE_THRESHOLD = 6; // ⭐ 이 거리 이상 움직이면 "이동"으로 판단
 
+    // PC: 더블클릭 삭제 (기존 그대로)
     el.addEventListener('dblclick', e => {
         e.preventDefault();
         if(confirm('이 객체를 삭제하시겠습니까?')) {
@@ -328,29 +335,58 @@ function enableDeleteConfirmation(el) {
         }
     });
 
+    // 모바일: 길게 누르기 시작
     el.addEventListener('pointerdown', e => {
-        if(e.pointerType === 'touch') {
-            touchTimer = setTimeout(() => {
-                if(confirm('이 객체를 삭제하시겠습니까?')) {
-                    el.remove();
-                    if(selected === el){
-                        selected = null;
-                        panel.style.visibility = 'hidden';
-                        panel.style.opacity = '0';
-                    }
+        if(e.pointerType !== 'touch') return;
+
+        startX = e.clientX;
+        startY = e.clientY;
+        moved = false;
+
+        touchTimer = setTimeout(() => {
+            if(moved) return; // ⭐ 이동 중이면 삭제 금지
+
+            if(confirm('이 객체를 삭제하시겠습니까?')) {
+                el.remove();
+                if(selected === el){
+                    selected = null;
+                    panel.style.visibility = 'hidden';
+                    panel.style.opacity = '0';
                 }
-            }, 700);
+            }
+        }, 700);
+    });
+
+    // ⭐ 이동 감지 → 삭제 타이머 취소
+    el.addEventListener('pointermove', e => {
+        if(!touchTimer) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if(Math.hypot(dx, dy) > MOVE_THRESHOLD) {
+            moved = true;
+            clearTimeout(touchTimer);
+            touchTimer = null;
         }
     });
 
-    el.addEventListener('pointerup', e => {
-        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    // 터치 종료 / 취소
+    el.addEventListener('pointerup', () => {
+        if(touchTimer){
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
     });
 
-    el.addEventListener('pointercancel', e => {
-        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    el.addEventListener('pointercancel', () => {
+        if(touchTimer){
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
     });
 }
+
 
 // 선 색과 두께 초기값
 let currentLineColor = document.getElementById('lineColor').value;  // 기본 빨강
@@ -685,7 +721,7 @@ function addIcon(type){
   img.className='icon';
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
-  img.style.width='32px';
+  img.style.width = '64px'; 
   mapDiv.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
@@ -698,7 +734,7 @@ function addArrow(){
   img.className='arrow';
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
-  img.style.width='32px';
+  img.style.width = '64px'; 
   mapDiv.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
@@ -718,9 +754,9 @@ function addText(){
 
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
+  t.style.fontSize = '20px';
   t.style.textAlign = 'center';
-  t.style.width = '12px';
+  t.style.width = '20px';
 
   mapDiv.appendChild(t);
   drag(t);
@@ -746,6 +782,7 @@ t.addEventListener('pointerup', () => {
   // 모바일에서 편집 시작
   t.isEditing = true;
   t.readOnly = false;
+  t.style.borderColor = '#333';
   t.focus();
   adjustSize();
 
@@ -777,6 +814,7 @@ t.addEventListener('pointerup', () => {
   t.addEventListener('blur', ()=>{
     t.isEditing = false;
     t.readOnly = true;
+    t.style.borderColor = 'transparent';
     adjustSize();
   });
 
