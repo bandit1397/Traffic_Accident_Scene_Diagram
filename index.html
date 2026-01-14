@@ -971,6 +971,15 @@ document.querySelectorAll('.stepBtn').forEach(btn=>{
   btn.addEventListener('pointercancel', stop);
 });
 
+let a4Zoom = false;
+function toggleA4View(){
+  const c = document.getElementById('container');
+  a4Zoom = !a4Zoom;
+  c.style.transform = a4Zoom ? 'scale(0.45)' : 'scale(1)';
+  c.style.transformOrigin = 'top left';
+}
+ 
+
 
 </script>
 
