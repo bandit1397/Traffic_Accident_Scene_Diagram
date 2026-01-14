@@ -113,6 +113,21 @@ h1 { text-align:center; }
   width:100%;
 }
 
+.rangeWrap{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.stepBtn{
+  width:22px;
+  height:22px;
+  font-size:16px;
+  line-height:20px;
+  padding:0;
+  cursor:pointer;
+}
+
 /* ===== 도구 패널 ===== */
 #toolbox {
   position:absolute;
@@ -152,14 +167,6 @@ h1 { text-align:center; }
   margin:2px 0;
   font-size:13px;
 }
-
-/* ===== 도구 버튼 선택 표시 ===== */
-#toolContent button.active {
-  background:#2c7be5 !important;
-  color:#fff !important;
-  border:1px solid #2c7be5;
-}
-
 
 #toolContent label {
   font-size:12px;
@@ -207,25 +214,17 @@ h1 { text-align:center; }
          ">
     </svg>
 
-
-    <!-- 자유곡선 캔버스 -->
-    <canvas id="drawCanvas"
-            style="
-              position:absolute;
-              inset:0;
-              z-index:500;
-            ">
-    </canvas>
-
-
-
     <!-- ④ 속성 패널 -->
     <div id="panel">
 
       <div id="panelHeader">선택 객체</div>
 
       <label>각도
-        <input id="angle" type="range" min="-180" max="180" value="0">
+        <div class="rangeWrap">
+          <button class="stepBtn" data-target="angle" data-step="-0.2">−</button>
+          <input id="angle" type="range" min="-180" max="180" step="0.2" value="0">
+          <button class="stepBtn" data-target="angle" data-step="0.2">+</button>
+        </div>
       </label>
       <label>크기
         <input id="size" type="range" min="10" max="150" value="32">
@@ -245,20 +244,15 @@ h1 { text-align:center; }
       <div id="toolContent">
 
         <!-- ===== 객체 ===== -->
-        <button onclick="togglePanel(); setActiveTool(this)">객체패널</button>
-        <button onclick="addIcon('person'); setActiveTool(this)">사람</button>
-        <button onclick="addIcon('car'); setActiveTool(this)">자동차</button>
-        <button onclick="addIcon('bike'); setActiveTool(this)">자전거</button>
-        <button onclick="addIcon('moto'); setActiveTool(this)">오토바이</button>
-        <button onclick="addArrow(); setActiveTool(this)">화살표</button>
-        <button onclick="addText(); setActiveTool(this)">문자</button>
-
+        <button onclick="togglePanel()">객체패널</button>
+        <button onclick="addIcon('person')">사람</button>
+        <button onclick="addIcon('car')">자동차</button>
+        <button onclick="addIcon('bike')">자전거</button>
+        <button onclick="addIcon('moto')">오토바이</button>
+        <button onclick="addArrow()">화살표</button>
+        <button onclick="addText()">문자</button>
 
         <hr>
-
-        <!-- ===== 자유곡선 / 기존 직선 ===== -->
-        <button onclick="drawMode=!drawMode">자유곡선</button>
-        <button onclick="togglePointLine()">직선(점→점)</button>
 
         <label>
           선색
@@ -277,17 +271,26 @@ h1 { text-align:center; }
         <!-- ===== 새로 추가되는 선 패널 ===== -->
         <b style="font-size:12px;">선</b>
 
-        <button onclick="setLineMode('solid'); setActiveTool(this)">실선 선택</button>
-        <button onclick="setLineMode('dashed'); setActiveTool(this)">점선 선택</button>
-        <button onclick="setLineMode(null); setActiveTool(null)">선 해제</button>
+        <button onclick="setLineMode('solid')">실선 선택</button>
+        <button onclick="setLineMode('dashed')">점선 선택</button>
+        <button onclick="setLineMode(null)">선 해제</button>
 
-        <button onclick="setMoveMode('solid'); setActiveTool(this)">실선 이동</button>
-        <button onclick="setMoveMode('dashed'); setActiveTool(this)">점선 이동</button>
+        <button onclick="setMoveMode('solid')">실선 이동</button>
+        <button onclick="setMoveMode('dashed')">점선 이동</button>
 
-        <button onclick="setDeleteMode('solid'); setActiveTool(this)">실선 삭제</button>
-        <button onclick="setDeleteMode('dashed'); setActiveTool(this)">점선 삭제</button>
+        <button onclick="setDeleteMode('solid')">실선 삭제</button>
+        <button onclick="setDeleteMode('dashed')">점선 삭제</button>
 
         <hr>
+
+        <!-- ===== 선 회전 기준 ===== -->
+        <b style="font-size:12px;">선 회전 기준</b>
+
+        <button onclick="lineRotateAnchor='start'">좌측 기준</button>
+        <button onclick="lineRotateAnchor='end'">우측 기준</button>
+
+        <hr>
+
 
         <!-- ===== 배경 이미지 불러오기 ===== -->
         <label style="font-size:12px; display:block; margin-top:6px;">
@@ -307,9 +310,51 @@ h1 { text-align:center; }
 
 <script>
 const mapDiv = document.getElementById('map');
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
+
+// ===== 여기! =====
+function enableDeleteConfirmation(el) {
+    let touchTimer = null;
+
+    el.addEventListener('dblclick', e => {
+        e.preventDefault();
+        if(confirm('이 객체를 삭제하시겠습니까?')) {
+            el.remove();
+            if(selected === el){
+                selected = null;
+                panel.style.visibility = 'hidden';
+                panel.style.opacity = '0';
+            }
+        }
+    });
+
+    el.addEventListener('pointerdown', e => {
+        if(e.pointerType === 'touch') {
+            touchTimer = setTimeout(() => {
+                if(confirm('이 객체를 삭제하시겠습니까?')) {
+                    el.remove();
+                    if(selected === el){
+                        selected = null;
+                        panel.style.visibility = 'hidden';
+                        panel.style.opacity = '0';
+                    }
+                }
+            }, 700);
+        }
+    });
+
+    el.addEventListener('pointerup', e => {
+        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    });
+
+    el.addEventListener('pointercancel', e => {
+        if(touchTimer){ clearTimeout(touchTimer); touchTimer=null; }
+    });
+}
+
+// 선 색과 두께 초기값
+let currentLineColor = document.getElementById('lineColor').value;  // 기본 빨강
+let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
 
 /* ===== 선(SVG) 시스템 ===== */
 const svg = document.getElementById('lineLayer');
@@ -326,22 +371,53 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
-  canvas.style.pointerEvents = type ? 'none' : 'auto';  
+  updateLineButtons();
 }
-
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
-  canvas.style.pointerEvents = 'none';   
+  updateLineButtons();
 }
-
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
+  updateLineButtons();
+}
 
-  canvas.style.pointerEvents = 'none';   
+
+/* ===== 버튼 상태 표시 ===== */
+function updateLineButtons(){
+  const buttons = toolContent.querySelectorAll('button');
+
+  buttons.forEach(btn => {
+    btn.style.background = '#fff';   // 기본 흰색
+    btn.style.color = '#000';        // 기본 검은색
+  });
+
+  // 활성 모드에 해당하는 버튼만 강조
+  if(lineMode){
+    const btn = toolContent.querySelector(`button[onclick="setLineMode('${lineMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(moveMode){
+    const btn = toolContent.querySelector(`button[onclick="setMoveMode('${moveMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(deleteMode){
+    const btn = toolContent.querySelector(`button[onclick="setDeleteMode('${deleteMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
 }
 
 
@@ -376,6 +452,11 @@ svg.addEventListener('pointerdown', e=>{
       };
       svg.setPointerCapture(e.pointerId);
     }
+  }
+  // 선 선택
+  if(!lineMode && !moveMode && !deleteMode){
+    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
+    if(line) select(line);
   }
 });
 
@@ -430,14 +511,23 @@ function createLine(p1, p2, type){
   }
 
   line.dataset.type = type;
-  line.addEventListener('pointerdown', e=>{
-    selected = line;
-    panel.style.visibility = 'visible';
-    panel.style.opacity = '1';
-    e.stopPropagation();   // 선 그리기/지도 클릭 방지
-  });
   svg.appendChild(line);
 }
+
+document.getElementById('lineWidth').addEventListener('input', e=>{
+  currentLineWidth = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke-width', currentLineWidth);
+  }
+});
+
+document.getElementById('lineColor').addEventListener('input', e=>{
+  currentLineColor = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke', currentLineColor);
+  }
+});
+
 
 /* ===== 가장 가까운 선 찾기 ===== */
 function findNearestLine(pt, type){
@@ -490,13 +580,6 @@ const panelHeader = document.getElementById('panelHeader');
 drag(panelHeader, panel);
 
 
-function resizeCanvas(){
-  canvas.width = mapDiv.clientWidth;
-  canvas.height = mapDiv.clientHeight;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
 /* ===== 공통 ===== */
 const icons={
   person:'icons/person.png',
@@ -517,17 +600,25 @@ function select(el){
   if(el === panel) return;
   selected = el;
 
+  // 선이면 패널 슬라이더 연동
+  if(el.tagName === 'line'){
+    // 색상/굵기 패널 슬라이더 값 업데이트
+    document.getElementById('lineColor').value = el.getAttribute('stroke');
+    document.getElementById('lineWidth').value = el.getAttribute('stroke-width');
+  }
+
   if(!panelInitialized){
     const r = mapDiv.getBoundingClientRect();
     panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
     panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
-    panel.style.transform = 'none';   // 중앙 계산 후 해제
+    panel.style.transform = 'none';
     panelInitialized = true;
   }
 
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
 }
+
 
 
 
@@ -597,6 +688,7 @@ function addIcon(type){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
 
 function addArrow(){
@@ -609,6 +701,8 @@ function addArrow(){
   img.style.width='32px';
   mapDiv.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
+
 }
 
 function addText(){
@@ -630,6 +724,9 @@ function addText(){
 
   mapDiv.appendChild(t);
   drag(t);
+  enableDeleteConfirmation(t);  // 🔹 여기 추가
+
+  
 
   /* 🔹 모바일 탭 → 편집 */
 let touchMoved = false;
@@ -695,51 +792,6 @@ t.addEventListener('pointerup', () => {
   adjustSize();
 }
 
-
-
-/* ===== 선 ===== */
-let drawMode=false;
-let drawing=false;
-let firstPoint=null;
-let currentLineWidth=3;
-let currentLineColor='#ff0000';
-
-canvas.addEventListener('pointerdown', e=>{
-  if(!drawMode) return;
-  drawing=true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX,e.offsetY);
-});
-canvas.addEventListener('pointermove', e=>{
-  if(!drawing) return;
-  ctx.lineTo(e.offsetX,e.offsetY);
-  ctx.strokeStyle=currentLineColor;
-  ctx.lineWidth=currentLineWidth;
-  ctx.stroke();
-});
-canvas.addEventListener('pointerup', ()=>drawing=false);
-
-function togglePointLine(){
-  firstPoint=null;
-  drawMode=false;
-  canvas.onclick=e=>{
-    if(!firstPoint){
-      firstPoint={x:e.offsetX,y:e.offsetY};
-    }else{
-      ctx.beginPath();
-      ctx.moveTo(firstPoint.x,firstPoint.y);
-      ctx.lineTo(e.offsetX,e.offsetY);
-      ctx.strokeStyle=currentLineColor;
-      ctx.lineWidth=currentLineWidth;
-      ctx.stroke();
-      firstPoint=null;
-    }
-  };
-}
-
-document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
-document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
-
 /* ===== PDF ===== */
 async function savePDF(){
   const canvasImg=await html2canvas(container);
@@ -756,16 +808,6 @@ toolToggle.onclick=()=>{
   toolContent.style.display=
     toolContent.style.display==='block'?'none':'block';
 };
-
-/* ===== 도구 버튼 선택 표시 ===== */
-function setActiveTool(btn){
-  document
-    .querySelectorAll('#toolContent button')
-    .forEach(b=>b.classList.remove('active'));
-
-  if(btn) btn.classList.add('active');
-}
-
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
@@ -784,71 +826,45 @@ bgInput.addEventListener('change', e=>{
 });
 
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
-const angleInput = document.getElementById('angle');
-const sizeInput = document.getElementById('size');
+const angleInput    = document.getElementById('angle');
+let lineRotateAnchor = 'start';   // 'start' = x1,y1 / 'end' = x2,y2
+const sizeInput     = document.getElementById('size');
 const fontSizeInput = document.getElementById('fontSize');
-const widthInput = document.getElementById('width');
+const widthInput    = document.getElementById('width');
 
 angleInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
+
+  // ===== 선일 경우 (끝점 기준 회전) =====
   if(selected.tagName === 'line'){
-    rotateLine(selected, angleInput.value);
-    return;
+    const x1 = selected.x1.baseVal.value;
+    const y1 = selected.y1.baseVal.value;
+    const x2 = selected.x2.baseVal.value;
+    const y2 = selected.y2.baseVal.value;
+
+    const anchor =
+      lineRotateAnchor === 'start'
+        ? { x: x1, y: y1 }   // 좌측 끝점
+        : { x: x2, y: y2 };  // 우측 끝점
+
+    selected.style.transformOrigin =
+      `${anchor.x}px ${anchor.y}px`;
+
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
   }
-  selected.style.transform = `rotate(${angleInput.value}deg)`; 
+  // ===== 기존 객체(아이콘, 화살표, 문자) =====
+  else{
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
+  }
 });
-
-// ▶ 여기부터 추가 (공용 함수 영역)
-function rotateLine(line, angle){
-  const x1 = line.x1.baseVal.value;
-  const y1 = line.y1.baseVal.value;
-  const x2 = line.x2.baseVal.value;
-  const y2 = line.y2.baseVal.value;
-
-  const cx = (x1 + x2) / 2;
-  const cy = (y1 + y2) / 2;
-
-  const rad = angle * Math.PI / 180;
-  const cos = Math.cos(rad);
-  const sin = Math.sin(rad);
-
-  const dx1 = x1 - cx;
-  const dy1 = y1 - cy;
-  const dx2 = x2 - cx;
-  const dy2 = y2 - cy;
-
-  line.setAttribute('x1', cx + dx1*cos - dy1*sin);
-  line.setAttribute('y1', cy + dx1*sin + dy1*cos);
-  line.setAttribute('x2', cx + dx2*cos - dy2*sin);
-  line.setAttribute('y2', cy + dx2*sin + dy2*cos);
-}
 
 sizeInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
-  // 🟢 SVG 선 크기
-  if(selected.tagName === 'line'){
-    scaleLine(selected, sizeInput.value / 100);
-    return;
-  }
   selected.style.width = sizeInput.value + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
 });
-
-function scaleLine(line, scale){
-  const x1 = line.x1.baseVal.value;
-  const y1 = line.y1.baseVal.value;
-  const x2 = line.x2.baseVal.value;
-  const y2 = line.y2.baseVal.value;
-
-  const cx = (x1 + x2) / 2;
-  const cy = (y1 + y2) / 2;
-
-  line.setAttribute('x1', cx + (x1 - cx) * scale);
-  line.setAttribute('y1', cy + (y1 - cy) * scale);
-  line.setAttribute('x2', cx + (x2 - cx) * scale);
-  line.setAttribute('y2', cy + (y2 - cy) * scale);
-}
-
 
 fontSizeInput.addEventListener('input', ()=> {
   if(!selected) return;
@@ -864,6 +880,47 @@ widthInput.addEventListener('input', ()=> {
     selected.style.width = widthInput.value + 'px';
     selected.style.height = 'auto';
   }
+});
+
+/* ===================================================== */
+/* ===== + / - 자동 증감 버튼 (슬라이더 기능 재사용) ===== */
+/* ===================================================== */
+
+let stepTimer = null;
+
+document.querySelectorAll('.stepBtn').forEach(btn=>{
+  const targetId = btn.dataset.target;
+  const step = parseFloat(btn.dataset.step);
+
+  const start = ()=>{
+    const input = document.getElementById(targetId);
+    if(!input) return;
+
+    const update = ()=>{
+      let v = parseFloat(input.value) + step;
+      v = Math.max(
+        parseFloat(input.min),
+        Math.min(parseFloat(input.max), v)
+      );
+      input.value = v;
+
+      // ⭐ 기존 슬라이더 로직 100% 재사용
+      input.dispatchEvent(new Event('input'));
+    };
+
+    update();                 // 즉시 1회
+    stepTimer = setInterval(update, 80); // 길게 누르면 자동
+  };
+
+  const stop = ()=>{
+    clearInterval(stepTimer);
+    stepTimer = null;
+  };
+
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
 });
 
 
