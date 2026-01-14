@@ -688,7 +688,7 @@ function addIcon(type){
   img.className='icon';
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
-  img.style.width='32px';
+  img.style.width = '64px'; 
   mapDiv.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
@@ -701,7 +701,7 @@ function addArrow(){
   img.className='arrow';
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
-  img.style.width='32px';
+  img.style.width = '64px'; 
   mapDiv.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
@@ -721,9 +721,9 @@ function addText(){
 
   t.style.left = p.x + 'px';
   t.style.top  = p.y + 'px';
-  t.style.fontSize = '14px';
+  t.style.fontSize = '20px';
   t.style.textAlign = 'center';
-  t.style.width = '12px';
+  t.style.width = '20px';
 
   mapDiv.appendChild(t);
   drag(t);
