@@ -66,7 +66,7 @@ h1 { text-align:center; }
 
 .textbox {
   position:absolute;
-  border:1px solid #333;
+  border:1px solid transparent;
   background:#fff;
   padding:2px 4px;
   cursor:move;
@@ -749,6 +749,7 @@ t.addEventListener('pointerup', () => {
   // 모바일에서 편집 시작
   t.isEditing = true;
   t.readOnly = false;
+  t.style.borderColor = '#333';
   t.focus();
   adjustSize();
 
@@ -780,6 +781,7 @@ t.addEventListener('pointerup', () => {
   t.addEventListener('blur', ()=>{
     t.isEditing = false;
     t.readOnly = true;
+    t.style.borderColor = 'transparent';
     adjustSize();
   });
 
