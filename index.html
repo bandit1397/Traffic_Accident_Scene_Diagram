@@ -10,13 +10,12 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-  width: 794px;        /* A4 */
-  min-height: 1123px;
-  margin: 20px auto;
-  padding: 38px;       /* 10mm ≈ 38px */
+  width:210mm;
+  min-height:297mm;
+  margin:20px auto;
+  padding:10mm;
   background:#fff;
   border:1px solid #ccc;
-  box-sizing: border-box;
 }
 
 h1 { text-align:center; }
@@ -27,6 +26,7 @@ h1 { text-align:center; }
   border:1px solid #888;
   position:relative;
   overflow:hidden;
+  touch-action: none; 
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -43,9 +43,10 @@ h1 { text-align:center; }
 
 #lineLayer {
   position:absolute;
+  inset:0;
   z-index:400;
   touch-action:none;
-  pointer-events: none;
+  pointer-events:auto;
 }
 
 /* ===== 자유곡선 캔버스 ===== */
@@ -314,36 +315,6 @@ h1 { text-align:center; }
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
-const toolToggle  = document.getElementById('toolToggle');   // ✅ 추가
-const toolContent = document.getElementById('toolContent');  // ✅ 추가
-
-function getImageRect() {
-  const img = bgMap;
-  const map = mapDiv;
-
-  const mapW = map.clientWidth;
-  const mapH = map.clientHeight;
-  const imgRatio = img.naturalWidth / img.naturalHeight;
-  const mapRatio = mapW / mapH;
-
-  let w, h, x, y;
-
-  if (imgRatio > mapRatio) {
-    w = mapW;
-    h = mapW / imgRatio;
-    x = 0;
-    y = (mapH - h) / 2;
-  } else {
-    h = mapH;
-    w = mapH * imgRatio;
-    x = (mapW - w) / 2;
-    y = 0;
-  }
-
-  return { x, y, w, h };
-}
-
-
 // ===== 여기! =====
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
@@ -424,50 +395,30 @@ let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
 /* ===== 선(SVG) 시스템 ===== */
 const svg = document.getElementById('lineLayer');
 
-function syncLineLayerToImage() {
-  const r = getImageRect();
-  svg.style.left = r.x + 'px';
-  svg.style.top  = r.y + 'px';
-  svg.style.width  = r.w + 'px';
-  svg.style.height = r.h + 'px';
-  svg.setAttribute('viewBox', `0 0 ${r.w} ${r.h}`);
-}
-
-bgMap.onload = syncLineLayerToImage;
-
-
 let lineMode = null;     // 'solid' | 'dashed' | null
 let moveMode = null;
 let deleteMode = null;
 
 let startPoint = null;
 let selectedLine = null;
-function clearLineModes(){
-  lineMode = moveMode = deleteMode = null;
-  svg.style.pointerEvents = 'none';   // SVG 클릭 통과
-  updateLineButtons();
-}
 let dragOffset = {x:0,y:0};
 
 /* ===== 선 모드 제어 ===== */
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
-  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
-  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
-  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
@@ -881,23 +832,30 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
+  const container = document.getElementById('container');
+
+  // 🔹 화면 그대로 캡처 (스케일 고정)
   const canvas = await html2canvas(container, {
-    scale: 2,
+    scale: 1,
     useCORS: true
   });
 
   const imgData = canvas.toDataURL('image/png');
-  const { jsPDF } = window.jspdf;
 
-  const pdf = new jsPDF('p', 'mm', 'a4');
+  // 🔹 캔버스 픽셀 = PDF 포인트 (1:1)
+  const pdf = new jspdf.jsPDF({
+    orientation: 'portrait',
+    unit: 'px',
+    format: [canvas.width, canvas.height]
+  });
 
   pdf.addImage(
     imgData,
     'PNG',
     0,
     0,
-    210,   // A4 가로
-    297    // A4 세로
+    canvas.width,
+    canvas.height
   );
 
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
