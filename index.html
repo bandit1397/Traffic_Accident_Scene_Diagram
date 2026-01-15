@@ -832,49 +832,49 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF() {
-  const container = document.getElementById('container');
-  const bgMap = document.getElementById('bgMap');
+  const { jsPDF } = window.jspdf;
 
-  // ① 배경 이미지 실제 크기 가져오기
-  const imgWidth = bgMap.naturalWidth;
-  const imgHeight = bgMap.naturalHeight;
-
-  // ② 컨테이너 크기를 이미지 크기에 맞춤
-  const originalWidth = container.style.width;
-  const originalHeight = container.style.height;
-  const originalPadding = container.style.padding;
-
-  container.style.width = imgWidth + 'px';
-  container.style.height = imgHeight + 'px';
-  container.style.padding = '0';
-
-  // ③ html2canvas 캡처
-  const canvasImg = await html2canvas(container, {
+  // ① 컨테이너 실제 크기로 캔버스 생성 (배경 흰색 + 고해상도)
+  const canvas = await html2canvas(container, {
     backgroundColor: '#fff',
-    scale: 2
+    scale: 2,        // 해상도 확대
+    useCORS: true,   // 외부 이미지도 포함
+    allowTaint: true // tainted canvas 허용
   });
 
-  // ④ 컨테이너 원래 크기로 복원
-  container.style.width = originalWidth;
-  container.style.height = originalHeight;
-  container.style.padding = originalPadding;
+  // ② 캔버스 크기 (픽셀 단위)
+  const canvasWidth = canvas.width;
+  const canvasHeight = canvas.height;
 
-  // ⑤ jsPDF 생성 (A4 세로)
-  const { jsPDF } = window.jspdf;
+  // ③ PDF 크기 (mm)
   const pdf = new jsPDF('p', 'mm', 'a4');
   const pdfWidth = pdf.internal.pageSize.getWidth();
   const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  // ⑥ 이미지 비율 맞춰 PDF에 삽입
-  const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-  const w = imgWidth * ratio;
-  const h = imgHeight * ratio;
-  const x = (pdfWidth - w) / 2;
-  const y = (pdfHeight - h) / 2;
+  // ④ 컨테이너 비율 계산
+  const canvasRatio = canvasWidth / canvasHeight;
+  const pdfRatio = pdfWidth / pdfHeight;
 
-  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', x, y, w, h);
+  let renderWidth, renderHeight, offsetX, offsetY;
 
-  // ⑦ PDF 저장
+  if (canvasRatio > pdfRatio) {
+    // 캔버스가 PDF보다 넓으면 가로 기준
+    renderWidth = pdfWidth;
+    renderHeight = pdfWidth / canvasRatio;
+    offsetX = 0;
+    offsetY = (pdfHeight - renderHeight) / 2; // 세로 중앙
+  } else {
+    // 캔버스가 PDF보다 높으면 세로 기준
+    renderHeight = pdfHeight;
+    renderWidth = pdfHeight * canvasRatio;
+    offsetX = (pdfWidth - renderWidth) / 2;   // 가로 중앙
+    offsetY = 0;
+  }
+
+  // ⑤ PDF에 이미지 추가
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', offsetX, offsetY, renderWidth, renderHeight);
+
+  // ⑥ PDF 저장
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
