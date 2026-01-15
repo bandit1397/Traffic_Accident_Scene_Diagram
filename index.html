@@ -27,11 +27,6 @@ h1 { text-align:center; }
   position:relative;
   overflow:hidden;
   touch-action: none; 
-
-  background-image: url('kakao_capture.jpg');
-  background-size: contain;
-  background-position: center;
-  background-repeat: no-repeat;
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -836,57 +831,15 @@ t.addEventListener('pointerup', () => {
 }
 
 /* ===== PDF ===== */
-async function savePDF() {
-  const { jsPDF } = window.jspdf;
-
-  // ① 컨테이너 실제 크기로 캔버스 생성 (배경 흰색 + 고해상도)
-  const canvas = await html2canvas(container, {
-      backgroundColor: '#fff', // 투명 대신 흰색
-      width: container.offsetWidth,
-      height: container.offsetHeight,
-      scale: 2,
-      useCORS: true,
-      allowTaint: true
-  });
-
-
-  // ② 캔버스 크기 (픽셀 단위)
-  const canvasWidth = canvas.width;
-  const canvasHeight = canvas.height;
-
-  // ③ PDF 크기 (mm)
-  const pdf = new jsPDF('p', 'mm', 'a4');
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  // ④ 컨테이너 비율 계산
-  const canvasRatio = canvasWidth / canvasHeight;
-  const pdfRatio = pdfWidth / pdfHeight;
-
-  let renderWidth, renderHeight, offsetX, offsetY;
-
-  if (canvasRatio > pdfRatio) {
-    // 캔버스가 PDF보다 넓으면 가로 기준
-    renderWidth = pdfWidth;
-    renderHeight = pdfWidth / canvasRatio;
-    offsetX = 0;
-    offsetY = (pdfHeight - renderHeight) / 2; // 세로 중앙
-  } else {
-    // 캔버스가 PDF보다 높으면 세로 기준
-    renderHeight = pdfHeight;
-    renderWidth = pdfHeight * canvasRatio;
-    offsetX = (pdfWidth - renderWidth) / 2;   // 가로 중앙
-    offsetY = 0;
-  }
-
-  // ⑤ PDF에 이미지 추가
-  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', offsetX, offsetY, renderWidth, renderHeight);
-
-  // ⑥ PDF 저장
+async function savePDF(){
+  const canvasImg=await html2canvas(container);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvasImg.height*w/canvasImg.width;
+  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
-
-
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
