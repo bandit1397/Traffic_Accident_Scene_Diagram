@@ -832,7 +832,7 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg = await html2canvas(container, {
+  const canvas = await html2canvas(container, {
       backgroundColor: '#fff',
       width: container.offsetWidth,
       height: container.offsetHeight,
@@ -841,13 +841,33 @@ async function savePDF(){
       allowTaint: true
   });
 
-  const {jsPDF} = window.jspdf;
+  // jsPDF
+  const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
-  const w = pdf.internal.pageSize.getWidth();
-  const h = canvasImg.height * w / canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+
+  // PDF 크기
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  // 캔버스 비율
+  const canvasRatio = canvas.width / canvas.height;
+  const pdfRatio = pdfWidth / pdfHeight;
+
+  let renderWidth, renderHeight;
+
+  if(canvasRatio > pdfRatio){
+      // 캔버스가 더 넓으면 너비 기준
+      renderWidth = pdfWidth;
+      renderHeight = pdfWidth / canvasRatio;
+  }else{
+      // 캔버스가 더 높으면 높이 기준
+      renderHeight = pdfHeight;
+      renderWidth = pdfHeight * canvasRatio;
+  }
+
+  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, renderWidth, renderHeight);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
-}
+
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
