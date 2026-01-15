@@ -844,9 +844,16 @@ async function savePDF(){
 
 /* ===== PNG ===== */
 async function savePNG(){
+  const rect = container.getBoundingClientRect();
+
   const canvas = await html2canvas(container, {
     scale: window.devicePixelRatio,
-    backgroundColor: '#fff'
+    backgroundColor: '#fff',
+
+    width: rect.width,
+    height: rect.height,
+    windowWidth: document.documentElement.scrollWidth,
+    windowHeight: document.documentElement.scrollHeight
   });
 
   const link = document.createElement('a');
@@ -854,6 +861,7 @@ async function savePNG(){
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
+
 
 function rotateLine(line, angleDeg, anchor){
   const rad = angleDeg * Math.PI / 180;
