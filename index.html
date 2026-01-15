@@ -854,6 +854,33 @@ async function savePNG(){
   link.href = canvas.toDataURL('image/png');
   link.click();
 }
+
+function rotateLine(line, angleDeg, anchor){
+  const rad = angleDeg * Math.PI / 180;
+
+  const x1 = line.x1.baseVal.value;
+  const y1 = line.y1.baseVal.value;
+  const x2 = line.x2.baseVal.value;
+  const y2 = line.y2.baseVal.value;
+
+  function rotate(x, y){
+    const dx = x - anchor.x;
+    const dy = y - anchor.y;
+    return {
+      x: anchor.x + dx * Math.cos(rad) - dy * Math.sin(rad),
+      y: anchor.y + dx * Math.sin(rad) + dy * Math.cos(rad)
+    };
+  }
+
+  const p1 = rotate(x1, y1);
+  const p2 = rotate(x2, y2);
+
+  line.setAttribute('x1', p1.x);
+  line.setAttribute('y1', p1.y);
+  line.setAttribute('x2', p2.x);
+  line.setAttribute('y2', p2.y);
+}
+
   
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
