@@ -841,6 +841,19 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
+/* ===== PNG ===== */
+async function savePNG(){
+  const canvas = await html2canvas(container, {
+    scale: window.devicePixelRatio,
+    backgroundColor: '#fff'
+  });
+
+  const link = document.createElement('a');
+  link.download = 'Traffic_Accident_Scene.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+  
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
   toolContent.style.display=
