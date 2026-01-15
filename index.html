@@ -422,6 +422,18 @@ let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
 /* ===== 선(SVG) 시스템 ===== */
 const svg = document.getElementById('lineLayer');
 
+function syncLineLayerToImage() {
+  const r = getImageRect();
+  svg.style.left = r.x + 'px';
+  svg.style.top  = r.y + 'px';
+  svg.style.width  = r.w + 'px';
+  svg.style.height = r.h + 'px';
+  svg.setAttribute('viewBox', `0 0 ${r.w} ${r.h}`);
+}
+
+bgMap.onload = syncLineLayerToImage;
+
+
 let lineMode = null;     // 'solid' | 'dashed' | null
 let moveMode = null;
 let deleteMode = null;
