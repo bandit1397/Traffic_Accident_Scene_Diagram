@@ -841,11 +841,14 @@ async function savePDF() {
 
   // ① 컨테이너 실제 크기로 캔버스 생성 (배경 흰색 + 고해상도)
   const canvas = await html2canvas(container, {
-    backgroundColor: '#fff',
-    scale: 2,        // 해상도 확대
-    useCORS: true,   // 외부 이미지도 포함
-    allowTaint: true // tainted canvas 허용
+      backgroundColor: '#fff', // 투명 대신 흰색
+      width: container.offsetWidth,
+      height: container.offsetHeight,
+      scale: 2,
+      useCORS: true,
+      allowTaint: true
   });
+
 
   // ② 캔버스 크기 (픽셀 단위)
   const canvasWidth = canvas.width;
