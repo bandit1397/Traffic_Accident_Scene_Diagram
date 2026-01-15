@@ -867,13 +867,17 @@ async function savePDF(){
 
   pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, renderWidth, renderHeight);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
+  
 
+  /* ===== 도구 토글 ===== */
+  const toolToggle = document.getElementById('toolToggle');
+  const toolContent = document.getElementById('toolContent');
 
-/* ===== 도구 토글 ===== */
-toolToggle.onclick=()=>{
-  toolContent.style.display=
-    toolContent.style.display==='block'?'none':'block';
-};
+  toolToggle.onclick = () => {
+    toolContent.style.display =
+      toolContent.style.display === 'block' ? 'none' : 'block';
+  };
+
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
