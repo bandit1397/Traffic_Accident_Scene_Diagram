@@ -205,8 +205,6 @@ h1 { text-align:center; }
 
     <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
     <svg id="lineLayer"
-         viewBox="0 0 2100 2970"
-         preserveAspectRatio="xMidYMid meet"
          width="100%"
          height="100%"
          style="
@@ -522,12 +520,12 @@ svg.addEventListener('pointerup', ()=>{
 
 /* ===== 좌표 변환 ===== */
 function getSVGPoint(e){
-  const pt = svg.createSVGPoint();
-  pt.x = e.clientX;
-  pt.y = e.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
-}
-
+  const r = svg.getBoundingClientRect();
+  return {
+    x: e.clientX - r.left,
+    y: e.clientY - r.top
+  };
+}  
 
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
