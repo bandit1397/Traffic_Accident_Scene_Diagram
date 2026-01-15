@@ -832,35 +832,52 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF() {
-  const pdfWidth = 210; // mm
-  const pdfHeight = 297; // mm
+  const container = document.getElementById('container');
+  const bgMap = document.getElementById('bgMap');
 
-  // html2canvas는 픽셀 단위 → scale 조정
-  const scale = 2;
+  // ① 배경 이미지 실제 크기 가져오기
+  const imgWidth = bgMap.naturalWidth;
+  const imgHeight = bgMap.naturalHeight;
 
-  // 컨테이너를 PDF 크기 픽셀로 맞춤
+  // ② 컨테이너 크기를 이미지 크기에 맞춤
+  const originalWidth = container.style.width;
+  const originalHeight = container.style.height;
+  const originalPadding = container.style.padding;
+
+  container.style.width = imgWidth + 'px';
+  container.style.height = imgHeight + 'px';
+  container.style.padding = '0';
+
+  // ③ html2canvas 캡처
   const canvasImg = await html2canvas(container, {
     backgroundColor: '#fff',
-    scale: scale,
-    width: container.offsetWidth,
-    height: container.offsetHeight
+    scale: 2
   });
 
+  // ④ 컨테이너 원래 크기로 복원
+  container.style.width = originalWidth;
+  container.style.height = originalHeight;
+  container.style.padding = originalPadding;
+
+  // ⑤ jsPDF 생성 (A4 세로)
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p', 'mm', 'a4');
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
 
-  // 여백 포함 위치 + 크기
-  const margin = 10; // mm 여백
-  pdf.addImage(
-    canvasImg.toDataURL('image/png'),
-    'PNG',
-    margin, margin,                 // PDF 좌측 상단에서 margin만큼 떨어짐
-    pdfWidth - margin*2,            // 가로 크기에서 여백 제외
-    pdfHeight - margin*2            // 세로 크기에서 여백 제외
-  );
+  // ⑥ 이미지 비율 맞춰 PDF에 삽입
+  const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+  const w = imgWidth * ratio;
+  const h = imgHeight * ratio;
+  const x = (pdfWidth - w) / 2;
+  const y = (pdfHeight - h) / 2;
 
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', x, y, w, h);
+
+  // ⑦ PDF 저장
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 
 /* ===== 도구 토글 ===== */
