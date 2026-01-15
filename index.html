@@ -873,11 +873,10 @@ async function savePDF(){
   const toolToggle = document.getElementById('toolToggle');
   const toolContent = document.getElementById('toolContent');
 
-  toolToggle.onclick = () => {
+  toolToggle.addEventListener('click', () => {
     toolContent.style.display =
       toolContent.style.display === 'block' ? 'none' : 'block';
-  };
-
+  });
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
