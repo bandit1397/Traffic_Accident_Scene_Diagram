@@ -832,14 +832,38 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+  // 1. 캡처 대상 = container
+  const canvasImg = await html2canvas(container, {
+    scale: 2,             // 고해상도
+    useCORS: true,        // 외부 이미지 포함 시
+    allowTaint: true
+  });
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+
+  // 2. PDF 페이지 크기
+  const pdfWidth  = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  // 3. 캔버스 실제 크기
+  const imgWidth  = canvasImg.width;
+  const imgHeight = canvasImg.height;
+
+  // 4. PDF에 맞추되 비율 유지
+  const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+
+  const w = imgWidth * ratio;
+  const h = imgHeight * ratio;
+
+  // 5. 중앙 정렬
+  const x = (pdfWidth - w) / 2;
+  const y = (pdfHeight - h) / 2;
+
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', x, y, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
