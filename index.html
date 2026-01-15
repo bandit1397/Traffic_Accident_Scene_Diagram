@@ -10,24 +10,12 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-
-  /* A4 실제 크기 */
-  width: 210mm;
-  min-height: 297mm;
-
-  /* 화면 중앙 정렬 */
-  margin: 20px auto;
-
-  /* 내부 여백 (캡처 기준 유지용) */
-  padding: 10mm;
-  box-sizing: border-box;
-
-  /* 배경 및 테두리 */
-  background-color: #fff;
-  border: 1px solid #ccc;
-
-  /* 캡처 안정성 강화 */
-  overflow: hidden;
+  width:210mm;
+  min-height:297mm;
+  margin:20px auto;
+  padding:10mm;
+  background:#fff;
+  border:1px solid #ccc;
 }
 
 h1 { text-align:center; }
@@ -280,7 +268,6 @@ h1 { text-align:center; }
         </label>
 
         <button onclick="savePDF()">PDF</button>
-        <button onclick="savePNG()">PNG</button>
 
         <hr>
 
@@ -854,54 +841,6 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
-/* ===== PNG ===== */
-async function savePNG(){
-  const rect = container.getBoundingClientRect();
-
-  const canvas = await html2canvas(container, {
-    scale: window.devicePixelRatio,
-    backgroundColor: '#fff',
-
-    width: rect.width,
-    height: rect.height,
-    windowWidth: document.documentElement.scrollWidth,
-    windowHeight: document.documentElement.scrollHeight
-  });
-
-  const link = document.createElement('a');
-  link.download = 'Traffic_Accident_Scene.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-}
-
-
-function rotateLine(line, angleDeg, anchor){
-  const rad = angleDeg * Math.PI / 180;
-
-  const x1 = line.x1.baseVal.value;
-  const y1 = line.y1.baseVal.value;
-  const x2 = line.x2.baseVal.value;
-  const y2 = line.y2.baseVal.value;
-
-  function rotate(x, y){
-    const dx = x - anchor.x;
-    const dy = y - anchor.y;
-    return {
-      x: anchor.x + dx * Math.cos(rad) - dy * Math.sin(rad),
-      y: anchor.y + dx * Math.sin(rad) + dy * Math.cos(rad)
-    };
-  }
-
-  const p1 = rotate(x1, y1);
-  const p2 = rotate(x2, y2);
-
-  line.setAttribute('x1', p1.x);
-  line.setAttribute('y1', p1.y);
-  line.setAttribute('x2', p2.x);
-  line.setAttribute('y2', p2.y);
-}
-
-  
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
   toolContent.style.display=
