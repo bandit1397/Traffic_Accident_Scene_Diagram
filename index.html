@@ -520,12 +520,12 @@ svg.addEventListener('pointerup', ()=>{
 
 /* ===== 좌표 변환 ===== */
 function getSVGPoint(e){
-  const r = svg.getBoundingClientRect();
-  return {
-    x: e.clientX - r.left,
-    y: e.clientY - r.top
-  };
-}  
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX;
+  pt.y = e.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+
 
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
