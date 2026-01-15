@@ -442,6 +442,11 @@ let deleteMode = null;
 
 let startPoint = null;
 let selectedLine = null;
+function clearLineModes(){
+  lineMode = moveMode = deleteMode = null;
+  svg.style.pointerEvents = 'none';   // SVG 클릭 통과
+  updateLineButtons();
+}
 let dragOffset = {x:0,y:0};
 
 /* ===== 선 모드 제어 ===== */
