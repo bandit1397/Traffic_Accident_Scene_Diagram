@@ -45,7 +45,7 @@ h1 { text-align:center; }
   position:absolute;
   z-index:400;
   touch-action:none;
-  pointer-events:auto;
+  pointer-events: none;
 }
 
 /* ===== 자유곡선 캔버스 ===== */
@@ -448,18 +448,21 @@ let dragOffset = {x:0,y:0};
 function setLineMode(type){
   lineMode = type;
   moveMode = deleteMode = null;
+  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
 function setMoveMode(type){
   moveMode = type;
   lineMode = deleteMode = null;
+  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
 function setDeleteMode(type){
   deleteMode = type;
   lineMode = moveMode = null;
+  svg.style.pointerEvents = 'auto';
   updateLineButtons();
 }
 
