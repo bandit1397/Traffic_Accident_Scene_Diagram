@@ -831,15 +831,33 @@ t.addEventListener('pointerup', () => {
 }
 
 /* ===== PDF ===== */
-async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+async function savePDF() {
+  // ① 컨테이너 캡처 (배경 흰색 + 고해상도)
+  const canvasImg = await html2canvas(container, {
+    backgroundColor: '#fff', // 캔버스 배경 흰색
+    scale: 2                 // 고해상도
+  });
+
+  // ② jsPDF 생성 (A4 세로)
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p', 'mm', 'a4');
+
+  const pdfWidth = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  // ③ PDF 전체 영역에 캔버스 이미지 넣기
+  pdf.addImage(
+    canvasImg.toDataURL('image/png'),
+    'PNG',
+    0, 0,         // x, y 위치
+    pdfWidth,     // PDF 가로에 맞춤
+    pdfHeight     // PDF 세로에 맞춤 (여백 포함)
+  );
+
+  // ④ PDF 저장
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
