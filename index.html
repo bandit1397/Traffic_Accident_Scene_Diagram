@@ -832,11 +832,17 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
+  const canvasImg = await html2canvas(container, {
+    backgroundColor: '#fff',  // 흰색 배경
+    scale: 2,                 // 해상도 확대
+    useCORS: true,            // 외부 이미지 포함
+    allowTaint: true          // tainted canvas 허용
+  });
+
+  const {jsPDF} = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const w = pdf.internal.pageSize.getWidth();
+  const h = canvasImg.height * w / canvasImg.width;
   pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
