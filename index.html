@@ -198,7 +198,7 @@ h1 { text-align:center; }
            inset:0;
            width:100%;
            height:100%;
-           object-fit:cover;   /* ⭐ 여기 변경 */
+           object-fit:contain;
            z-index:1;
            pointer-events:none;
          ">
@@ -832,51 +832,20 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvas = await html2canvas(container, {
-      backgroundColor: '#fff',
-      width: container.offsetWidth,
-      height: container.offsetHeight,
-      scale: 2,
-      useCORS: true,
-      allowTaint: true
-  });
-
-  // jsPDF
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
-
-  // PDF 크기
-  const pdfWidth = pdf.internal.pageSize.getWidth();
-  const pdfHeight = pdf.internal.pageSize.getHeight();
-
-  // 캔버스 비율
-  const canvasRatio = canvas.width / canvas.height;
-  const pdfRatio = pdfWidth / pdfHeight;
-
-  let renderWidth, renderHeight;
-
-  if(canvasRatio > pdfRatio){
-      // 캔버스가 더 넓으면 너비 기준
-      renderWidth = pdfWidth;
-      renderHeight = pdfWidth / canvasRatio;
-  }else{
-      // 캔버스가 더 높으면 높이 기준
-      renderHeight = pdfHeight;
-      renderWidth = pdfHeight * canvasRatio;
-  }
-
-  pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, renderWidth, renderHeight);
+  const canvasImg=await html2canvas(container);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvasImg.height*w/canvasImg.width;
+  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
-  
+}
 
-  /* ===== 도구 토글 ===== */
-  const toolToggle = document.getElementById('toolToggle');
-  const toolContent = document.getElementById('toolContent');
-
-  toolToggle.addEventListener('click', () => {
-    toolContent.style.display =
-      toolContent.style.display === 'block' ? 'none' : 'block';
-  });
+/* ===== 도구 토글 ===== */
+toolToggle.onclick=()=>{
+  toolContent.style.display=
+    toolContent.style.display==='block'?'none':'block';
+};
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
