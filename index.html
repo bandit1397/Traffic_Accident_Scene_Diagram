@@ -834,34 +834,31 @@ t.addEventListener('pointerup', () => {
 /* ===== PDF ===== */
 async function savePDF(){
   const canvasImg = await html2canvas(container, {
-    scale: 2,                 // ⭐ 해상도 고정
+    scale: 2,
     useCORS: true,
     backgroundColor: '#fff'
   });
 
   const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p','mm','a4');
+  const pdf = new jsPDF('p', 'mm', 'a4');
 
-  const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
+  // ⭐ 1mm = 96 / 25.4 px 기준
+  const pxToMm = px => px * 25.4 / 96;
 
-  // 이미지 비율 유지
-  const imgW = pageW;
-  const imgH = canvasImg.height * imgW / canvasImg.width;
+  const imgW = pxToMm(canvasImg.width);
+  const imgH = pxToMm(canvasImg.height);
 
-  // ⭐ 중앙 정렬 (비율 깨짐 방지)
-  const y = (pageH - imgH) / 2;
-
+  // ⭐ 좌측 상단부터 "있는 그대로"
   pdf.addImage(
     canvasImg.toDataURL('image/png'),
     'PNG',
     0,
-    y,
+    0,
     imgW,
     imgH
   );
 
-  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
+  pdf.save('교통사고_현장약도.pdf');
 }
 
 
