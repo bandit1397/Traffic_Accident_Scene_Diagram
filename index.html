@@ -26,7 +26,7 @@ h1 { text-align:center; }
   border:1px solid #888;
   position:relative;
   overflow:hidden;
-  touch-action: auto;
+  touch-action: none; 
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -45,7 +45,7 @@ h1 { text-align:center; }
   position:absolute;
   inset:0;
   z-index:400;
-  touch-action: pan-y pan-x;
+  touch-action:none;
   pointer-events:auto;
 }
 
@@ -462,39 +462,23 @@ function updateLineButtons(){
 svg.addEventListener('pointerdown', e=>{
   const pt = getSVGPoint(e);
 
-  // 도구 모드 아닐 때
-  if(!lineMode && !moveMode && !deleteMode){
-    const line =
-      findNearestLine(pt, 'solid') ||
-      findNearestLine(pt, 'dashed');
-
-    if(!line){
-      // ⭐ 아무것도 안 잡았으면 → 브라우저에게 맡김 (스크롤)
-      return;
-    }
-
-    // ⭐ 선을 잡았을 때만 스크롤 차단
-    e.preventDefault();
-    select(line);
-    return;
-  }
-
-  // ===== 아래부터는 "의도적으로 조작"하는 영역 =====
-  e.preventDefault();
-
+  /* ===== 생성 ===== */
   if(lineMode){
-    if(!startPoint) startPoint = pt;
-    else{
+    if(!startPoint){
+      startPoint = pt;
+    }else{
       createLine(startPoint, pt, lineMode);
       startPoint = null;
     }
   }
 
+  /* ===== 삭제 ===== */
   if(deleteMode){
     const line = findNearestLine(pt, deleteMode);
     if(line) svg.removeChild(line);
   }
 
+  /* ===== 이동 시작 ===== */
   if(moveMode){
     const line = findNearestLine(pt, moveMode);
     if(line){
@@ -506,17 +490,16 @@ svg.addEventListener('pointerdown', e=>{
       svg.setPointerCapture(e.pointerId);
     }
   }
+  // 선 선택
+  if(!lineMode && !moveMode && !deleteMode){
+    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
+    if(line) select(line);
+  }
 });
 
-
 /* ===== 선 이동 ===== */
-svg.addEventListener('pointermove', e => {
-
-  // ⭐ 선을 잡고 있지 않으면 → 브라우저 스크롤 그대로
-  if (!selectedLine) return;
-
-  // ⭐ 선을 이동하는 순간에만 스크롤 차단
-  e.preventDefault();
+svg.addEventListener('pointermove', e=>{
+  if(!selectedLine) return;
 
   const pt = getSVGPoint(e);
   const dx = pt.x - dragOffset.x;
@@ -530,7 +513,6 @@ svg.addEventListener('pointermove', e => {
   selectedLine.setAttribute('x2', dx + w);
   selectedLine.setAttribute('y2', dy + h);
 });
-
 
 /* ===== 이동 종료 ===== */
 svg.addEventListener('pointerup', ()=>{
