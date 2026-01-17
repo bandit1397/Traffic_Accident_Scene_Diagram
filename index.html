@@ -12,7 +12,6 @@ body { margin:0; background:#eee; font-family:sans-serif; }
   position: relative;
   width:210mm;
   min-height:297mm;
-  box-sizing:border-box;
   margin:20px auto;
   padding:10mm;
   background:#fff;
@@ -833,34 +832,14 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg = await html2canvas(container, {
-    scale: 2,
-    useCORS: true,
-    backgroundColor: '#fff'
-  });
-
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF('p', 'mm', 'a4');
-
-  // ⭐ 1mm = 96 / 25.4 px 기준
-  const pxToMm = px => px * 25.4 / 96;
-
-  const imgW = pxToMm(canvasImg.width);
-  const imgH = pxToMm(canvasImg.height);
-
-  // ⭐ 좌측 상단부터 "있는 그대로"
-  pdf.addImage(
-    canvasImg.toDataURL('image/png'),
-    'PNG',
-    0,
-    0,
-    imgW,
-    imgH
-  );
-
-  pdf.save('교통사고_현장약도.pdf');
+  const canvasImg=await html2canvas(container);
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF('p','mm','a4');
+  const w=pdf.internal.pageSize.getWidth();
+  const h=canvasImg.height*w/canvasImg.width;
+  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
-
 
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
