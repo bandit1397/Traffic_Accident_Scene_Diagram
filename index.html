@@ -26,9 +26,8 @@ h1 { text-align:center; }
   border:1px solid #888;
   position:relative;
   overflow:hidden;
-  touch-action: auto;   /* ✅ 기본은 스크롤 허용 */
+  touch-action: none; 
 }
-
 
 /* ===== 카카오 지도 이미지 ===== */
 #bgMap {
@@ -46,7 +45,7 @@ h1 { text-align:center; }
   position:absolute;
   inset:0;
   z-index:400;
-  touch-action:auto;
+  touch-action:none;
   pointer-events:auto;
 }
 
@@ -493,12 +492,8 @@ svg.addEventListener('pointerdown', e=>{
   }
   // 선 선택
   if(!lineMode && !moveMode && !deleteMode){
-    const line =
-      findNearestLine(pt, 'solid') ||
-      findNearestLine(pt, 'dashed');
-    if(!line) return;
-    select(line);
-    e.preventDefault();
+    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
+    if(line) select(line);
   }
 });
 
@@ -673,9 +668,6 @@ function drag(handle, target = handle){
 
   handle.addEventListener('pointerdown', e=>{
 
-    // ⭐ 객체 드래그 중에는 스크롤 완전 차단
-    document.body.style.touchAction = 'none';
-
     if(target === panel && panel.style.transform){
       panel.style.transform = 'none';
     }
@@ -699,7 +691,6 @@ function drag(handle, target = handle){
   });
 
 
-
   handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
 
@@ -709,13 +700,11 @@ function drag(handle, target = handle){
 
   handle.addEventListener('pointerup', e=>{
     dragging = false;
-    document.body.style.touchAction = 'auto';
     handle.releasePointerCapture(e.pointerId);
   });
 
   handle.addEventListener('pointercancel', e=>{
     dragging = false;
-    document.body.style.touchAction = 'auto';
     handle.releasePointerCapture(e.pointerId);
   });
 }
