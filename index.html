@@ -669,6 +669,9 @@ function drag(handle, target = handle){
 
   handle.addEventListener('pointerdown', e=>{
 
+    // ⭐ 객체 드래그 중에는 스크롤 완전 차단
+    document.body.style.touchAction = 'none';
+
     if(target === panel && panel.style.transform){
       panel.style.transform = 'none';
     }
@@ -692,6 +695,7 @@ function drag(handle, target = handle){
   });
 
 
+
   handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
 
@@ -701,11 +705,13 @@ function drag(handle, target = handle){
 
   handle.addEventListener('pointerup', e=>{
     dragging = false;
+    document.body.style.touchAction = 'auto';
     handle.releasePointerCapture(e.pointerId);
   });
 
   handle.addEventListener('pointercancel', e=>{
     dragging = false;
+    document.body.style.touchAction = 'auto';
     handle.releasePointerCapture(e.pointerId);
   });
 }
