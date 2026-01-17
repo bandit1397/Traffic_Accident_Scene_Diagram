@@ -462,34 +462,39 @@ function updateLineButtons(){
 svg.addEventListener('pointerdown', e=>{
   const pt = getSVGPoint(e);
 
-  // ⭐ 도구 모드 아닐 때 + 선도 없으면 → 완전 무시 (스크롤 허용)
+  // 도구 모드 아닐 때
   if(!lineMode && !moveMode && !deleteMode){
     const line =
       findNearestLine(pt, 'solid') ||
       findNearestLine(pt, 'dashed');
 
-    if(!line) return;   // ⭐⭐⭐ 핵심
+    if(!line){
+      // ⭐ 아무것도 안 잡았으면 → 브라우저에게 맡김 (스크롤)
+      return;
+    }
+
+    // ⭐ 선을 잡았을 때만 스크롤 차단
+    e.preventDefault();
     select(line);
     return;
   }
 
-  /* ===== 생성 ===== */
+  // ===== 아래부터는 "의도적으로 조작"하는 영역 =====
+  e.preventDefault();
+
   if(lineMode){
-    if(!startPoint){
-      startPoint = pt;
-    }else{
+    if(!startPoint) startPoint = pt;
+    else{
       createLine(startPoint, pt, lineMode);
       startPoint = null;
     }
   }
 
-  /* ===== 삭제 ===== */
   if(deleteMode){
     const line = findNearestLine(pt, deleteMode);
     if(line) svg.removeChild(line);
   }
 
-  /* ===== 이동 시작 ===== */
   if(moveMode){
     const line = findNearestLine(pt, moveMode);
     if(line){
