@@ -510,8 +510,13 @@ svg.addEventListener('pointerdown', e=>{
 
 
 /* ===== 선 이동 ===== */
-svg.addEventListener('pointermove', e=>{
-  if(!selectedLine) return;
+svg.addEventListener('pointermove', e => {
+
+  // ⭐ 선을 잡고 있지 않으면 → 브라우저 스크롤 그대로
+  if (!selectedLine) return;
+
+  // ⭐ 선을 이동하는 순간에만 스크롤 차단
+  e.preventDefault();
 
   const pt = getSVGPoint(e);
   const dx = pt.x - dragOffset.x;
@@ -525,6 +530,7 @@ svg.addEventListener('pointermove', e=>{
   selectedLine.setAttribute('x2', dx + w);
   selectedLine.setAttribute('y2', dy + h);
 });
+
 
 /* ===== 이동 종료 ===== */
 svg.addEventListener('pointerup', ()=>{
