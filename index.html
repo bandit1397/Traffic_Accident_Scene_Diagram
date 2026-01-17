@@ -493,8 +493,12 @@ svg.addEventListener('pointerdown', e=>{
   }
   // 선 선택
   if(!lineMode && !moveMode && !deleteMode){
-    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
-    if(line) select(line);
+    const line =
+      findNearestLine(pt, 'solid') ||
+      findNearestLine(pt, 'dashed');
+    if(!line) return;
+    select(line);
+    e.preventDefault();
   }
 });
 
