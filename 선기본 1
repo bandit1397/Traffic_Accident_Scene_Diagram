@@ -192,16 +192,17 @@ h1 { text-align:center; }
 
     <!-- 배경 지도 이미지 -->
     <img id="bgMap"
-         src="kakao_capture.jpg"
-         style="
-           position:absolute;
-           inset:0;
-           width:100%;
-           height:100%;
-           object-fit:contain;
-           z-index:1;
-           pointer-events:none;
-         ">
+       src="kakao_capture.jpg"
+       style="
+         position:absolute;
+         inset:0;
+         width:100%;
+         height:100%;
+         object-fit:cover;   /* ⭐ contain → cover 변경 */
+         z-index:1;
+         pointer-events:none;
+       ">
+
 
     <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
     <svg id="lineLayer"
