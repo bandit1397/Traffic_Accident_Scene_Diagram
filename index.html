@@ -734,19 +734,22 @@ function addIcon(type){
   enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
 
-function addArrow(){
-  const p=centerPos();
-  const img=document.createElement('img');
-  img.src=icons.arrow;
-  img.className='arrow';
-  img.style.left=p.x+'px';
-  img.style.top=p.y+'px';
-  img.style.width = '64px'; 
+function addArrow(type = 0){
+  const p = centerPos();
+  const img = document.createElement('img');
+
+  img.src = icons.arrows[type];   // ⭐ 여기만 변경
+  img.className = 'arrow';
+
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '64px';
+
   mapDiv.appendChild(img);
   drag(img);
-  enableDeleteConfirmation(img);  // 🔹 여기 추가
-
+  enableDeleteConfirmation(img);
 }
+
 
 function addText(){
   const p = centerPos();
