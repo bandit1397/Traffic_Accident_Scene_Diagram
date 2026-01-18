@@ -159,21 +159,21 @@ h1 {
 }
 
 #toolContent {
-  display:none;
-  margin-top:6px;
-  background:#fff;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:6px;
-  width:120px;
-
+  display: none;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 6px;
+  width: 120px;
   max-height: 70vh;
   overflow-y: auto;
-  overscroll-behavior: contain;
-
-  padding-bottom: 16px;        /* ✅ PC 스크롤 잘림 방지 */
-  box-sizing: border-box;      /* ✅ 높이 계산 정확화 */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 32px;      
+  box-sizing: border-box;
 }
+
 
 
 #toolContent button {
