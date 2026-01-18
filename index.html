@@ -193,13 +193,20 @@ h1 {
   margin:6px 0;
 }
 
-.toggle-panel {
-  position: relative;
-  max-height: 80dvh;
+#objectPanel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 60dvh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   touch-action: pan-y;
+  display: none;
+  background: #fff;
+  z-index: 9999;
 }
+
 </style>
 </head>
 
