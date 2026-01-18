@@ -259,9 +259,9 @@ h1 {
         <button onclick="addIcon('person')">사람</button>
         <button onclick="addIcon('car')">자동차</button>
         <button onclick="addIcon('bike')">자전거</button>
-        <button onclick="addIcon(0)">오토바이①</button>
-        <button onclick="addIcon(1)">오토바이②</button>
-        <button onclick="addIcon(2)">오토바이③</button>
+        <button onclick="addMoto(0)">오토바이①</button>
+        <button onclick="addMoto(1)">오토바이②</button>
+        <button onclick="addMoto(2)">오토바이③</button>
         <button onclick="addArrow(0)">화살표①</button>
         <button onclick="addArrow(1)">화살표②</button>
         <button onclick="addArrow(2)">화살표③</button>
@@ -733,10 +733,6 @@ function drag(handle, target = handle){
 }
 
 
-
-
-
-
 /* ===== 객체 ===== */
 function addIcon(type){
   const p=centerPos();
@@ -750,6 +746,23 @@ function addIcon(type){
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
+
+function addMoto(index = 0){
+  const p = centerPos();
+  const img = document.createElement('img');
+
+  img.src = icons.motos[index];
+  img.className = 'icon';
+
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '64px';
+
+  mapDiv.appendChild(img);
+  drag(img);
+  enableDeleteConfirmation(img);
+}
+
 
 function addArrow(type = 0){
   const p = centerPos();
