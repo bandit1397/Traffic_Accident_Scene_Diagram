@@ -338,7 +338,13 @@ h1 {
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
-// ===== 여기! =====
+const objectPanel = document.getElementById('objectPanel');
+
+function toggleObjectPanel(){
+  objectPanel.style.display =
+    objectPanel.style.display === 'block' ? 'none' : 'block';
+}
+
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
     let startX = 0, startY = 0;
