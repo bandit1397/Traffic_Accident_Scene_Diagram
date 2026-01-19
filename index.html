@@ -6,6 +6,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+  
+html, body {
+  height: 100%;
+  overflow-y: auto;
+}
+
 body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
@@ -153,21 +159,21 @@ h1 {
 }
 
 #toolContent {
-  display:none;
-  margin-top:6px;
-  background:#fff;
-  border:1px solid #333;
-  border-radius:10px;
-  padding:6px;
-  width:120px;
-
+  display: block;
+  margin-top: 6px;
+  background: #fff;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 6px;
+  width: 120px;
   max-height: 70vh;
   overflow-y: auto;
-  overscroll-behavior: contain;
-
-  padding-bottom: 16px;        /* ✅ PC 스크롤 잘림 방지 */
-  box-sizing: border-box;      /* ✅ 높이 계산 정확화 */
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  padding-bottom: 32px;      
+  box-sizing: border-box;
 }
+
 
 
 #toolContent button {
@@ -186,6 +192,21 @@ h1 {
 #toolContent hr {
   margin:6px 0;
 }
+
+#objectPanel {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-height: 60dvh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  display: none;
+  background: #fff;
+  z-index: 9999;
+}
+
 </style>
 </head>
 
@@ -255,7 +276,7 @@ h1 {
       <div id="toolContent">
 
         <!-- ===== 객체 ===== -->
-        <button onclick="togglePanel()">객체패널</button>
+        <button onclick="toggleObjectPanel()">객체패널</button>
         <button onclick="addIcon('person')">사람</button>
         <button onclick="addIcon('car')">자동차</button>
         <button onclick="addIcon('bike')">자전거</button>
@@ -318,8 +339,10 @@ h1 {
       </div>
 
     </div>
-
+  
+   </div>
   </div>
+  <div id="objectPanel" class="toggle-panel">
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -329,7 +352,13 @@ h1 {
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
-// ===== 여기! =====
+const objectPanel = document.getElementById('objectPanel');
+
+function toggleObjectPanel(){
+  objectPanel.style.display =
+    objectPanel.style.display === 'block' ? 'none' : 'block';
+}
+
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
     let startX = 0, startY = 0;
@@ -675,9 +704,10 @@ function select(el){
     panel.style.transform = 'none';
     panelInitialized = true;
   }
-
+  
   panel.style.visibility = 'visible';
   panel.style.opacity = '1';
+  objectPanel.style.display = 'block';
 }
 
 
