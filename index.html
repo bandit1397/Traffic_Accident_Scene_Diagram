@@ -10,29 +10,23 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-  width: 210mm;     /* A4 세로 가로 */
-  height: 270mm;     
-  margin: 0 auto;
-  padding: 15mm;    /* 사진과 유사한 여백 */
-  background: #fff;
-  border: 1px solid #000;
-  box-sizing: border-box;
+  width:210mm;
+  min-height:297mm;
+  margin:20px auto;
+  padding:10mm;
+  background:#fff;
+  border:1px solid #ccc;
 }
 
-
-h1 {
-  text-align: center;
-  font-size: 16px;
-  margin: 0 0 10mm 0;   /* ⭐ 제목 아래 여백 */
-}
+h1 { text-align:center; }
 
 #map {
-  width: 100%;
-  height: calc(100% - 30mm - 26px);
-  /* padding 상하 + 제목 영역 제외 */
-  border: 1px solid #000;
-  position: relative;
-  overflow: hidden;
+  width:100%;
+  height:600px;
+  border:1px solid #888;
+  position:relative;
+  overflow:hidden;
+  touch-action: none; 
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -194,8 +188,7 @@ h1 {
 <div id="container">
   <h1>교통사고 현장약도</h1>
 
-  <div id="map">
-
+  <div id="map" style="position:relative; width:100%; height:600px;">
 
     <!-- 배경 지도 이미지 -->
     <img id="bgMap"
@@ -259,14 +252,8 @@ h1 {
         <button onclick="addIcon('person')">사람</button>
         <button onclick="addIcon('car')">자동차</button>
         <button onclick="addIcon('bike')">자전거</button>
-        <button onclick="addMoto(0)">오토바이①</button>
-        <button onclick="addMoto(1)">오토바이②</button>
-        <button onclick="addMoto(2)">오토바이③</button>
-        <button onclick="addArrow(0)">화살표①</button>
-        <button onclick="addArrow(1)">화살표②</button>
-        <button onclick="addArrow(2)">화살표③</button>
-        <button onclick="addArrow(3)">화살표④</button>
-        <button onclick="addArrow(4)">화살표⑤</button>
+        <button onclick="addIcon('moto')">오토바이</button>
+        <button onclick="addArrow()">화살표</button>
         <button onclick="addText()">문자</button>
 
         <hr>
@@ -631,24 +618,13 @@ drag(panelHeader, panel);
 
 
 /* ===== 공통 ===== */
-const icons = {
-  person: './icons/person.png',
-  car: './icons/car.png',
-  bike: './icons/bike.png',
-  motos: [
-    './icons/moto1.png',
-    './icons/moto2.png',
-    './icons/moto3.png'
-  ],
-  arrows: [
-    './icons/arrow1.png',
-    './icons/arrow2.png',
-    './icons/arrow2.png',
-    './icons/arrow4.png',
-    './icons/arrow5.png'
-  ]
+const icons={
+  person:'icons/person.png',
+  car:'icons/car.png',
+  bike:'icons/bike.png',
+  moto:'icons/moto.png',
+  arrow:'icons/arrow.png'
 };
-
 
 let selected=null;
 let panelInitialized = false;
@@ -734,6 +710,10 @@ function drag(handle, target = handle){
 }
 
 
+
+
+
+
 /* ===== 객체 ===== */
 function addIcon(type){
   const p=centerPos();
@@ -748,39 +728,19 @@ function addIcon(type){
   enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
 
-function addMoto(index = 0){
-  const p = centerPos();
-  const img = document.createElement('img');
-
-  img.src = icons.motos[index];
-  img.className = 'icon';
-
-  img.style.left = p.x + 'px';
-  img.style.top  = p.y + 'px';
-  img.style.width = '64px';
-
+function addArrow(){
+  const p=centerPos();
+  const img=document.createElement('img');
+  img.src=icons.arrow;
+  img.className='arrow';
+  img.style.left=p.x+'px';
+  img.style.top=p.y+'px';
+  img.style.width = '64px'; 
   mapDiv.appendChild(img);
   drag(img);
-  enableDeleteConfirmation(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
+
 }
-
-
-function addArrow(type = 0){
-  const p = centerPos();
-  const img = document.createElement('img');
-
-  img.src = icons.arrows[type];   // ⭐ 여기만 변경
-  img.className = 'arrow';
-
-  img.style.left = p.x + 'px';
-  img.style.top  = p.y + 'px';
-  img.style.width = '64px';
-
-  mapDiv.appendChild(img);
-  drag(img);
-  enableDeleteConfirmation(img);
-}
-
 
 function addText(){
   const p = centerPos();
