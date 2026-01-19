@@ -267,8 +267,10 @@ h1 {
 
 
     <!-- 도구 -->
+    <!-- 도구 -->
     <div id="toolbox">
       <button id="toolToggle">☰</button>
+
       <div id="toolContent">
 
         <!-- ===== 객체 ===== -->
@@ -276,18 +278,30 @@ h1 {
         <button onclick="addIcon('person')">사람</button>
         <button onclick="addIcon('car')">자동차</button>
         <button onclick="addIcon('bike')">자전거</button>
-        <button onclick="addMoto(0)">오토바이①</button>
-        <button onclick="addMoto(1)">오토바이②</button>
-        <button onclick="addMoto(2)">오토바이③</button>
-        <button onclick="addArrow(0)">화살표①</button>
-        <button onclick="addArrow(1)">화살표②</button>
-        <button onclick="addArrow(2)">화살표③</button>
-        <button onclick="addArrow(3)">화살표④</button>
-        <button onclick="addArrow(4)">화살표⑤</button>
+
+        <!-- ===== 오토바이 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('motoMenu')">▶ 오토바이</button>
+        <div id="motoMenu" class="subMenu">
+          <button onclick="addMoto(0)">오토바이①</button>
+          <button onclick="addMoto(1)">오토바이②</button>
+          <button onclick="addMoto(2)">오토바이③</button>
+        </div>
+
+        <!-- ===== 화살표 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('arrowMenu')">▶ 화살표</button>
+        <div id="arrowMenu" class="subMenu">
+          <button onclick="addArrow(0)">화살표①</button>
+          <button onclick="addArrow(1)">화살표②</button>
+          <button onclick="addArrow(2)">화살표③</button>
+          <button onclick="addArrow(3)">화살표④</button>
+          <button onclick="addArrow(4)">화살표⑤</button>
+        </div>
+
         <button onclick="addText()">문자</button>
 
         <hr>
 
+        <!-- ===== 선색 / 굵기 ===== -->
         <label>
           선색
           <input type="color" id="lineColor" value="#ff0000">
@@ -302,38 +316,45 @@ h1 {
 
         <hr>
 
-        <!-- ===== 새로 추가되는 선 패널 ===== -->
-        <b style="font-size:12px;">선</b>
+        <!-- ===== 선 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('lineMenu')">▶ 선</button>
 
-        <button onclick="setLineMode('solid')">실선 선택</button>
-        <button onclick="setLineMode('dashed')">점선 선택</button>
-        <button onclick="setLineMode(null)">선 해제</button>
+        <div id="lineMenu" class="subMenu">
 
-        <button onclick="setMoveMode('solid')">실선 이동</button>
-        <button onclick="setMoveMode('dashed')">점선 이동</button>
+          <b style="font-size:12px;">선 선택</b>
+          <button onclick="setLineMode('solid')">실선 선택</button>
+          <button onclick="setLineMode('dashed')">점선 선택</button>
+          <button onclick="setLineMode(null)">선 해제</button>
 
-        <button onclick="setDeleteMode('solid')">실선 삭제</button>
-        <button onclick="setDeleteMode('dashed')">점선 삭제</button>
+          <hr>
+
+          <b style="font-size:12px;">선 이동</b>
+          <button onclick="setMoveMode('solid')">실선 이동</button>
+          <button onclick="setMoveMode('dashed')">점선 이동</button>
+
+          <hr>
+
+          <b style="font-size:12px;">선 삭제</b>
+          <button onclick="setDeleteMode('solid')">실선 삭제</button>
+          <button onclick="setDeleteMode('dashed')">점선 삭제</button>
+
+          <hr>
+
+          <b style="font-size:12px;">선 회전 기준</b>
+          <button onclick="lineRotateAnchor='start'">좌측 기준</button>
+          <button onclick="lineRotateAnchor='end'">우측 기준</button>
+
+        </div>
 
         <hr>
 
-        <!-- ===== 선 회전 기준 ===== -->
-        <b style="font-size:12px;">선 회전 기준</b>
-
-        <button onclick="lineRotateAnchor='start'">좌측 기준</button>
-        <button onclick="lineRotateAnchor='end'">우측 기준</button>
-
-        <hr>
-
-
-        <!-- ===== 배경 이미지 불러오기 ===== -->
+        <!-- ===== 배경 이미지 ===== -->
         <label style="font-size:12px; display:block; margin-top:6px;">
           배경 이미지 불러오기
           <input type="file" id="bgInput" accept="image/*">
         </label>
 
       </div>
-
     </div>
 
   </div>
