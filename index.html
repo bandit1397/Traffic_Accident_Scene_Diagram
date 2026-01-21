@@ -969,46 +969,6 @@ bgInput.addEventListener('change', e=>{
   reader.readAsDataURL(file);
 });
 
-const toolToggle  = document.getElementById('toolToggle');
-const toolContent = document.getElementById('toolContent');
-
-toolToggle.onclick = () => {
-  toolContent.style.display =
-    toolContent.style.display === 'block' ? 'none' : 'block';
-};
-
-<button onclick="captureMapView()">🖼 현재 화면 배경으로</button>
-
-// ===== 컨테이너 안 보이는 지도 영역 캡처 후 배경 업데이트 =====
-async function captureMapView() {
-  // mapDiv 영역만 캡처
-  const mapCanvas = await html2canvas(mapDiv, {
-    useCORS: true,      // 외부 이미지 허용
-    allowTaint: true,
-    logging: false,
-    backgroundColor: null
-  });
-
-  // 캡처한 이미지를 bgMap에 넣기
-  bgMap.src = mapCanvas.toDataURL();
-
-  // objectLayer와 lineLayer는 그대로 유지
-  alert('현재 컨테이너 안 보이는 지도 영역으로 배경이 업데이트 되었습니다.');
-}
-
-// ===== 캡처 버튼 추가 (도구 상자 안) =====
-const captureBtn = document.createElement('button');
-captureBtn.textContent = '현재 지도 영역 캡처';
-captureBtn.style.width = '100%';
-captureBtn.style.minHeight = '32px';
-captureBtn.style.margin = '2px 0';
-captureBtn.style.fontSize = '13px';
-captureBtn.onclick = captureMapView;
-
-// 도구 상자(toolContent)에 추가
-toolContent.appendChild(captureBtn);
-
-
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
 const angleInput    = document.getElementById('angle');
 let lineRotateAnchor = 'start';   // 'start' = x1,y1 / 'end' = x2,y2
