@@ -969,6 +969,8 @@ bgInput.addEventListener('change', e=>{
   reader.readAsDataURL(file);
 });
 
+<button onclick="captureMapView()">🖼 현재 화면 배경으로</button>
+
 // ===== 컨테이너 안 보이는 지도 영역 캡처 후 배경 업데이트 =====
 async function captureMapView() {
   // mapDiv 영역만 캡처
