@@ -932,14 +932,44 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+  // ① map 영역만 캡처
+  const rect = mapDiv.getBoundingClientRect();
+
+  const canvasImg = await html2canvas(mapDiv, {
+    scale: 2,             // 고해상도
+    useCORS: true,
+    backgroundColor: '#fff',
+    width: rect.width,    // ⭐ map 영역 너비
+    height: rect.height,  // ⭐ map 영역 높이
+    x: 0,                 // map 좌상단 기준
+    y: 0
+  });
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+
+  const pdfWidth  = pdf.internal.pageSize.getWidth();
+  const pdfHeight = pdf.internal.pageSize.getHeight();
+
+  // 캔버스 비율 계산
+  const ratio = canvasImg.width / canvasImg.height;
+  let finalWidth, finalHeight;
+
+  if(pdfWidth / pdfHeight > ratio){
+    finalHeight = pdfHeight;
+    finalWidth  = ratio * pdfHeight;
+  } else {
+    finalWidth  = pdfWidth;
+    finalHeight = pdfWidth / ratio;
+  }
+
+  const xOffset = (pdfWidth - finalWidth) / 2;
+  const yOffset = (pdfHeight - finalHeight) / 2;
+
+  pdf.addImage(canvasImg.toDataURL(), 'PNG', xOffset, yOffset, finalWidth, finalHeight);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 function toggleSub(id){
   const el = document.getElementById(id);
