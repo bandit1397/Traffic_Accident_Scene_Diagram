@@ -10,13 +10,10 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-  width: 210mm;
-  height: 297mm;          /* ⭐ A4 전체 높이 */
+  width: 210mm;     /* A4 세로 가로 */
+  height: 270mm;     
   margin: 0 auto;
-  padding-top: 15mm;
-  padding-left: 15mm;
-  padding-right: 15mm;
-  padding-bottom: 15mm;  /* ⭐ 하단 1.5cm 여백 */
+  padding: 15mm;    /* 사진과 유사한 여백 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
@@ -31,42 +28,24 @@ h1 {
 
 #map {
   width: 100%;
-  height: calc(100% - 15mm - 26px);
+  height: calc(100% - 30mm - 26px);
+  /* padding 상하 + 제목 영역 제외 */
   border: 1px solid #000;
   position: relative;
   overflow: hidden;
 }
 
-#workArea{
-  position: relative;
-  width: 100%;
-  height: 270mm;
-  overflow: hidden;
-}
-
-#footerArea{
-  position: relative;
-  width: 100%;
-  height: 27mm;        /* ⭐ 객체 설명 공간 */
-  border-top: 1px dashed #999;
-  padding: 4mm;
-  box-sizing: border-box;
-  font-size: 12px;
-}
-
-
 /* ===== 카카오 지도 이미지 ===== */
 #bgMap {
   position:absolute;
-  top:0;
-  left:0;
+  inset:0;
   width:100%;
   height:100%;
-  object-fit:cover;
+  object-fit:contain;
+  user-select:none;
   pointer-events:none;
   z-index:1;
 }
-
 
 #lineLayer {
   position:absolute;
@@ -236,7 +215,18 @@ h1 {
 
 
     <!-- 배경 지도 이미지 -->
-    <img id="bgMap" src="kakao_capture.jpg">
+    <img id="bgMap"
+       src="kakao_capture.jpg"
+       style="
+         position:absolute;
+         inset:0;
+         width:100%;
+         height:100%;
+         object-fit:cover;   /* ⭐ contain → cover 변경 */
+         z-index:1;
+         pointer-events:none;
+       ">
+
 
     <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
     <svg id="lineLayer"
