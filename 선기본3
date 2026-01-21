@@ -681,7 +681,7 @@ const icons = {
   arrows: [
     './icons/arrow1.png',
     './icons/arrow2.png',
-    './icons/arrow2.png',
+    './icons/arrow3.png',
     './icons/arrow4.png',
     './icons/arrow5.png'
   ]
