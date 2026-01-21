@@ -8,41 +8,31 @@
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
-##container {
+#container {
   position: relative;
-  width: 210mm;
-  height: 292mm;
+  width: 210mm;     /* A4 세로 가로 */
+  height: 270mm;     
   margin: 0 auto;
-  padding: 0;                  /* ⭐ padding 제거 */
+  padding: 15mm;    /* 사진과 유사한 여백 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
 }
 
+
 h1 {
   text-align: center;
   font-size: 16px;
-  margin: 0 0 10mm 0;      /* 제목 아래 여백 10mm */
+  margin: 0 0 10mm 0;   /* ⭐ 제목 아래 여백 */
 }
 
 #map {
   width: 100%;
-  height: 260mm;               /* 요구사항 */
+  height: calc(100% - 30mm - 26px);
+  /* padding 상하 + 제목 영역 제외 */
   border: 1px solid #000;
   position: relative;
   overflow: hidden;
-}
-
-/* ===== 객체 대기 영역 (22mm) ===== */
-#objectTray {
-  width: 100%;
-  height: 32mm;                /* 요구사항 */
-  border-top: 1px dashed #999;
-  display: flex;
-  align-items: center;
-  gap: 6mm;
-  padding: 2mm;
-  box-sizing: border-box;
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -368,12 +358,6 @@ h1 {
     </div>
 
   </div>
-  
-    <!-- 🔻 객체 대기 영역 (22mm) -->
-  <div id="objectTray">
-    <span style="font-size:12px; color:#666;">객체 대기 영역</span>
-  </div>
-
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
