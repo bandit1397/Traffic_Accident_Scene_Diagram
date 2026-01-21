@@ -11,9 +11,9 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 #container {
   position: relative;
   width: 210mm;     /* A4 세로 가로 */
-  height: 292mm;     
+  height: 270mm;     
   margin: 0 auto;
-  padding: 10mm;    /* 사진과 유사한 여백 */
+  padding: 15mm;    /* 사진과 유사한 여백 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
@@ -68,20 +68,6 @@ h1 {
   cursor:move;
   z-index:1000;
 }
-
-#objectLayer{
-  position:absolute;
-  inset:0;                 /* container 전체 */
-  pointer-events:none;     /* 기본은 통과 */
-  z-index:2000;
-}
-
-#objectLayer .icon,
-#objectLayer .arrow,
-#objectLayer .textbox{
-  pointer-events:auto;     /* 객체만 이벤트 받음 */
-}
-
 .arrow { transform-origin:center; }
 
 .textbox {
