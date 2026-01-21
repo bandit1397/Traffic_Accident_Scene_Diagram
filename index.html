@@ -68,6 +68,21 @@ h1 {
   cursor:move;
   z-index:1000;
 }
+
+/* ===== 객체 전용 레이어 (map 밖 허용) ===== */
+#objectLayer{
+  position:absolute;
+  inset:0;
+  z-index:2000;
+  pointer-events:none;   /* 기본 통과 */
+}
+
+#objectLayer .icon,
+#objectLayer .arrow,
+#objectLayer .textbox{
+  pointer-events:auto;   /* 객체만 이벤트 */
+}
+
 .arrow { transform-origin:center; }
 
 .textbox {
