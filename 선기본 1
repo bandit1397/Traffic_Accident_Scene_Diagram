@@ -68,6 +68,21 @@ h1 {
   cursor:move;
   z-index:1000;
 }
+
+/* ===== 객체 전용 레이어 (map 밖 허용) ===== */
+#objectLayer{
+  position:absolute;
+  inset:0;
+  z-index:2000;
+  pointer-events:none;   /* 기본 통과 */
+}
+
+#objectLayer .icon,
+#objectLayer .arrow,
+#objectLayer .textbox{
+  pointer-events:auto;   /* 객체만 이벤트 */
+}
+
 .arrow { transform-origin:center; }
 
 .textbox {
@@ -242,6 +257,10 @@ h1 {
          ">
     </svg>
 
+  </div>
+
+  <div id="objectLayer"></div>
+
     <!-- ④ 속성 패널 -->
     <div id="panel">
 
@@ -366,6 +385,8 @@ h1 {
 <script>
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
+
+const objectLayer = document.getElementById('objectLayer');
 
 // ===== 여기! =====
 function enableDeleteConfirmation(el) {
@@ -781,7 +802,7 @@ function addIcon(type){
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
   img.style.width = '64px'; 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
@@ -797,7 +818,7 @@ function addMoto(index = 0){
   img.style.top  = p.y + 'px';
   img.style.width = '64px';
 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);
 }
@@ -814,7 +835,7 @@ function addArrow(type = 0){
   img.style.top  = p.y + 'px';
   img.style.width = '64px';
 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);
 }
@@ -837,7 +858,7 @@ function addText(){
   t.style.textAlign = 'center';
   t.style.width = '20px';
 
-  mapDiv.appendChild(t);
+  objectLayer.appendChild(t);
   drag(t);
   enableDeleteConfirmation(t);  // 🔹 여기 추가
 
