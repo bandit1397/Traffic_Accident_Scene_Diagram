@@ -10,10 +10,13 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-  width: 210mm;     /* A4 세로 가로 */
-  height: 270mm;     
+  width: 210mm;
+  height: 297mm;          /* ⭐ A4 전체 높이 */
   margin: 0 auto;
-  padding: 15mm;    /* 사진과 유사한 여백 */
+  padding-top: 15mm;
+  padding-left: 15mm;
+  padding-right: 15mm;
+  padding-bottom: 15mm;  /* ⭐ 하단 1.5cm 여백 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
