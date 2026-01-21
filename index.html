@@ -800,7 +800,7 @@ function addIcon(type){
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
   img.style.width = '64px'; 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
@@ -816,7 +816,7 @@ function addMoto(index = 0){
   img.style.top  = p.y + 'px';
   img.style.width = '64px';
 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);
 }
@@ -833,7 +833,7 @@ function addArrow(type = 0){
   img.style.top  = p.y + 'px';
   img.style.width = '64px';
 
-  mapDiv.appendChild(img);
+  objectLayer.appendChild(img);
   drag(img);
   enableDeleteConfirmation(img);
 }
@@ -856,7 +856,7 @@ function addText(){
   t.style.textAlign = 'center';
   t.style.width = '20px';
 
-  mapDiv.appendChild(t);
+  objectLayer.appendChild(t);
   drag(t);
   enableDeleteConfirmation(t);  // 🔹 여기 추가
 
