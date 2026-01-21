@@ -31,10 +31,16 @@ h1 {
 
 #map {
   width: 100%;
-  height: calc(100% - 30mm - 26px);
-  /* padding 상하 + 제목 영역 제외 */
+  height: calc(100% - 15mm - 26px);
   border: 1px solid #000;
   position: relative;
+  overflow: hidden;
+}
+
+#workArea{
+  position: relative;
+  width: 100%;
+  height: 270mm;        /* ⭐ 지도 + 객체 영역 */
   overflow: hidden;
 }
 
