@@ -10,22 +10,29 @@ body { margin:0; background:#eee; font-family:sans-serif; }
 
 #container {
   position: relative;
-  width:210mm;
-  min-height:297mm;
-  margin:20px auto;
-  padding:10mm;
-  background:#fff;
-  border:1px solid #ccc;
+  width: 210mm;     /* A4 세로 가로 */
+  height: 270mm;     
+  margin: 0 auto;
+  padding: 15mm;    /* 사진과 유사한 여백 */
+  background: #fff;
+  border: 1px solid #000;
+  box-sizing: border-box;
 }
 
-h1 { text-align:center; }
+
+h1 {
+  text-align: center;
+  font-size: 16px;
+  margin: 0 0 10mm 0;   /* ⭐ 제목 아래 여백 */
+}
 
 #map {
-  width:100%;
-  height:600px;
-  border:1px solid #888;
-  position:relative;
-  overflow:hidden;
+  width: 100%;
+  height: calc(100% - 30mm - 26px);
+  /* padding 상하 + 제목 영역 제외 */
+  border: 1px solid #000;
+  position: relative;
+  overflow: hidden;
 }
 
 /* ===== 카카오 지도 이미지 ===== */
@@ -38,6 +45,14 @@ h1 { text-align:center; }
   user-select:none;
   pointer-events:none;
   z-index:1;
+}
+
+#lineLayer {
+  position:absolute;
+  inset:0;
+  z-index:400;
+  touch-action:none;
+  pointer-events:auto;
 }
 
 /* ===== 자유곡선 캔버스 ===== */
@@ -53,24 +68,41 @@ h1 { text-align:center; }
   cursor:move;
   z-index:1000;
 }
+
+/* ===== 객체 전용 레이어 (map 밖 허용) ===== */
+#objectLayer{
+  position:absolute;
+  inset:0;
+  z-index:2000;
+  pointer-events:none;   /* 기본 통과 */
+}
+
+#objectLayer .icon,
+#objectLayer .arrow,
+#objectLayer .textbox{
+  pointer-events:auto;   /* 객체만 이벤트 */
+}
+
 .arrow { transform-origin:center; }
 
 .textbox {
   position:absolute;
-  border:1px solid #333;
+  border:1px solid transparent;
   background:#fff;
-  padding:2px;
-  resize:both;
+  padding:2px 4px;
   cursor:move;
   z-index:1000;
+
+  resize:none;          /* ⭐ 제거 */
+  white-space:nowrap;  /* ⭐ 한 줄 유지 */
 }
 
 /* ===== 속성 패널 ===== */
 #panel {
   position:absolute;
-  left:10px;
+  left:50%;
   top:50%;
-  transform:translateY(-50%);
+  transform:translate(-50%, -50%);
   background:#fff;
   border:1px solid #333;
   padding:10px;
@@ -78,6 +110,18 @@ h1 { text-align:center; }
   visibility:hidden;
   opacity:0;
   z-index:3000;
+}
+
+
+#panelHeader {
+  font-weight: bold;
+  margin-bottom: 6px;
+  cursor: move;
+  user-select: none;
+}
+
+#panel, #panelHeader {
+  touch-action: none;
 }
 
 #panel label {
@@ -88,6 +132,21 @@ h1 { text-align:center; }
 
 #panel input[type="range"]{
   width:100%;
+}
+
+.rangeWrap{
+  display:flex;
+  align-items:center;
+  gap:4px;
+}
+
+.stepBtn{
+  width:22px;
+  height:22px;
+  font-size:16px;
+  line-height:20px;
+  padding:0;
+  cursor:pointer;
 }
 
 /* ===== 도구 패널 ===== */
@@ -116,7 +175,15 @@ h1 { text-align:center; }
   border-radius:10px;
   padding:6px;
   width:120px;
+
+  max-height: 70vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  padding-bottom: 16px;        /* ✅ PC 스크롤 잘림 방지 */
+  box-sizing: border-box;      /* ✅ 높이 계산 정확화 */
 }
+
 
 #toolContent button {
   width:100%;
@@ -134,6 +201,23 @@ h1 { text-align:center; }
 #toolContent hr {
   margin:6px 0;
 }
+.subToggle{
+  width:100%;
+  min-height:32px;
+  margin:2px 0;
+  font-size:13px;
+  text-align:left;
+}
+
+.subMenu{
+  display:none;
+  padding-left:8px;
+}
+
+.subMenu button{
+  font-size:12px;
+}
+
 </style>
 </head>
 
@@ -144,17 +228,50 @@ h1 { text-align:center; }
 
   <div id="map">
 
-    <!-- ① 카카오 지도 캡처 -->
-    <img id="bgMap" src="kakao_capture.jpg" alt="kakao map">
 
-    <!-- ② 자유곡선 캔버스 -->
-    <canvas id="drawCanvas"></canvas>
+    <!-- 배경 지도 이미지 -->
+    <img id="bgMap"
+       src="kakao_capture.jpg"
+       style="
+         position:absolute;
+         inset:0;
+         width:100%;
+         height:100%;
+         object-fit:cover;   /* ⭐ contain → cover 변경 */
+         z-index:1;
+         pointer-events:none;
+       ">
 
-    <!-- ③ 속성 패널 -->
+
+    <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
+    <svg id="lineLayer"
+         width="100%"
+         height="100%"
+         style="
+           position:absolute;
+           inset:0;
+           z-index:400;
+           touch-action:none;
+           pointer-events:auto;
+           background:transparent;
+         ">
+    </svg>
+
+  </div>
+
+  <div id="objectLayer"></div>
+
+    <!-- ④ 속성 패널 -->
     <div id="panel">
-      <strong>선택 객체</strong>
+
+      <div id="panelHeader">선택 객체</div>
+
       <label>각도
-        <input id="angle" type="range" min="-180" max="180" value="0">
+        <div class="rangeWrap">
+          <button class="stepBtn" data-target="angle" data-step="-0.2">−</button>
+          <input id="angle" type="range" min="-180" max="180" step="0.2" value="0">
+          <button class="stepBtn" data-target="angle" data-step="0.2">+</button>
+        </div>
       </label>
       <label>크기
         <input id="size" type="range" min="10" max="150" value="32">
@@ -167,22 +284,95 @@ h1 { text-align:center; }
       </label>
     </div>
 
+
+    <!-- 도구 -->
     <!-- 도구 -->
     <div id="toolbox">
       <button id="toolToggle">☰</button>
+
       <div id="toolContent">
+
+        <!-- ===== 객체 ===== -->
+        <button onclick="togglePanel()">객체패널</button>
         <button onclick="addIcon('person')">사람</button>
         <button onclick="addIcon('car')">자동차</button>
         <button onclick="addIcon('bike')">자전거</button>
-        <button onclick="addIcon('moto')">오토바이</button>
-        <button onclick="addArrow()">화살표</button>
+
+        <!-- ===== 오토바이 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('motoMenu')">▶ 오토바이</button>
+        <div id="motoMenu" class="subMenu">
+          <button onclick="addMoto(0)">오토바이①</button>
+          <button onclick="addMoto(1)">오토바이②</button>
+          <button onclick="addMoto(2)">오토바이③</button>
+        </div>
+
+        <!-- ===== 화살표 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('arrowMenu')">▶ 화살표</button>
+        <div id="arrowMenu" class="subMenu">
+          <button onclick="addArrow(0)">화살표①</button>
+          <button onclick="addArrow(1)">화살표②</button>
+          <button onclick="addArrow(2)">화살표③</button>
+          <button onclick="addArrow(3)">화살표④</button>
+          <button onclick="addArrow(4)">화살표⑤</button>
+        </div>
+
         <button onclick="addText()">문자</button>
+
         <hr>
-        <button onclick="drawMode=!drawMode">자유곡선</button>
-        <button onclick="togglePointLine()">직선(점→점)</button>
-        <label>선색 <input type="color" id="lineColor" value="#ff0000"></label>
-        <label>굵기 <input type="range" id="lineWidth" min="1" max="15" value="3"></label>
+
+        <!-- ===== 선색 / 굵기 ===== -->
+        <label>
+          선색
+          <input type="color" id="lineColor" value="#ff0000">
+        </label>
+
+        <label>
+          굵기
+          <input type="range" id="lineWidth" min="1" max="15" value="3">
+        </label>
+
         <button onclick="savePDF()">PDF</button>
+
+        <hr>
+
+        <!-- ===== 선 하위 토글 ===== -->
+        <button class="subToggle" onclick="toggleSub('lineMenu')">▶ 선</button>
+
+        <div id="lineMenu" class="subMenu">
+
+          <b style="font-size:12px;">선 선택</b>
+          <button onclick="setLineMode('solid')">실선 선택</button>
+          <button onclick="setLineMode('dashed')">점선 선택</button>
+          <button onclick="setLineMode(null)">선 해제</button>
+
+          <hr>
+
+          <b style="font-size:12px;">선 이동</b>
+          <button onclick="setMoveMode('solid')">실선 이동</button>
+          <button onclick="setMoveMode('dashed')">점선 이동</button>
+
+          <hr>
+
+          <b style="font-size:12px;">선 삭제</b>
+          <button onclick="setDeleteMode('solid')">실선 삭제</button>
+          <button onclick="setDeleteMode('dashed')">점선 삭제</button>
+
+          <hr>
+
+          <b style="font-size:12px;">선 회전 기준</b>
+          <button onclick="lineRotateAnchor='start'">좌측 기준</button>
+          <button onclick="lineRotateAnchor='end'">우측 기준</button>
+
+        </div>
+
+        <hr>
+
+        <!-- ===== 배경 이미지 ===== -->
+        <label style="font-size:12px; display:block; margin-top:6px;">
+          배경 이미지 불러오기
+          <input type="file" id="bgInput" accept="image/*">
+        </label>
+
       </div>
     </div>
 
@@ -194,55 +384,414 @@ h1 { text-align:center; }
 
 <script>
 const mapDiv = document.getElementById('map');
-const canvas = document.getElementById('drawCanvas');
-const ctx = canvas.getContext('2d');
 const panel = document.getElementById('panel');
 
-function resizeCanvas(){
-  canvas.width = mapDiv.clientWidth;
-  canvas.height = mapDiv.clientHeight;
+const objectLayer = document.getElementById('objectLayer');
+
+// ===== 여기! =====
+function enableDeleteConfirmation(el) {
+    let touchTimer = null;
+    let startX = 0, startY = 0;
+    let moved = false;
+    const MOVE_THRESHOLD = 6; // ⭐ 이 거리 이상 움직이면 "이동"으로 판단
+
+    // PC: 더블클릭 삭제 (기존 그대로)
+    el.addEventListener('dblclick', e => {
+        e.preventDefault();
+        if(confirm('이 객체를 삭제하시겠습니까?')) {
+            el.remove();
+            if(selected === el){
+                selected = null;
+                panel.style.visibility = 'hidden';
+                panel.style.opacity = '0';
+            }
+        }
+    });
+
+    // 모바일: 길게 누르기 시작
+    el.addEventListener('pointerdown', e => {
+        if(e.pointerType !== 'touch') return;
+
+        startX = e.clientX;
+        startY = e.clientY;
+        moved = false;
+
+        touchTimer = setTimeout(() => {
+            if(moved) return; // ⭐ 이동 중이면 삭제 금지
+
+            if(confirm('이 객체를 삭제하시겠습니까?')) {
+                el.remove();
+                if(selected === el){
+                    selected = null;
+                    panel.style.visibility = 'hidden';
+                    panel.style.opacity = '0';
+                }
+            }
+        }, 700);
+    });
+
+    // ⭐ 이동 감지 → 삭제 타이머 취소
+    el.addEventListener('pointermove', e => {
+        if(!touchTimer) return;
+
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+
+        if(Math.hypot(dx, dy) > MOVE_THRESHOLD) {
+            moved = true;
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    });
+
+    // 터치 종료 / 취소
+    el.addEventListener('pointerup', () => {
+        if(touchTimer){
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    });
+
+    el.addEventListener('pointercancel', () => {
+        if(touchTimer){
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    });
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+
+
+// 선 색과 두께 초기값
+let currentLineColor = document.getElementById('lineColor').value;  // 기본 빨강
+let currentLineWidth = document.getElementById('lineWidth').value;  // 기본 3
+
+/* ===== 선(SVG) 시스템 ===== */
+const svg = document.getElementById('lineLayer');
+
+let lineMode = null;     // 'solid' | 'dashed' | null
+let moveMode = null;
+let deleteMode = null;
+
+let startPoint = null;
+let selectedLine = null;
+let dragOffset = {x:0,y:0};
+
+/* ===== 선 모드 제어 ===== */
+function setLineMode(type){
+  lineMode = type;
+  moveMode = deleteMode = null;
+  updateLineButtons();
+}
+
+function setMoveMode(type){
+  moveMode = type;
+  lineMode = deleteMode = null;
+  updateLineButtons();
+}
+
+function setDeleteMode(type){
+  deleteMode = type;
+  lineMode = moveMode = null;
+  updateLineButtons();
+}
+
+
+/* ===== 버튼 상태 표시 ===== */
+function updateLineButtons(){
+  const buttons = toolContent.querySelectorAll('button');
+
+  buttons.forEach(btn => {
+    btn.style.background = '#fff';   // 기본 흰색
+    btn.style.color = '#000';        // 기본 검은색
+  });
+
+  // 활성 모드에 해당하는 버튼만 강조
+  if(lineMode){
+    const btn = toolContent.querySelector(`button[onclick="setLineMode('${lineMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(moveMode){
+    const btn = toolContent.querySelector(`button[onclick="setMoveMode('${moveMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(deleteMode){
+    const btn = toolContent.querySelector(`button[onclick="setDeleteMode('${deleteMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+}
+
+
+/* ===== 선 입력 이벤트 (← 바로 다음에 질문한 코드가 옴) ===== */
+svg.addEventListener('pointerdown', e=>{
+  const pt = getSVGPoint(e);
+
+  /* ===== 생성 ===== */
+  if(lineMode){
+    if(!startPoint){
+      startPoint = pt;
+    }else{
+      createLine(startPoint, pt, lineMode);
+      startPoint = null;
+    }
+  }
+
+  /* ===== 삭제 ===== */
+  if(deleteMode){
+    const line = findNearestLine(pt, deleteMode);
+    if(line) svg.removeChild(line);
+  }
+
+  /* ===== 이동 시작 ===== */
+  if(moveMode){
+    const line = findNearestLine(pt, moveMode);
+    if(line){
+      selectedLine = line;
+      dragOffset = {
+        x: pt.x - line.x1.baseVal.value,
+        y: pt.y - line.y1.baseVal.value
+      };
+      svg.setPointerCapture(e.pointerId);
+    }
+  }
+  // 선 선택
+  if(!lineMode && !moveMode && !deleteMode){
+    const line = findNearestLine(pt, 'solid') || findNearestLine(pt, 'dashed');
+    if(line) select(line);
+  }
+});
+
+/* ===== 선 이동 ===== */
+svg.addEventListener('pointermove', e=>{
+  if(!selectedLine) return;
+
+  const pt = getSVGPoint(e);
+  const dx = pt.x - dragOffset.x;
+  const dy = pt.y - dragOffset.y;
+
+  const w = selectedLine.x2.baseVal.value - selectedLine.x1.baseVal.value;
+  const h = selectedLine.y2.baseVal.value - selectedLine.y1.baseVal.value;
+
+  selectedLine.setAttribute('x1', dx);
+  selectedLine.setAttribute('y1', dy);
+  selectedLine.setAttribute('x2', dx + w);
+  selectedLine.setAttribute('y2', dy + h);
+});
+
+/* ===== 이동 종료 ===== */
+svg.addEventListener('pointerup', ()=>{
+  selectedLine = null;
+});
+
+/* ===== 좌표 변환 ===== */
+function getSVGPoint(e){
+  const r = svg.getBoundingClientRect();
+  return {
+    x: e.clientX - r.left,
+    y: e.clientY - r.top
+  };
+}  
+
+/* ===== 선 생성 ===== */
+function createLine(p1, p2, type){
+  const line = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'line'
+  );
+
+  line.setAttribute('x1', p1.x);
+  line.setAttribute('y1', p1.y);
+  line.setAttribute('x2', p2.x);
+  line.setAttribute('y2', p2.y);
+  line.setAttribute('stroke', currentLineColor);
+  line.setAttribute('stroke-width', currentLineWidth);
+  line.setAttribute('stroke-linecap', 'round');
+
+  if(type === 'dashed'){
+    line.setAttribute('stroke-dasharray', '8 6');
+  }
+
+  line.dataset.type = type;
+  svg.appendChild(line);
+}
+
+document.getElementById('lineWidth').addEventListener('input', e=>{
+  currentLineWidth = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke-width', currentLineWidth);
+  }
+});
+
+document.getElementById('lineColor').addEventListener('input', e=>{
+  currentLineColor = e.target.value;
+  if(selected && selected.tagName === 'line'){
+    selected.setAttribute('stroke', currentLineColor);
+  }
+});
+
+
+/* ===== 가장 가까운 선 찾기 ===== */
+function findNearestLine(pt, type){
+  let min = 15;
+  let target = null;
+
+  [...svg.children].forEach(l=>{
+    if(l.dataset.type !== type) return;
+    const d = pointLineDistance(pt, l);
+    if(d < min){
+      min = d;
+      target = l;
+    }
+  });
+  return target;
+}
+
+/* ===== 점-선 거리 계산 ===== */
+function pointLineDistance(p, l){
+  const x1=l.x1.baseVal.value, y1=l.y1.baseVal.value;
+  const x2=l.x2.baseVal.value, y2=l.y2.baseVal.value;
+  const A=p.x-x1, B=p.y-y1, C=x2-x1, D=y2-y1;
+  const dot=A*C+B*D;
+  const len=C*C+D*D;
+  const t=Math.max(0,Math.min(1,dot/len));
+  const x=x1+t*C, y=y1+t*D;
+  return Math.hypot(p.x-x,p.y-y);
+}
+  
+function togglePanel(){
+  if(panel.style.visibility === 'visible'){
+    panel.style.visibility = 'hidden';
+    panel.style.opacity = '0';
+  } else {
+    // 🔹 현재 화면 기준 위치를 px로 고정
+    const r = panel.getBoundingClientRect();
+    const mapR = mapDiv.getBoundingClientRect();
+
+    panel.style.left = (r.left - mapR.left) + 'px';
+    panel.style.top  = (r.top  - mapR.top ) + 'px';
+    panel.style.transform = 'none';   // ⭐ transform 완전 제거
+
+    panel.style.visibility = 'visible';
+    panel.style.opacity = '1';
+  }
+}
+
+  
+const panelHeader = document.getElementById('panelHeader');
+drag(panelHeader, panel);
+
 
 /* ===== 공통 ===== */
-const icons={
-  person:'icons/person.png',
-  car:'icons/car.png',
-  bike:'icons/bike.png',
-  moto:'icons/moto.png',
-  arrow:'icons/arrow.png'
+const icons = {
+  person: './icons/person.png',
+  car: './icons/car.png',
+  bike: './icons/bike.png',
+  motos: [
+    './icons/moto1.png',
+    './icons/moto2.png',
+    './icons/moto3.png'
+  ],
+  arrows: [
+    './icons/arrow1.png',
+    './icons/arrow2.png',
+    './icons/arrow3.png',
+    './icons/arrow4.png',
+    './icons/arrow5.png'
+  ]
 };
 
+
 let selected=null;
+let panelInitialized = false;
 function centerPos(){
   const r=mapDiv.getBoundingClientRect();
   return {x:r.width/2-16, y:r.height/2-16};
 }
 
 function select(el){
-  selected=el;
-  panel.style.visibility='visible';
-  panel.style.opacity='1';
+  if(el === panel) return;
+  selected = el;
+
+  // 선이면 패널 슬라이더 연동
+  if(el.tagName === 'line'){
+    // 색상/굵기 패널 슬라이더 값 업데이트
+    document.getElementById('lineColor').value = el.getAttribute('stroke');
+    document.getElementById('lineWidth').value = el.getAttribute('stroke-width');
+  }
+
+  if(!panelInitialized){
+    const r = mapDiv.getBoundingClientRect();
+    panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
+    panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
+    panel.style.transform = 'none';
+    panelInitialized = true;
+  }
+
+  panel.style.visibility = 'visible';
+  panel.style.opacity = '1';
 }
 
+
+
+
 /* ===== 드래그 ===== */
-function drag(el){
-  let sx,sy,ox,oy,dragging=false;
-  el.addEventListener('pointerdown', e=>{
-    select(el);
-    sx=e.clientX; sy=e.clientY;
-    ox=parseFloat(el.style.left); oy=parseFloat(el.style.top);
-    dragging=true;
-    el.setPointerCapture(e.pointerId);
+function drag(handle, target = handle){
+  let sx = 0, sy = 0, ox = 0, oy = 0;
+  let dragging = false;
+
+  handle.style.touchAction = 'none';
+
+  handle.addEventListener('pointerdown', e=>{
+
+    if(target === panel && panel.style.transform){
+      panel.style.transform = 'none';
+    }
+
+    if(typeof select === 'function'){
+      select(target);
+    }
+
+    if(target.classList.contains('textbox') && target.isEditing){
+      return;
+    }
+
+    dragging = true;
+    sx = e.clientX;
+    sy = e.clientY;
+    ox = parseFloat(target.style.left) || 0;
+    oy = parseFloat(target.style.top)  || 0;
+
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
   });
-  el.addEventListener('pointermove', e=>{
+
+
+  handle.addEventListener('pointermove', e=>{
     if(!dragging) return;
-    el.style.left=(ox+e.clientX-sx)+'px';
-    el.style.top =(oy+e.clientY-sy)+'px';
+
+    target.style.left = (ox + e.clientX - sx) + 'px';
+    target.style.top  = (oy + e.clientY - sy) + 'px';
   });
-  el.addEventListener('pointerup', ()=>dragging=false);
+
+  handle.addEventListener('pointerup', e=>{
+    dragging = false;
+    handle.releasePointerCapture(e.pointerId);
+  });
+
+  handle.addEventListener('pointercancel', e=>{
+    dragging = false;
+    handle.releasePointerCapture(e.pointerId);
+  });
 }
+
 
 /* ===== 객체 ===== */
 function addIcon(type){
@@ -252,76 +801,134 @@ function addIcon(type){
   img.className='icon';
   img.style.left=p.x+'px';
   img.style.top=p.y+'px';
-  img.style.width='32px';
-  mapDiv.appendChild(img);
+  img.style.width = '64px'; 
+  objectLayer.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);  // 🔹 여기 추가
 }
 
-function addArrow(){
-  const p=centerPos();
-  const img=document.createElement('img');
-  img.src=icons.arrow;
-  img.className='arrow';
-  img.style.left=p.x+'px';
-  img.style.top=p.y+'px';
-  img.style.width='32px';
-  mapDiv.appendChild(img);
+function addMoto(index = 0){
+  const p = centerPos();
+  const img = document.createElement('img');
+
+  img.src = icons.motos[index];
+  img.className = 'icon';
+
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '64px';
+
+  objectLayer.appendChild(img);
   drag(img);
+  enableDeleteConfirmation(img);
 }
+
+
+function addArrow(type = 0){
+  const p = centerPos();
+  const img = document.createElement('img');
+
+  img.src = icons.arrows[type];   // ⭐ 여기만 변경
+  img.className = 'arrow';
+
+  img.style.left = p.x + 'px';
+  img.style.top  = p.y + 'px';
+  img.style.width = '64px';
+
+  objectLayer.appendChild(img);
+  drag(img);
+  enableDeleteConfirmation(img);
+}
+
 
 function addText(){
-  const p=centerPos();
-  const t=document.createElement('input');
-  t.className='textbox';
-  t.style.left=p.x+'px';
-  t.style.top=p.y+'px';
-  t.style.fontSize='14px';
-  mapDiv.appendChild(t);
+  const p = centerPos();
+  const t = document.createElement('input');
+
+  t.type = 'text';
+  t.className = 'textbox';
+  t.placeholder = '텍스트';
+
+  t.isEditing = false;       // ⭐ 상태 플래그
+  t.readOnly = true;
+
+  t.style.left = p.x + 'px';
+  t.style.top  = p.y + 'px';
+  t.style.fontSize = '20px';
+  t.style.textAlign = 'center';
+  t.style.width = '20px';
+
+  objectLayer.appendChild(t);
   drag(t);
-}
+  enableDeleteConfirmation(t);  // 🔹 여기 추가
 
-/* ===== 선 ===== */
-let drawMode=false;
-let drawing=false;
-let firstPoint=null;
-let currentLineWidth=3;
-let currentLineColor='#ff0000';
+  
 
-canvas.addEventListener('pointerdown', e=>{
-  if(!drawMode) return;
-  drawing=true;
-  ctx.beginPath();
-  ctx.moveTo(e.offsetX,e.offsetY);
+  /* 🔹 모바일 탭 → 편집 */
+let touchMoved = false;
+
+t.addEventListener('pointerdown', () => {
+  touchMoved = false;
 });
-canvas.addEventListener('pointermove', e=>{
-  if(!drawing) return;
-  ctx.lineTo(e.offsetX,e.offsetY);
-  ctx.strokeStyle=currentLineColor;
-  ctx.lineWidth=currentLineWidth;
-  ctx.stroke();
-});
-canvas.addEventListener('pointerup', ()=>drawing=false);
 
-function togglePointLine(){
-  firstPoint=null;
-  drawMode=false;
-  canvas.onclick=e=>{
-    if(!firstPoint){
-      firstPoint={x:e.offsetX,y:e.offsetY};
-    }else{
-      ctx.beginPath();
-      ctx.moveTo(firstPoint.x,firstPoint.y);
-      ctx.lineTo(e.offsetX,e.offsetY);
-      ctx.strokeStyle=currentLineColor;
-      ctx.lineWidth=currentLineWidth;
-      ctx.stroke();
-      firstPoint=null;
-    }
+t.addEventListener('pointermove', () => {
+  touchMoved = true;   // 이동하면 편집 취소
+});
+
+t.addEventListener('pointerup', () => {
+  if (touchMoved) return;        // 드래그 중이면 무시
+  if (t.isEditing) return;
+
+  // 모바일에서 편집 시작
+  t.isEditing = true;
+  t.readOnly = false;
+  t.style.borderColor = '#333';
+  t.focus();
+  adjustSize();
+
+  // 모바일 키보드 확실히 띄우기
+  setTimeout(() => {
+    t.setSelectionRange(t.value.length, t.value.length);
+  }, 0);
+});
+
+
+  /* 🔹 자동 폭 계산 */
+  const adjustSize = ()=>{
+    t.style.width = '1px';
+    t.style.width = (t.scrollWidth + 6) + 'px';
   };
-}
 
-document.getElementById('lineWidth').oninput=e=>currentLineWidth=e.target.value;
-document.getElementById('lineColor').oninput=e=>currentLineColor=e.target.value;
+  /* 🔹 더블클릭 → 편집 */
+  t.addEventListener('dblclick', ()=>{
+    t.isEditing = true;
+    t.readOnly = false;
+    t.focus();
+    adjustSize();
+  });
+
+  /* 🔹 입력 중 자동 확대 */
+  t.addEventListener('input', adjustSize);
+
+  /* 🔹 포커스 해제 → 이동 */
+  t.addEventListener('blur', ()=>{
+    t.isEditing = false;
+    t.readOnly = true;
+    t.style.borderColor = 'transparent';
+    adjustSize();
+  });
+
+  /* 🔹 폰트 슬라이더 연동 */
+  const fontInput = document.getElementById('fontSize');
+  fontInput.addEventListener('input', ()=>{
+    if(selected === t){
+      t.style.fontSize = fontInput.value + 'px';
+      adjustSize();
+    }
+  });
+
+  adjustSize();
+}
 
 /* ===== PDF ===== */
 async function savePDF(){
@@ -334,11 +941,133 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
+function toggleSub(id){
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+}
+
+
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
   toolContent.style.display=
     toolContent.style.display==='block'?'none':'block';
 };
+
+/* ===== 배경 이미지 선택 ===== */
+const bgMap = document.getElementById('bgMap');
+const bgInput = document.getElementById('bgInput');
+
+// 배경 이미지 선택 코드 끝
+bgInput.addEventListener('change', e=>{
+  const file = e.target.files[0];
+  if(!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    bgMap.src = evt.target.result;  // 선택한 이미지로 변경
+  }
+  reader.readAsDataURL(file);
+});
+
+/* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
+const angleInput    = document.getElementById('angle');
+let lineRotateAnchor = 'start';   // 'start' = x1,y1 / 'end' = x2,y2
+const sizeInput     = document.getElementById('size');
+const fontSizeInput = document.getElementById('fontSize');
+const widthInput    = document.getElementById('width');
+
+angleInput.addEventListener('input', ()=> {
+  if(!selected || selected === panel) return;
+
+  // ===== 선일 경우 (끝점 기준 회전) =====
+  if(selected.tagName === 'line'){
+    const x1 = selected.x1.baseVal.value;
+    const y1 = selected.y1.baseVal.value;
+    const x2 = selected.x2.baseVal.value;
+    const y2 = selected.y2.baseVal.value;
+
+    const anchor =
+      lineRotateAnchor === 'start'
+        ? { x: x1, y: y1 }   // 좌측 끝점
+        : { x: x2, y: y2 };  // 우측 끝점
+
+    selected.style.transformOrigin =
+      `${anchor.x}px ${anchor.y}px`;
+
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
+  }
+  // ===== 기존 객체(아이콘, 화살표, 문자) =====
+  else{
+    selected.style.transform =
+      `rotate(${angleInput.value}deg)`;
+  }
+});
+
+sizeInput.addEventListener('input', ()=> {
+  if(!selected || selected === panel) return;
+  selected.style.width = sizeInput.value + 'px';
+  if(selected.tagName === 'IMG') selected.style.height = 'auto';
+});
+
+fontSizeInput.addEventListener('input', ()=> {
+  if(!selected) return;
+  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+});
+
+widthInput.addEventListener('input', ()=> {
+  if(!selected || selected === panel) return;
+
+  if(selected.tagName === 'INPUT') {
+    selected.style.width = widthInput.value + 'px';
+  } else if(selected.classList.contains('arrow')) {
+    selected.style.width = widthInput.value + 'px';
+    selected.style.height = 'auto';
+  }
+});
+
+/* ===================================================== */
+/* ===== + / - 자동 증감 버튼 (슬라이더 기능 재사용) ===== */
+/* ===================================================== */
+
+let stepTimer = null;
+
+document.querySelectorAll('.stepBtn').forEach(btn=>{
+  const targetId = btn.dataset.target;
+  const step = parseFloat(btn.dataset.step);
+
+  const start = ()=>{
+    const input = document.getElementById(targetId);
+    if(!input) return;
+
+    const update = ()=>{
+      let v = parseFloat(input.value) + step;
+      v = Math.max(
+        parseFloat(input.min),
+        Math.min(parseFloat(input.max), v)
+      );
+      input.value = v;
+
+      // ⭐ 기존 슬라이더 로직 100% 재사용
+      input.dispatchEvent(new Event('input'));
+    };
+
+    update();                 // 즉시 1회
+    stepTimer = setInterval(update, 80); // 길게 누르면 자동
+  };
+
+  const stop = ()=>{
+    clearInterval(stepTimer);
+    stepTimer = null;
+  };
+
+  btn.addEventListener('pointerdown', start);
+  btn.addEventListener('pointerup', stop);
+  btn.addEventListener('pointerleave', stop);
+  btn.addEventListener('pointercancel', stop);
+});
+
+
 </script>
 
 </body>
