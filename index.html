@@ -8,12 +8,12 @@
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
-#container {
+##container {
   position: relative;
-  width: 210mm;            /* A4 세로 가로 */
-  height: 292mm;           /* A4 세로 높이 */
+  width: 210mm;
+  height: 292mm;
   margin: 0 auto;
-  padding: 15mm;           /* 위 + 아래 = 30mm */
+  padding: 0;                  /* ⭐ padding 제거 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
@@ -27,7 +27,7 @@ h1 {
 
 #map {
   width: 100%;
-  height: 230mm;           /* ⭐ 핵심 수정 (A4 정확히 맞음) */
+  height: 260mm;               /* 요구사항 */
   border: 1px solid #000;
   position: relative;
   overflow: hidden;
@@ -36,7 +36,7 @@ h1 {
 /* ===== 객체 대기 영역 (22mm) ===== */
 #objectTray {
   width: 100%;
-  height: 22mm;
+  height: 32mm;                /* 요구사항 */
   border-top: 1px dashed #999;
   display: flex;
   align-items: center;
@@ -44,7 +44,6 @@ h1 {
   padding: 2mm;
   box-sizing: border-box;
 }
-
 
 /* ===== 카카오 지도 이미지 ===== */
 #bgMap {
