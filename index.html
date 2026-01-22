@@ -1010,6 +1010,26 @@ async function savePNG_A4(dpi = 300, mode = "contain") {
   }, "image/png");
 }
 
+async function savePNG_AS_IS() {
+  const el = document.getElementById("container"); // 화면 그대로(툴박스 포함)
+  const canvas = await html2canvas(el, {
+    backgroundColor: "#ffffff",
+    useCORS: true,
+    scale: window.devicePixelRatio || 2,
+    scrollX: 0,
+    scrollY: 0
+  });
+
+  canvas.toBlob(blob => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "screen_as_is.png";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }, "image/png");
+}
+
+
 function toggleSub(id){
   const el = document.getElementById(id);
   el.style.display = el.style.display === 'block' ? 'none' : 'block';
