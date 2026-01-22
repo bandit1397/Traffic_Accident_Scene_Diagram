@@ -332,8 +332,6 @@ h1 {
         </label>
 
         <button onclick="savePDF()">PDF</button>
-        <button onclick="savePNG_MAP_ONLY()">PNG(지도영역만)</button>
-
 
         <hr>
 
@@ -385,7 +383,6 @@ h1 {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-const container = document.getElementById('container');
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
@@ -943,37 +940,6 @@ async function savePDF(){
   pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
-
-/* ===== PNG (보이는 지도영역만, 왜곡/숨은영역 없음) ===== */
-async function savePNG_MAP_ONLY() {
-  const el = document.getElementById("map"); // ✅ 보이는 영역만 캡처(overflow:hidden으로 강제 크롭)
-
-  // 이미지 로딩 안정화(있으면 좋음)
-  const bg = document.getElementById("bgMap");
-  if (bg && bg.decode) {
-    try { await bg.decode(); } catch(e) {}
-  }
-
-  // 1프레임 대기(레이아웃 안정화)
-  await new Promise(r => requestAnimationFrame(r));
-
-  const canvas = await html2canvas(el, {
-    backgroundColor: "#ffffff",
-    useCORS: true,
-    scale: window.devicePixelRatio || 2,
-    scrollX: 0,
-    scrollY: 0
-  });
-
-  canvas.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "map_only.png";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }, "image/png");
-}
-
 
 function toggleSub(id){
   const el = document.getElementById(id);
