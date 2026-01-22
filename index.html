@@ -932,7 +932,10 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  // ✅ container 전체 캡처: 제목(h1) + 하단 영역(32mm 포함) 다 들어감
+  const container = document.getElementById('container'); // ✅ 명시적으로 지정
+
+  await document.fonts.ready; // ✅ 글자 깨짐/위치 튐 방지
+
   const canvasImg = await html2canvas(container, {
     scale: 2,
     backgroundColor: '#fff',
@@ -941,34 +944,11 @@ async function savePDF(){
   });
 
   const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation:'p', unit:'mm', format:'a4' });
 
-  // ✅ PDF는 반드시 A4
-  const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+  // ✅ A4에 그대로 꽉 채움 (container가 이미 A4 비율이므로 왜곡 없음)
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, 210, 297);
 
-  const pageW = 210;
-  const pageH = 297;
-
-  // ✅ 비율 유지(왜곡 0)로 A4 안에 맞춰 넣기
-  const imgW = canvasImg.width;
-  const imgH = canvasImg.height;
-  const imgRatio = imgW / imgH;
-  const pageRatio = pageW / pageH;
-
-  let drawW, drawH;
-  if(imgRatio > pageRatio){
-    // 가로가 더 김 → 가로에 맞춤
-    drawW = pageW;
-    drawH = drawW / imgRatio;
-  } else {
-    // 세로가 더 김 → 세로에 맞춤
-    drawH = pageH;
-    drawW = drawH * imgRatio;
-  }
-
-  const x = (pageW - drawW) / 2;
-  const y = (pageH - drawH) / 2;
-
-  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', x, y, drawW, drawH);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
