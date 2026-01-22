@@ -973,14 +973,21 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+  const canvasImg = await html2canvas(container, {
+    ignoreElements: (el) => {
+      return el.id === 'toolbox' || el.closest('#toolbox');
+    }
+  });
+
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const w = pdf.internal.pageSize.getWidth();
+  const h = canvasImg.height * w / canvasImg.width;
+
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 function toggleSub(id){
   const el = document.getElementById(id);
