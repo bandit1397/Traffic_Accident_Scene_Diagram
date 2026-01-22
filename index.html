@@ -332,10 +332,6 @@ h1 {
         </label>
 
         <button onclick="savePDF()">PDF</button>
-        <button onclick="savePNG_A4(300, 'contain')">A4 PNG</button>
-        <button onclick="savePNG_AS_IS()">화면 그대로 PNG</button>
-
-
 
         <hr>
 
@@ -387,7 +383,6 @@ h1 {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-const container = document.getElementById('container'); // ✅ 추가
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
@@ -936,7 +931,6 @@ t.addEventListener('pointerup', () => {
 }
 
 /* ===== PDF ===== */
-/* ===== PDF ===== */
 async function savePDF(){
   const canvasImg=await html2canvas(container);
   const {jsPDF}=window.jspdf;
@@ -946,91 +940,6 @@ async function savePDF(){
   pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
-
-/* ===== A4 PNG ===== */
-async function savePNG_A4(dpi = 300, mode = "contain") {
-  // A4 inch: 8.27 x 11.69
-  const a4w = Math.round(8.27 * dpi);   // 2480 at 300dpi
-  const a4h = Math.round(11.69 * dpi);  // 3508 at 300dpi
-
-  // 1) 현재 화면(컨테이너)을 캡처 (보이는 그대로)
-  const srcCanvas = await html2canvas(container, {
-    backgroundColor: "#ffffff",
-    scale: Math.max(2, window.devicePixelRatio || 2), // 선/텍스트 선명도
-    useCORS: true
-  });
-
-  // 2) A4 규격 캔버스 생성
-  const out = document.createElement("canvas");
-  out.width = a4w;
-  out.height = a4h;
-  const ctx = out.getContext("2d");
-
-  // 흰 배경
-  ctx.fillStyle = "#fff";
-  ctx.fillRect(0, 0, a4w, a4h);
-
-  // 3) 비율 유지 배치 (contain 또는 cover)
-  const sw = srcCanvas.width, sh = srcCanvas.height;
-  const sRatio = sw / sh;
-  const aRatio = a4w / a4h;
-
-  let dw, dh, dx, dy;
-
-  if (mode === "cover") {
-    // A4를 꽉 채우되, 일부가 잘릴 수 있음 (왜곡 없음)
-    if (sRatio > aRatio) {
-      dh = a4h;
-      dw = dh * sRatio;
-    } else {
-      dw = a4w;
-      dh = dw / sRatio;
-    }
-  } else {
-    // contain: 전체가 다 들어오되, 여백이 생길 수 있음 (왜곡 없음)
-    if (sRatio > aRatio) {
-      dw = a4w;
-      dh = dw / sRatio;
-    } else {
-      dh = a4h;
-      dw = dh * sRatio;
-    }
-  }
-
-  dx = (a4w - dw) / 2;
-  dy = (a4h - dh) / 2;
-
-  ctx.drawImage(srcCanvas, dx, dy, dw, dh);
-
-  // 4) PNG 다운로드
-  out.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "Traffic_Accident_Scene_A4.png";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }, "image/png");
-}
-
-async function savePNG_AS_IS() {
-  const el = document.getElementById("container"); // 화면 그대로(툴박스 포함)
-  const canvas = await html2canvas(el, {
-    backgroundColor: "#ffffff",
-    useCORS: true,
-    scale: window.devicePixelRatio || 2,
-    scrollX: 0,
-    scrollY: 0
-  });
-
-  canvas.toBlob(blob => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "screen_as_is.png";
-    a.click();
-    URL.revokeObjectURL(a.href);
-  }, "image/png");
-}
-
 
 function toggleSub(id){
   const el = document.getElementById(id);
