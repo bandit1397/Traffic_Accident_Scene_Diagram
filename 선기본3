@@ -388,6 +388,47 @@ const panel = document.getElementById('panel');
 
 const objectLayer = document.getElementById('objectLayer');
 
+async function cropImageToMapCover(imgEl, mapEl, outScale = 2){
+  // map 크기(화면 px 기준)
+  const r = mapEl.getBoundingClientRect();
+  const cw = Math.round(r.width);
+  const ch = Math.round(r.height);
+
+  // 원본 이미지 실제 크기
+  const iw = imgEl.naturalWidth;
+  const ih = imgEl.naturalHeight;
+
+  // "cover" 스케일 (컨테이너를 꽉 채우는 스케일)
+  const scale = Math.max(cw / iw, ch / ih);
+
+  // 컨테이너에 보이는 영역이 원본에서 차지하는 크기(소스 좌표)
+  const srcW = cw / scale;
+  const srcH = ch / scale;
+
+  // 중앙 크롭(원본 가운데를 기준으로)
+  const sx = (iw - srcW) / 2;
+  const sy = (ih - srcH) / 2;
+
+  // 출력 캔버스(해상도 outScale로 올리면 PDF 더 선명)
+  const canvas = document.createElement('canvas');
+  canvas.width  = cw * outScale;
+  canvas.height = ch * outScale;
+
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+
+  // 원본에서 sx,sy,srcW,srcH만 잘라서
+  // 출력 캔버스 전체로 확대해서 그림
+  ctx.drawImage(
+    imgEl,
+    sx, sy, srcW, srcH,
+    0, 0, canvas.width, canvas.height
+  );
+
+  return canvas.toDataURL('image/jpeg', 0.95); // png도 가능
+}
+
+
 // ===== 여기! =====
 function enableDeleteConfirmation(el) {
     let touchTimer = null;
@@ -970,11 +1011,24 @@ bgInput.addEventListener('change', e=>{
   if(!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(evt){
-    bgMap.src = evt.target.result;  // 선택한 이미지로 변경
-  }
+  reader.onload = async function(evt){
+    // 1) 일단 원본을 bgMap에 로드
+    bgMap.onload = async () => {
+      // 2) map 영역에 맞춰 "보이는 부분만" 실제 크롭
+      const cropped = await cropImageToMapCover(bgMap, mapDiv, 2);
+
+      // 3) 크롭된 이미지로 교체 → 이제 숨겨진 영역 자체가 없음
+      bgMap.src = cropped;
+
+      // 4) 이제는 cover 필요 없음 (이미 딱 맞게 잘라져 있으니까)
+      bgMap.style.objectFit = 'fill';
+    };
+
+    bgMap.src = evt.target.result;
+  };
   reader.readAsDataURL(file);
 });
+
 
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
 const angleInput    = document.getElementById('angle');
