@@ -35,6 +35,12 @@ h1 {
   overflow: hidden;
 }
 
+#objectLayer {             /* ✅ 이 블록을 #map 블록 다음 줄에 추가 */
+  position: absolute;
+  inset: 0;
+  z-index: 2000;
+}
+
 /* ===== 카카오 지도 이미지 ===== */
 #bgMap {
   position:absolute;
