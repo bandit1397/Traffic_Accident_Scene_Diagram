@@ -1004,11 +1004,24 @@ bgInput.addEventListener('change', e=>{
   if(!file) return;
 
   const reader = new FileReader();
-  reader.onload = function(evt){
-    bgMap.src = evt.target.result;  // 선택한 이미지로 변경
-  }
+  reader.onload = async function(evt){
+    // 1) 일단 원본을 bgMap에 로드
+    bgMap.onload = async () => {
+      // 2) map 영역에 맞춰 "보이는 부분만" 실제 크롭
+      const cropped = await cropImageToMapCover(bgMap, mapDiv, 2);
+
+      // 3) 크롭된 이미지로 교체 → 이제 숨겨진 영역 자체가 없음
+      bgMap.src = cropped;
+
+      // 4) 이제는 cover 필요 없음 (이미 딱 맞게 잘라져 있으니까)
+      bgMap.style.objectFit = 'fill';
+    };
+
+    bgMap.src = evt.target.result;
+  };
   reader.readAsDataURL(file);
 });
+
 
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
 const angleInput    = document.getElementById('angle');
