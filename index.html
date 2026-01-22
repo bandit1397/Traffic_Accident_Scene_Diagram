@@ -938,50 +938,46 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  // ✅ 1) "보이는 지도 영역"만 캡처 (container 말고 mapDiv!)
-  const canvasImg = await html2canvas(mapDiv, {
+  // ✅ container 전체 캡처: 제목(h1) + 하단 영역(32mm 포함) 다 들어감
+  const canvasImg = await html2canvas(container, {
     scale: 2,
     backgroundColor: '#fff',
-    useCORS: true
+    useCORS: true,
+    logging: false
   });
 
   const { jsPDF } = window.jspdf;
 
-  // ✅ 2) A4 (210 x 297mm)
+  // ✅ PDF는 반드시 A4
   const pdf = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
 
-  const pageW = pdf.internal.pageSize.getWidth();   // 210
-  const pageH = pdf.internal.pageSize.getHeight();  // 297
+  const pageW = 210;
+  const pageH = 297;
 
-  // ✅ 3) 캡처 이미지 비율 유지하면서 페이지 안에 "맞춰 넣기" (contain)
-  const imgRatio = canvasImg.width / canvasImg.height;
+  // ✅ 비율 유지(왜곡 0)로 A4 안에 맞춰 넣기
+  const imgW = canvasImg.width;
+  const imgH = canvasImg.height;
+  const imgRatio = imgW / imgH;
   const pageRatio = pageW / pageH;
 
   let drawW, drawH;
-
   if(imgRatio > pageRatio){
-    // 이미지가 더 가로로 길다 → 가로에 맞추고 세로는 비율로 계산
+    // 가로가 더 김 → 가로에 맞춤
     drawW = pageW;
     drawH = drawW / imgRatio;
   } else {
-    // 이미지가 더 세로로 길다 → 세로에 맞추고 가로는 비율로 계산
+    // 세로가 더 김 → 세로에 맞춤
     drawH = pageH;
     drawW = drawH * imgRatio;
   }
 
-  // ✅ 4) 가운데 정렬(여백 생겨도 왜곡 없음)
   const x = (pageW - drawW) / 2;
   const y = (pageH - drawH) / 2;
 
-  pdf.addImage(
-    canvasImg.toDataURL('image/png'),
-    'PNG',
-    x, y,
-    drawW, drawH
-  );
-
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', x, y, drawW, drawH);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 
 function toggleSub(id){
