@@ -218,50 +218,10 @@ h1 {
   font-size:12px;
 }
 
-/* ===== 외부 스크롤 래퍼 (모바일용) ===== */
-#scrollWrapper {
-  position: fixed;
-  inset: 0;
-  overflow: auto;              /* ⭐ 실제 스크롤 */
-  background: #ccc;
-  -webkit-overflow-scrolling: touch;
-}
-
-/* ===== 스크롤 영역 크기 (가상 여백) ===== */
-#scrollArea {
-  position: relative;
-  width: max-content;
-  height: max-content;
-  min-width: 200vw;            /* ⭐ 좌우 이동 여유 */
-  min-height: 200vh;           /* ⭐ 상하 이동 여유 */
-  padding: 50vh 50vw;          /* ⭐ 항상 중앙에 컨테이너 */
-}
-
-/* ===== 스크롤바 항상 표시 (모바일/PC 공통) ===== */
-#scrollWrapper {
-  scrollbar-width: auto;       /* Firefox */
-}
-
-#scrollWrapper::-webkit-scrollbar {
-  width: 12px;
-  height: 12px;
-}
-
-#scrollWrapper::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.4);
-  border-radius: 6px;
-}
-
-#scrollWrapper::-webkit-scrollbar-track {
-  background: rgba(0,0,0,0.1);
-}
-
 </style>
 </head>
 
 <body>
-<div id="scrollWrapper">
-  <div id="scrollArea">
 
 <div id="container">
   <h1>교통사고 현장약도</h1>
@@ -1170,9 +1130,6 @@ document.querySelectorAll('.stepBtn').forEach(btn=>{
 
 
 </script>
-
-</div>
-</div>
 
 </body>
 </html>
