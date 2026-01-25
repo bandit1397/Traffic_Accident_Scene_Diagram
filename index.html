@@ -77,6 +77,24 @@ h1 {
   pointer-events:none;   /* 기본 통과 */
 }
 
+/* ===== 선택된 객체 표시 ===== */
+.selected {
+  outline: 2px dashed red;
+  outline-offset: 2px;
+}
+
+/* 아이콘/화살표는 색조 변경 효과 */
+.selected.icon,
+.selected.arrow {
+  filter: drop-shadow(0 0 4px red);
+}
+
+/* 텍스트박스 선택 표시 */
+.selected.textbox {
+  border-color: red !important;
+}
+
+
 #objectLayer .icon,
 #objectLayer .arrow,
 #objectLayer .textbox{
