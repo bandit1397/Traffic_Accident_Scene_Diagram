@@ -1145,7 +1145,64 @@ document.querySelectorAll('.stepBtn').forEach(btn=>{
   btn.addEventListener('pointercancel', stop);
 });
 
+<script>
+/* ============================= */
+/* ===== A4 컨테이너 핀치줌 ===== */
+/* ============================= */
 
+const pinchTarget = document.getElementById('container');
+
+let pointers = new Map();
+let startDistance = 0;
+let startScale = 1;
+let currentScale = 1;
+
+function getDistance(p1, p2){
+  const dx = p1.clientX - p2.clientX;
+  const dy = p1.clientY - p2.clientY;
+  return Math.hypot(dx, dy);
+}
+
+pinchTarget.addEventListener('pointerdown', e=>{
+  pointers.set(e.pointerId, e);
+});
+
+pinchTarget.addEventListener('pointermove', e=>{
+  if(!pointers.has(e.pointerId)) return;
+  pointers.set(e.pointerId, e);
+
+  if(pointers.size === 2){
+    const pts = [...pointers.values()];
+    const dist = getDistance(pts[0], pts[1]);
+
+    if(startDistance === 0){
+      startDistance = dist;
+      startScale = currentScale;
+      return;
+    }
+
+    let scale = startScale * (dist / startDistance);
+
+    /* ⭐ 확대/축소 제한 */
+    scale = Math.min(2.5, Math.max(0.5, scale));
+
+    currentScale = scale;
+    pinchTarget.style.transform = `scale(${scale})`;
+  }
+});
+
+pinchTarget.addEventListener('pointerup', e=>{
+  pointers.delete(e.pointerId);
+  if(pointers.size < 2){
+    startDistance = 0;
+  }
+});
+
+pinchTarget.addEventListener('pointercancel', ()=>{
+  pointers.clear();
+  startDistance = 0;
+});
+ 
 </script>
 
 </body>
