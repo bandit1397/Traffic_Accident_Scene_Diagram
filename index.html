@@ -83,6 +83,15 @@ h1 {
   pointer-events:auto;   /* 객체만 이벤트 */
 }
 
+/* 🔹 객체만 터치 제어 (이동/그리기용) */
+.icon,
+.arrow,
+.textbox,
+#lineLayer line {
+  touch-action: none;
+}
+
+
 .arrow { transform-origin:center; }
 
 .textbox {
