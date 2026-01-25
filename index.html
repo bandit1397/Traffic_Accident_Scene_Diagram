@@ -1004,8 +1004,10 @@ async function savePDF(){
 
 function toggleSub(id){
   const el = document.getElementById(id);
-  el.style.display = el.style.display === 'block' ? 'none' : 'block';
+  const isVisible = window.getComputedStyle(el).display !== 'none';
+  el.style.display = isVisible ? 'none' : 'block';
 }
+
 
 
 /* ===== 도구 토글 ===== */
