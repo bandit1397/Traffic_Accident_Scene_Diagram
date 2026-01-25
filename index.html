@@ -1022,19 +1022,20 @@ function toggleSub(id, btn){
   const el = document.getElementById(id);
 
   // 현재 메뉴 상태
-  const isHidden = el.style.display === 'none' || el.style.display === '';
+  const style = window.getComputedStyle(el);
+  const isHidden = style.display === 'none'; // ✅ 기존보다 안정적
 
   // 토글
   el.style.display = isHidden ? 'block' : 'none';
 
   // 버튼 화살표 업데이트
   if(btn){
-    // 공백 제거 후 화살표만 갱신
     let text = btn.textContent.trim();
-    text = text.replace(/^[▶▼]\s*/, ''); // 앞에 ▶ 또는 ▼ 제거
+    text = text.replace(/^[▶▼]\s*/, '');
     btn.textContent = (isHidden ? '▼ ' : '▶ ') + text;
   }
 }
+
 
 
 
