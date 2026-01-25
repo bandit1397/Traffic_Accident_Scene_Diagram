@@ -48,12 +48,11 @@ h1 {
 }
 
 #lineLayer {
-  position:absolute;       /* container 기준 절대 위치 */
-  inset:0;                 /* container 전체 덮기 */
-  z-index:400;             
+  position:absolute;
+  inset:0;
+  z-index:400;
   touch-action:none;
   pointer-events:auto;
-  background:transparent;
 }
 
 /* ===== 자유곡선 캔버스 ===== */
@@ -242,9 +241,10 @@ h1 {
          z-index:1;
          pointer-events:none;
        ">
-  </div>
 
-    <div id="lineLayer"
+
+    <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
+    <svg id="lineLayer"
          width="100%"
          height="100%"
          style="
@@ -255,8 +255,9 @@ h1 {
            pointer-events:auto;
            background:transparent;
          ">
-    </div>
+    </svg>
 
+  </div>
 
   <div id="objectLayer"></div>
 
@@ -633,12 +634,12 @@ svg.addEventListener('pointerup', ()=>{
 
 /* ===== 좌표 변환 ===== */
 function getSVGPoint(e){
-  const r = container.getBoundingClientRect(); // ⭐ map → container
+  const r = svg.getBoundingClientRect();
   return {
     x: e.clientX - r.left,
     y: e.clientY - r.top
   };
-}
+}  
 
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
