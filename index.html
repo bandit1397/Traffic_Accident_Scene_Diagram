@@ -304,7 +304,7 @@ h1 {
         <button onclick="addIcon('bike')">자전거</button>
 
         <!-- ===== 오토바이 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('motoMenu')">▶ 오토바이</button>
+        <button class="subToggle" onclick="toggleSub('motoMenu', this)">▶ 오토바이</button>
         <div id="motoMenu" class="subMenu">
           <button onclick="addMoto(0)">오토바이①</button>
           <button onclick="addMoto(1)">오토바이②</button>
@@ -312,7 +312,7 @@ h1 {
         </div>
 
         <!-- ===== 화살표 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('arrowMenu')">▶ 화살표</button>
+        <button class="subToggle" onclick="toggleSub('arrowMenu', this)">▶ 화살표</button>
         <div id="arrowMenu" class="subMenu">
           <button onclick="addArrow(0)">화살표①</button>
           <button onclick="addArrow(1)">화살표②</button>
@@ -341,7 +341,7 @@ h1 {
         <hr>
 
         <!-- ===== 선 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('lineMenu')">▶ 선</button>
+        <button class="subToggle" onclick="toggleSub('lineMenu', this)">▶ 선</button>
 
         <div id="lineMenu" class="subMenu">
 
