@@ -1006,10 +1006,14 @@ function toggleSub(id){
 
 
 /* ===== 도구 토글 ===== */
-toolToggle.onclick=()=>{
-  toolContent.style.display=
-    toolContent.style.display==='block'?'none':'block';
+const toolToggle  = document.getElementById('toolToggle');
+const toolContent = document.getElementById('toolContent');
+
+toolToggle.onclick = () => {
+  toolContent.style.display =
+    toolContent.style.display === 'block' ? 'none' : 'block';
 };
+
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
