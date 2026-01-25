@@ -77,24 +77,6 @@ h1 {
   pointer-events:none;   /* 기본 통과 */
 }
 
-/* ===== 선택된 객체 표시 ===== */
-.selected {
-  outline: 2px dashed red;
-  outline-offset: 2px;
-}
-
-/* 아이콘/화살표는 색조 변경 효과 */
-.selected.icon,
-.selected.arrow {
-  filter: drop-shadow(0 0 4px red);
-}
-
-/* 텍스트박스 선택 표시 */
-.selected.textbox {
-  border-color: red !important;
-}
-
-
 #objectLayer .icon,
 #objectLayer .arrow,
 #objectLayer .textbox{
@@ -699,25 +681,17 @@ document.getElementById('lineColor').addEventListener('input', e=>{
 
 /* ===== 가장 가까운 선 찾기 ===== */
 function findNearestLine(pt, type){
-  const HIT_PADDING = 34;   // ⭐ 좌우 선택 민감도 (px)
-  let min = HIT_PADDING;
+  let min = 15;
   let target = null;
 
   [...svg.children].forEach(l=>{
     if(l.dataset.type !== type) return;
-
     const d = pointLineDistance(pt, l);
-
-    // ⭐ stroke-width가 굵을수록 자동으로 판정 범위 증가
-    const strokeW = parseFloat(l.getAttribute('stroke-width')) || 1;
-    const effectiveHit = Math.max(HIT_PADDING, strokeW * 2);
-
-    if(d < effectiveHit && d < min){
+    if(d < min){
       min = d;
       target = l;
     }
   });
-
   return target;
 }
 
@@ -785,21 +759,11 @@ function centerPos(){
 
 function select(el){
   if(el === panel) return;
-
-  // 🔹 이전 선택 해제
-  if(selected){
-    selected.classList.remove('selected');
-  }
-
   selected = el;
 
-  // 🔹 새 선택 표시
-  if(selected){
-    selected.classList.add('selected');
-  }
-
-  // ===== 선일 경우 패널 연동 =====
+  // 선이면 패널 슬라이더 연동
   if(el.tagName === 'line'){
+    // 색상/굵기 패널 슬라이더 값 업데이트
     document.getElementById('lineColor').value = el.getAttribute('stroke');
     document.getElementById('lineWidth').value = el.getAttribute('stroke-width');
   }
