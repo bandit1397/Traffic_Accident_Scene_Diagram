@@ -634,13 +634,16 @@ svg.addEventListener('pointerup', ()=>{
 });
 
 /* ===== 좌표 변환 ===== */
+const container = document.getElementById('container');
+
 function getSVGPoint(e){
-  const r = svg.getBoundingClientRect();
+  const r = container.getBoundingClientRect();
   return {
     x: e.clientX - r.left,
     y: e.clientY - r.top
   };
-}  
+}
+
 
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
