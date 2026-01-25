@@ -360,8 +360,8 @@ h1 {
           <hr>
 
           <b style="font-size:12px;">선 회전 기준</b>
-          <button data-anchor="start" onclick="setLineAnchor('start')">좌측 기준</button>
-          <button data-anchor="end"   onclick="setLineAnchor('end')">우측 기준</button>
+          <button onclick="lineRotateAnchor='start'">좌측 기준</button>
+          <button onclick="lineRotateAnchor='end'">우측 기준</button>
 
         </div>
 
@@ -536,49 +536,38 @@ function setDeleteMode(type){
   updateLineButtons();
 }
 
-function setLineAnchor(anchor){
-  lineRotateAnchor = anchor;
-  updateLineButtons();   // ⭐ 기존 함수 재사용
-}
-
 
 /* ===== 버튼 상태 표시 ===== */
 function updateLineButtons(){
   const buttons = toolContent.querySelectorAll('button');
 
-  buttons.forEach(btn=>{
-    btn.style.background = '#fff';
-    btn.style.color = '#000';
+  buttons.forEach(btn => {
+    btn.style.background = '#fff';   // 기본 흰색
+    btn.style.color = '#000';        // 기본 검은색
   });
 
+  // 활성 모드에 해당하는 버튼만 강조
   if(lineMode){
-    const btn = toolContent.querySelector(
-      `button[onclick="setLineMode('${lineMode}')"]`
-    );
-    if(btn){ btn.style.background='#333'; btn.style.color='#fff'; }
-  }
-
-  if(moveMode){
-    const btn = toolContent.querySelector(
-      `button[onclick="setMoveMode('${moveMode}')"]`
-    );
-    if(btn){ btn.style.background='#333'; btn.style.color='#fff'; }
-  }
-
-  if(deleteMode){
-    const btn = toolContent.querySelector(
-      `button[onclick="setDeleteMode('${deleteMode}')"]`
-    );
-    if(btn){ btn.style.background='#333'; btn.style.color='#fff'; }
-  }
-
-  /* ⭐ 여기만 추가 */
-  toolContent.querySelectorAll('button[data-anchor]').forEach(btn=>{
-    if(btn.dataset.anchor === lineRotateAnchor){
+    const btn = toolContent.querySelector(`button[onclick="setLineMode('${lineMode}')"]`);
+    if(btn){
       btn.style.background = '#333';
       btn.style.color = '#fff';
     }
-  });
+  }
+  if(moveMode){
+    const btn = toolContent.querySelector(`button[onclick="setMoveMode('${moveMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
+  if(deleteMode){
+    const btn = toolContent.querySelector(`button[onclick="setDeleteMode('${deleteMode}')"]`);
+    if(btn){
+      btn.style.background = '#333';
+      btn.style.color = '#fff';
+    }
+  }
 }
 
 
