@@ -17,11 +17,7 @@ body { margin:0; background:#eee; font-family:sans-serif; }
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
-
-  touch-action: none;              /* ⭐ 핀치 줌 허용 */
-  transform-origin: center center; /* ⭐ 확대 기준 */
 }
-
 
 
 h1 {
@@ -51,13 +47,11 @@ h1 {
   z-index:1;
 }
 
-#lineLayer{
+#lineLayer {
   position:absolute;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
+  inset:0;
   z-index:400;
+  touch-action:none;
   pointer-events:auto;
 }
 
@@ -207,30 +201,17 @@ h1 {
 #toolContent hr {
   margin:6px 0;
 }
-  
-.subToggle {
-  width: 100%;
-  min-height: 32px;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  background: #fff;      /* 클릭 영역 전체 활성화 */
-  border: none;
-  padding-left: 8px;     /* 글자+화살표 공간 확보 */
-  touch-action: manipulation;
+.subToggle{
+  width:100%;
+  min-height:32px;
+  margin:2px 0;
+  font-size:13px;
+  text-align:left;
 }
-
 
 .subMenu{
   display:none;
   padding-left:8px;
-  min-height:32px; /* 메뉴 클릭 영역 확보 */
-}
-
-.subMenu button{
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
 }
 
 .subMenu button{
@@ -261,9 +242,8 @@ h1 {
          pointer-events:none;
        ">
 
-  </div>
 
-  <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
+    <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
     <svg id="lineLayer"
          width="100%"
          height="100%"
@@ -276,6 +256,8 @@ h1 {
            background:transparent;
          ">
     </svg>
+
+  </div>
 
   <div id="objectLayer"></div>
 
@@ -317,7 +299,7 @@ h1 {
         <button onclick="addIcon('bike')">자전거</button>
 
         <!-- ===== 오토바이 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('motoMenu', this)">▶ 오토바이</button>
+        <button class="subToggle" onclick="toggleSub('motoMenu')">▶ 오토바이</button>
         <div id="motoMenu" class="subMenu">
           <button onclick="addMoto(0)">오토바이①</button>
           <button onclick="addMoto(1)">오토바이②</button>
@@ -325,7 +307,7 @@ h1 {
         </div>
 
         <!-- ===== 화살표 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('arrowMenu', this)">▶ 화살표</button>
+        <button class="subToggle" onclick="toggleSub('arrowMenu')">▶ 화살표</button>
         <div id="arrowMenu" class="subMenu">
           <button onclick="addArrow(0)">화살표①</button>
           <button onclick="addArrow(1)">화살표②</button>
@@ -354,7 +336,7 @@ h1 {
         <hr>
 
         <!-- ===== 선 하위 토글 ===== -->
-        <button class="subToggle" onclick="toggleSub('lineMenu', this)">▶ 선</button>
+        <button class="subToggle" onclick="toggleSub('lineMenu')">▶ 선</button>
 
         <div id="lineMenu" class="subMenu">
 
@@ -651,16 +633,13 @@ svg.addEventListener('pointerup', ()=>{
 });
 
 /* ===== 좌표 변환 ===== */
-const container = document.getElementById('container');
-
 function getSVGPoint(e){
-  const r = container.getBoundingClientRect();
+  const r = svg.getBoundingClientRect();
   return {
     x: e.clientX - r.left,
     y: e.clientY - r.top
   };
-}
-
+}  
 
 /* ===== 선 생성 ===== */
 function createLine(p1, p2, type){
@@ -773,15 +752,10 @@ const icons = {
 
 let selected=null;
 let panelInitialized = false;
- 
 function centerPos(){
-  const r = container.getBoundingClientRect();
-  return {
-    x: r.width / 2 - 32,
-    y: r.height / 2 - 32
-  };
+  const r=mapDiv.getBoundingClientRect();
+  return {x:r.width/2-16, y:r.height/2-16};
 }
-
 
 function select(el){
   if(el === panel) return;
@@ -1014,38 +988,18 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
-/* ===== 도구 토글 ===== */
-const toolToggle  = document.getElementById('toolToggle');
-const toolContent = document.getElementById('toolContent');
 
-toolToggle.onclick = () => {
-  toolContent.style.display =
-    toolContent.style.display === 'block' ? 'none' : 'block';
-};
-
-// ===== 하위 메뉴 토글 =====
-function toggleSub(id, btn){
+function toggleSub(id){
   const el = document.getElementById(id);
-
-  // 현재 메뉴 상태
-  const style = window.getComputedStyle(el);
-  const isHidden = style.display === 'none'; // ✅ 기존보다 안정적
-
-  // 토글
-  el.style.display = isHidden ? 'block' : 'none';
-
-  // 버튼 화살표 업데이트
-  if(btn){
-    let text = btn.textContent.trim();
-    text = text.replace(/^[▶▼]\s*/, '');
-    btn.textContent = (isHidden ? '▼ ' : '▶ ') + text;
-  }
+  el.style.display = el.style.display === 'block' ? 'none' : 'block';
 }
 
 
-
-
-
+/* ===== 도구 토글 ===== */
+toolToggle.onclick=()=>{
+  toolContent.style.display=
+    toolContent.style.display==='block'?'none':'block';
+};
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
@@ -1174,64 +1128,7 @@ document.querySelectorAll('.stepBtn').forEach(btn=>{
   btn.addEventListener('pointercancel', stop);
 });
 
-<script>
-/* ============================= */
-/* ===== A4 컨테이너 핀치줌 ===== */
-/* ============================= */
 
-const pinchTarget = document.getElementById('container');
-
-let pointers = new Map();
-let startDistance = 0;
-let startScale = 1;
-let currentScale = 1;
-
-function getDistance(p1, p2){
-  const dx = p1.clientX - p2.clientX;
-  const dy = p1.clientY - p2.clientY;
-  return Math.hypot(dx, dy);
-}
-
-pinchTarget.addEventListener('pointerdown', e=>{
-  pointers.set(e.pointerId, e);
-});
-
-pinchTarget.addEventListener('pointermove', e=>{
-  if(!pointers.has(e.pointerId)) return;
-  pointers.set(e.pointerId, e);
-
-  if(pointers.size === 2){
-    const pts = [...pointers.values()];
-    const dist = getDistance(pts[0], pts[1]);
-
-    if(startDistance === 0){
-      startDistance = dist;
-      startScale = currentScale;
-      return;
-    }
-
-    let scale = startScale * (dist / startDistance);
-
-    /* ⭐ 확대/축소 제한 */
-    scale = Math.min(2.5, Math.max(0.5, scale));
-
-    currentScale = scale;
-    pinchTarget.style.transform = `scale(${scale})`;
-  }
-});
-
-pinchTarget.addEventListener('pointerup', e=>{
-  pointers.delete(e.pointerId);
-  if(pointers.size < 2){
-    startDistance = 0;
-  }
-});
-
-pinchTarget.addEventListener('pointercancel', ()=>{
-  pointers.clear();
-  startDistance = 0;
-});
- 
 </script>
 
 </body>
