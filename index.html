@@ -1007,15 +1007,6 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
-
-function toggleSub(id){
-  const el = document.getElementById(id);
-  const isVisible = window.getComputedStyle(el).display !== 'none';
-  el.style.display = isVisible ? 'none' : 'block';
-}
-
-
-
 /* ===== 도구 토글 ===== */
 const toolToggle  = document.getElementById('toolToggle');
 const toolContent = document.getElementById('toolContent');
