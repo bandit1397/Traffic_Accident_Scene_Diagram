@@ -1022,12 +1022,16 @@ toolToggle.onclick = () => {
 // ===== 하위 메뉴 토글 =====
 function toggleSub(id, btn){
   const el = document.getElementById(id);
-  const isVisible = window.getComputedStyle(el).display !== 'none';
+  const isVisible = el.style.display === 'block';
   el.style.display = isVisible ? 'none' : 'block';
 
-  // 버튼 텍스트 변경
-  if(btn) btn.textContent = isVisible ? '▶ ' + btn.textContent.slice(2) : '▼ ' + btn.textContent.slice(2);
+  // 버튼 텍스트 앞 글자만 바꾸기
+  if(btn){
+    const label = btn.textContent.slice(2);  // '선', '오토바이' 등
+    btn.textContent = (isVisible ? '▶ ' : '▼ ') + label;
+  }
 }
+
 
 
 /* ===== 배경 이미지 선택 ===== */
