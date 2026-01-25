@@ -536,6 +536,11 @@ function setDeleteMode(type){
   updateLineButtons();
 }
 
+function setLineAnchor(anchor){
+  lineRotateAnchor = anchor;
+  updateLineButtons();   // ⭐ 기존 함수 재사용
+}
+
 
 /* ===== 버튼 상태 표시 ===== */
 function updateLineButtons(){
