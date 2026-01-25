@@ -1019,15 +1019,22 @@ toolToggle.onclick = () => {
 // ===== 하위 메뉴 토글 =====
 function toggleSub(id, btn){
   const el = document.getElementById(id);
-  const isVisible = el.style.display === 'block';
+
+  // ✅ 현재 실제 스타일 확인
+  const isVisible = window.getComputedStyle(el).display !== 'none';
+
+  // ✅ 토글
   el.style.display = isVisible ? 'none' : 'block';
 
-  // 버튼 텍스트 앞 글자만 바꾸기
+  // ✅ 버튼 화살표 변경
   if(btn){
-    const label = btn.textContent.slice(2);  // '선', '오토바이' 등
+    const text = btn.textContent.trim();
+    // 현재 화살표 제거
+    const label = text.replace(/^▶|^▼/, '').trim();
     btn.textContent = (isVisible ? '▶ ' : '▼ ') + label;
   }
 }
+
 
 
 
