@@ -48,11 +48,12 @@ h1 {
 }
 
 #lineLayer {
-  position:absolute;
-  inset:0;
-  z-index:400;
+  position:absolute;       /* container 기준 절대 위치 */
+  inset:0;                 /* container 전체 덮기 */
+  z-index:400;             
   touch-action:none;
   pointer-events:auto;
+  background:transparent;
 }
 
 /* ===== 자유곡선 캔버스 ===== */
