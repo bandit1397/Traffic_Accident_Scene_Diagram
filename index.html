@@ -33,11 +33,7 @@ h1 {
   border: 1px solid #000;
   position: relative;
   overflow: hidden;
-
-  /* 🔹 빈 공간 스와이프 시 화면 스크롤 허용 */
-  touch-action: pan-y;
 }
-
 
 /* ===== 카카오 지도 이미지 ===== */
 #bgMap {
@@ -55,7 +51,7 @@ h1 {
   position:absolute;
   inset:0;
   z-index:400;
-  touch-action: pan-y;
+  touch-action:none;
   pointer-events:auto;
 }
 
@@ -86,15 +82,6 @@ h1 {
 #objectLayer .textbox{
   pointer-events:auto;   /* 객체만 이벤트 */
 }
-
-/* 🔹 객체만 터치 제어 (이동/그리기용) */
-.icon,
-.arrow,
-.textbox,
-#lineLayer line {
-  touch-action: none;
-}
-
 
 .arrow { transform-origin:center; }
 
@@ -264,7 +251,7 @@ h1 {
            position:absolute;
            inset:0;
            z-index:400;
-           touch-action:pan-y;
+           touch-action:none;
            pointer-events:auto;
            background:transparent;
          ">
