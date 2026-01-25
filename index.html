@@ -1019,6 +1019,16 @@ toolToggle.onclick = () => {
     toolContent.style.display === 'block' ? 'none' : 'block';
 };
 
+// ===== 하위 메뉴 토글 =====
+function toggleSub(id, btn){
+  const el = document.getElementById(id);
+  const isVisible = window.getComputedStyle(el).display !== 'none';
+  el.style.display = isVisible ? 'none' : 'block';
+
+  // 버튼 텍스트 변경
+  if(btn) btn.textContent = isVisible ? '▶ ' + btn.textContent.slice(2) : '▼ ' + btn.textContent.slice(2);
+}
+
 
 /* ===== 배경 이미지 선택 ===== */
 const bgMap = document.getElementById('bgMap');
