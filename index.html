@@ -699,17 +699,25 @@ document.getElementById('lineColor').addEventListener('input', e=>{
 
 /* ===== 가장 가까운 선 찾기 ===== */
 function findNearestLine(pt, type){
-  let min = 15;
+  const HIT_PADDING = 28;   // ⭐ 좌우 선택 민감도 (px)
+  let min = HIT_PADDING;
   let target = null;
 
   [...svg.children].forEach(l=>{
     if(l.dataset.type !== type) return;
+
     const d = pointLineDistance(pt, l);
-    if(d < min){
+
+    // ⭐ stroke-width가 굵을수록 자동으로 판정 범위 증가
+    const strokeW = parseFloat(l.getAttribute('stroke-width')) || 1;
+    const effectiveHit = Math.max(HIT_PADDING, strokeW * 2);
+
+    if(d < effectiveHit && d < min){
       min = d;
       target = l;
     }
   });
+
   return target;
 }
 
