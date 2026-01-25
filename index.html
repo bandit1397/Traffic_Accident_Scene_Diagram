@@ -1020,20 +1020,21 @@ toolToggle.onclick = () => {
 function toggleSub(id, btn){
   const el = document.getElementById(id);
 
-  // ✅ 현재 실제 스타일 확인
-  const isVisible = window.getComputedStyle(el).display !== 'none';
+  // 현재 메뉴 상태
+  const isHidden = el.style.display === 'none' || el.style.display === '';
 
-  // ✅ 토글
-  el.style.display = isVisible ? 'none' : 'block';
+  // 토글
+  el.style.display = isHidden ? 'block' : 'none';
 
-  // ✅ 버튼 화살표 변경
+  // 버튼 화살표 업데이트
   if(btn){
-    const text = btn.textContent.trim();
-    // 현재 화살표 제거
-    const label = text.replace(/^▶|^▼/, '').trim();
-    btn.textContent = (isVisible ? '▶ ' : '▼ ') + label;
+    // 공백 제거 후 화살표만 갱신
+    let text = btn.textContent.trim();
+    text = text.replace(/^[▶▼]\s*/, ''); // 앞에 ▶ 또는 ▼ 제거
+    btn.textContent = (isHidden ? '▼ ' : '▶ ') + text;
   }
 }
+
 
 
 
