@@ -752,10 +752,16 @@ const icons = {
 
 let selected=null;
 let panelInitialized = false;
+const container = document.getElementById('container');
+
 function centerPos(){
-  const r=mapDiv.getBoundingClientRect();
-  return {x:r.width/2-16, y:r.height/2-16};
+  const r = container.getBoundingClientRect();
+  return {
+    x: r.width / 2 - 32,
+    y: r.height / 2 - 32
+  };
 }
+
 
 function select(el){
   if(el === panel) return;
