@@ -974,6 +974,12 @@ t.addEventListener('pointerup', () => {
 /* ===== PDF ===== */
 async function savePDF(){
 
+  const container = document.getElementById('container');
+
+  // ⭐ textbox 이동 잠금 (PDF 중 흔들림 방지)
+  const textboxList = document.querySelectorAll('.textbox');
+  textboxList.forEach(t => t.style.pointerEvents = 'none');
+
   // 🔹 텍스트 input → PDF용 div로 임시 복사
   const clones = [];
 
@@ -1011,6 +1017,9 @@ async function savePDF(){
     o.clone.remove();
   });
 
+  // ⭐ textbox 이동 잠금 해제
+  textboxList.forEach(t => t.style.pointerEvents = 'auto');
+
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const w = pdf.internal.pageSize.getWidth();
@@ -1019,8 +1028,6 @@ async function savePDF(){
   pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
-
-
 
 function toggleSub(id){
   const el = document.getElementById(id);
