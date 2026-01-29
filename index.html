@@ -986,13 +986,12 @@ async function savePDF(){
   document.querySelectorAll('.textbox').forEach(t=>{
     const div = document.createElement('div');
 
-    const r = t.getBoundingClientRect();
-    const mapR = container.getBoundingClientRect();
-
     div.innerText = t.value;
     div.style.position = 'absolute';
-    div.style.left = (r.left - mapR.left) + 'px';
-    div.style.top  = (r.top  - mapR.top ) + 'px';
+    
+    div.style.left = t.style.left;
+    div.style.top  = t.style.top;
+    
     div.style.fontSize = getComputedStyle(t).fontSize;
     div.style.fontFamily = getComputedStyle(t).fontFamily;
     div.style.whiteSpace = 'nowrap';
