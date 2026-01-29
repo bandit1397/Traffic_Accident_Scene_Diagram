@@ -1004,6 +1004,8 @@ async function savePDF(){
     clones.push({input:t, clone:div});
   });
 
+  await new Promise(requestAnimationFrame);
+  
   const canvasImg = await html2canvas(container, {
     ignoreElements: (el) => {
       return el.id === 'toolbox' || el.closest('#toolbox');
