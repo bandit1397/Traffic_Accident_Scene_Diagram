@@ -986,13 +986,19 @@ async function savePDF(){
     d.textContent = inp.value;
 
     const s = getComputedStyle(inp);
+
+    // ⭐ 실제 화면 좌표 기준 복사 (핵심 수정)
+    const r = inp.getBoundingClientRect();
+    const base = objectLayer.getBoundingClientRect();
+
     d.style.position = 'absolute';
-    d.style.left = inp.style.left;
-    d.style.top = inp.style.top;
+    d.style.left = (r.left - base.left) + 'px';
+    d.style.top  = (r.top  - base.top ) + 'px';
+
     d.style.fontSize = s.fontSize;
     d.style.fontFamily = s.fontFamily;
     d.style.whiteSpace = 'nowrap';
-    d.style.width = inp.offsetWidth + 'px'; // ⭐ 추가
+    d.style.width = inp.offsetWidth + 'px';
     d.style.transform = inp.style.transform;
     d.style.transformOrigin = 'top left';
     d.style.lineHeight = '1';
@@ -1001,7 +1007,8 @@ async function savePDF(){
     inp.style.visibility = 'hidden';
     objectLayer.appendChild(d);
     clones.push({inp,d});
-  });
+});
+
 
   // ⭐ 2. 캡처
   const canvasImg = await html2canvas(container, {
