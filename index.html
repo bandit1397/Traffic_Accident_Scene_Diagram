@@ -93,8 +93,11 @@ h1 {
   cursor:move;
   z-index:1000;
 
-  resize:none;          /* ⭐ 제거 */
-  white-space:nowrap;  /* ⭐ 한 줄 유지 */
+  resize:none;
+  white-space:nowrap;
+
+  line-height:1;              /* ⭐ 추가 */
+  transform-origin:top left;  /* ⭐ 추가 */
 }
 
 /* ===== 속성 패널 ===== */
