@@ -93,8 +93,11 @@ h1 {
   cursor:move;
   z-index:1000;
 
-  resize:none;          /* ⭐ 제거 */
-  white-space:nowrap;  /* ⭐ 한 줄 유지 */
+  resize:none;
+  white-space:nowrap;
+
+  line-height:1;              /* ⭐ 추가 */
+  transform-origin:top left;  /* ⭐ 추가 */
 }
 
 /* ===== 속성 패널 ===== */
@@ -973,14 +976,61 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg=await html2canvas(container);
-  const {jsPDF}=window.jspdf;
-  const pdf=new jsPDF('p','mm','a4');
-  const w=pdf.internal.pageSize.getWidth();
-  const h=canvasImg.height*w/canvasImg.width;
-  pdf.addImage(canvasImg.toDataURL(),'PNG',0,0,w,h);
+
+  // ⭐ 1. input → div 복제
+  const inputs = [...document.querySelectorAll('.textbox')];
+  const clones = [];
+
+  inputs.forEach(inp=>{
+    const d = document.createElement('div');
+    d.textContent = inp.value;
+
+    const s = getComputedStyle(inp);
+
+    // ⭐ 실제 화면 좌표 기준 복사 (핵심 수정)
+    const r = inp.getBoundingClientRect();
+    const base = objectLayer.getBoundingClientRect();
+
+    d.style.position = 'absolute';
+    d.style.left = (r.left - base.left) + 'px';
+    d.style.top  = (r.top  - base.top ) + 'px';
+
+    d.style.fontSize = s.fontSize;
+    d.style.fontFamily = s.fontFamily;
+    d.style.whiteSpace = 'nowrap';
+    d.style.width = inp.offsetWidth + 'px';
+    d.style.transform = inp.style.transform;
+    d.style.transformOrigin = 'top left';
+    d.style.lineHeight = '1';
+    d.style.background = 'transparent';
+
+    inp.style.visibility = 'hidden';
+    objectLayer.appendChild(d);
+    clones.push({inp,d});
+});
+
+
+  // ⭐ 2. 캡처
+  const canvasImg = await html2canvas(container, {
+    ignoreElements: el => el.id === 'toolbox' || el.closest('#toolbox')
+  });
+
+  // ⭐ 3. 원상복구
+  clones.forEach(({inp,d})=>{
+    inp.style.visibility = 'visible';
+    d.remove();
+  });
+
+  // ⭐ 4. PDF 생성
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const w = pdf.internal.pageSize.getWidth();
+  const h = canvasImg.height * w / canvasImg.width;
+
+  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 function toggleSub(id){
   const el = document.getElementById(id);
@@ -1066,8 +1116,12 @@ sizeInput.addEventListener('input', ()=> {
 
 fontSizeInput.addEventListener('input', ()=> {
   if(!selected) return;
-  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+  if(selected.tagName === 'INPUT') {
+    selected.style.fontSize = fontSizeInput.value + 'px';
+    selected.style.lineHeight = '1';   // ⭐ 추가
+  }
 });
+
 
 widthInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
