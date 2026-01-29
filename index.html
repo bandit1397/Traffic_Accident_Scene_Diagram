@@ -976,12 +976,44 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
-  const canvasImg = await html2canvas(container, {
-    ignoreElements: (el) => {
-      return el.id === 'toolbox' || el.closest('#toolbox');
-    }
+
+  // ⭐ 1. input → div 복제
+  const inputs = [...document.querySelectorAll('.textbox')];
+  const clones = [];
+
+  inputs.forEach(inp=>{
+    const d = document.createElement('div');
+    d.textContent = inp.value;
+
+    const s = getComputedStyle(inp);
+    d.style.position = 'absolute';
+    d.style.left = inp.style.left;
+    d.style.top = inp.style.top;
+    d.style.fontSize = s.fontSize;
+    d.style.fontFamily = s.fontFamily;
+    d.style.whiteSpace = 'nowrap';
+    d.style.transform = inp.style.transform;
+    d.style.transformOrigin = 'top left';
+    d.style.lineHeight = '1';
+    d.style.background = 'transparent';
+
+    inp.style.visibility = 'hidden';
+    objectLayer.appendChild(d);
+    clones.push({inp,d});
   });
 
+  // ⭐ 2. 캡처
+  const canvasImg = await html2canvas(container, {
+    ignoreElements: el => el.id === 'toolbox' || el.closest('#toolbox')
+  });
+
+  // ⭐ 3. 원상복구
+  clones.forEach(({inp,d})=>{
+    inp.style.visibility = 'visible';
+    d.remove();
+  });
+
+  // ⭐ 4. PDF 생성
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const w = pdf.internal.pageSize.getWidth();
