@@ -973,10 +973,42 @@ t.addEventListener('pointerup', () => {
 
 /* ===== PDF ===== */
 async function savePDF(){
+
+  // 🔹 텍스트 input → PDF용 div로 임시 복사
+  const clones = [];
+
+  document.querySelectorAll('.textbox').forEach(t=>{
+    const div = document.createElement('div');
+
+    const r = t.getBoundingClientRect();
+    const mapR = container.getBoundingClientRect();
+
+    div.innerText = t.value;
+    div.style.position = 'absolute';
+    div.style.left = (r.left - mapR.left) + 'px';
+    div.style.top  = (r.top  - mapR.top ) + 'px';
+    div.style.fontSize = getComputedStyle(t).fontSize;
+    div.style.fontFamily = getComputedStyle(t).fontFamily;
+    div.style.whiteSpace = 'nowrap';
+    div.style.transform = t.style.transform;
+    div.style.transformOrigin = t.style.transformOrigin;
+
+    container.appendChild(div);
+    t.style.visibility = 'hidden';
+
+    clones.push({input:t, clone:div});
+  });
+
   const canvasImg = await html2canvas(container, {
     ignoreElements: (el) => {
       return el.id === 'toolbox' || el.closest('#toolbox');
     }
+  });
+
+  // 🔹 원상복구
+  clones.forEach(o=>{
+    o.input.style.visibility = 'visible';
+    o.clone.remove();
   });
 
   const { jsPDF } = window.jspdf;
@@ -987,6 +1019,7 @@ async function savePDF(){
   pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, w, h);
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
+
 
 
 function toggleSub(id){
