@@ -1004,8 +1004,17 @@ async function savePDF(){
     clones.push({input:t, clone:div});
   });
 
+  // 1프레임 대기
   await new Promise(requestAnimationFrame);
-  
+
+  // 2프레임 추가 대기
+  await new Promise(r =>
+    requestAnimationFrame(() =>
+      requestAnimationFrame(r)
+    )
+  );
+
+  // 캡처
   const canvasImg = await html2canvas(container, {
     ignoreElements: (el) => {
       return el.id === 'toolbox' || el.closest('#toolbox');
