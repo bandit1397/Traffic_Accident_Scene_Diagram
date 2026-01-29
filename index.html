@@ -1076,8 +1076,12 @@ sizeInput.addEventListener('input', ()=> {
 
 fontSizeInput.addEventListener('input', ()=> {
   if(!selected) return;
-  if(selected.tagName === 'INPUT') selected.style.fontSize = fontSizeInput.value + 'px';
+  if(selected.tagName === 'INPUT') {
+    selected.style.fontSize = fontSizeInput.value + 'px';
+    selected.style.lineHeight = '1';   // ⭐ 추가
+  }
 });
+
 
 widthInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
