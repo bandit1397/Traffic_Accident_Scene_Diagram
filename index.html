@@ -992,6 +992,7 @@ async function savePDF(){
     d.style.fontSize = s.fontSize;
     d.style.fontFamily = s.fontFamily;
     d.style.whiteSpace = 'nowrap';
+    d.style.width = inp.offsetWidth + 'px'; // ⭐ 추가
     d.style.transform = inp.style.transform;
     d.style.transformOrigin = 'top left';
     d.style.lineHeight = '1';
