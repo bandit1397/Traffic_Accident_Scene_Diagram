@@ -980,6 +980,22 @@ async function savePDF(){
   const textboxList = document.querySelectorAll('.textbox');
   textboxList.forEach(t => t.style.pointerEvents = 'none');
 
+  const freezeRects = [];
+
+  document.querySelectorAll('.textbox').forEach(t=>{
+    const r = t.getBoundingClientRect();
+    const cr = container.getBoundingClientRect();
+
+    freezeRects.push({
+      el: t,
+      left: t.style.left,
+      top: t.style.top
+    });
+
+    t.style.left = (r.left - cr.left) + 'px';
+    t.style.top  = (r.top  - cr.top ) + 'px';
+  });
+
   // 🔹 텍스트 input → PDF용 div로 임시 복사
   const clones = [];
 
@@ -1025,6 +1041,12 @@ async function savePDF(){
   clones.forEach(o=>{
     o.input.style.visibility = 'visible';
     o.clone.remove();
+  });
+
+  / ⭐ textbox 위치 원상복구
+  freezeRects.forEach(o=>{
+    o.el.style.left = o.left;
+    o.el.style.top  = o.top;
   });
 
   // ⭐ textbox 이동 잠금 해제
