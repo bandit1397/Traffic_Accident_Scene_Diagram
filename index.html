@@ -974,40 +974,19 @@ t.addEventListener('pointerup', () => {
 /* ===== PDF ===== */
 async function savePDF(){
 
-  const container = document.getElementById('container');
-
-  // ⭐ textbox 이동 잠금 (PDF 중 흔들림 방지)
-  const textboxList = document.querySelectorAll('.textbox');
-  textboxList.forEach(t => t.style.pointerEvents = 'none');
-
-  const freezeRects = [];
-
-  document.querySelectorAll('.textbox').forEach(t=>{
-    const r = t.getBoundingClientRect();
-    const cr = container.getBoundingClientRect();
-
-    freezeRects.push({
-      el: t,
-      left: t.style.left,
-      top: t.style.top
-    });
-
-    t.style.left = (r.left - cr.left) + 'px';
-    t.style.top  = (r.top  - cr.top ) + 'px';
-  });
-
   // 🔹 텍스트 input → PDF용 div로 임시 복사
   const clones = [];
 
   document.querySelectorAll('.textbox').forEach(t=>{
     const div = document.createElement('div');
 
+    const r = t.getBoundingClientRect();
+    const mapR = container.getBoundingClientRect();
+
     div.innerText = t.value;
     div.style.position = 'absolute';
-    
-    div.style.left = t.style.left;
-    div.style.top  = t.style.top;
-    
+    div.style.left = (r.left - mapR.left) + 'px';
+    div.style.top  = (r.top  - mapR.top ) + 'px';
     div.style.fontSize = getComputedStyle(t).fontSize;
     div.style.fontFamily = getComputedStyle(t).fontFamily;
     div.style.whiteSpace = 'nowrap';
@@ -1020,17 +999,6 @@ async function savePDF(){
     clones.push({input:t, clone:div});
   });
 
-  // 1프레임 대기
-  await new Promise(requestAnimationFrame);
-
-  // 2프레임 추가 대기
-  await new Promise(r =>
-    requestAnimationFrame(() =>
-      requestAnimationFrame(r)
-    )
-  );
-
-  // 캡처
   const canvasImg = await html2canvas(container, {
     ignoreElements: (el) => {
       return el.id === 'toolbox' || el.closest('#toolbox');
@@ -1043,15 +1011,6 @@ async function savePDF(){
     o.clone.remove();
   });
 
-  // ⭐ textbox 위치 원상복구
-  freezeRects.forEach(o=>{
-    o.el.style.left = o.left;
-    o.el.style.top  = o.top;
-  });
-
-  // ⭐ textbox 이동 잠금 해제
-  textboxList.forEach(t => t.style.pointerEvents = 'auto');
-
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
   const w = pdf.internal.pageSize.getWidth();
@@ -1061,14 +1020,14 @@ async function savePDF(){
   pdf.save('Traffic_Accident_Scene_Diagram.pdf');
 }
 
+
+
 function toggleSub(id){
   const el = document.getElementById(id);
   el.style.display = el.style.display === 'block' ? 'none' : 'block';
 }
 
-const toolToggle = document.getElementById('toolToggle');
-const toolContent = document.getElementById('toolContent');
-  
+
 /* ===== 도구 토글 ===== */
 toolToggle.onclick=()=>{
   toolContent.style.display=
