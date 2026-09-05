@@ -5,6 +5,9 @@
 <title>Traffic Accident Scene Diagram</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+<!-- ===== OpenStreetMap (Leaflet) ===== -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
 <style>
 body { margin:0; background:#eee; font-family:sans-serif; }
 
@@ -45,6 +48,53 @@ h1 {
   user-select:none;
   pointer-events:none;
   z-index:1;
+}
+
+/* ===== OpenStreetMap 배경 (Leaflet) ===== */
+#osmMap {
+  position:absolute;
+  inset:0;
+  z-index:300;          /* bgMap(1) 위, lineLayer(400) 아래 */
+  display:none;         /* 배경 확정 후 숨김 */
+}
+
+/* 지도 탐색 모드일 때만 지도가 포인터 이벤트를 받음 */
+#map.navigating #osmMap { display:block; }
+#map.navigating #lineLayer { pointer-events:none; }
+
+/* ===== 지도 검색 바 ===== */
+#mapNavBar {
+  position:absolute;
+  top:8px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:600;
+  display:none;
+  gap:4px;
+  background:rgba(255,255,255,0.95);
+  border:1px solid #333;
+  border-radius:8px;
+  padding:5px 6px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.3);
+  white-space:nowrap;
+}
+#map.navigating #mapNavBar { display:flex; }
+
+#mapNavBar input {
+  width:160px;
+  font-size:13px;
+  padding:3px 5px;
+}
+#mapNavBar button {
+  font-size:13px;
+  padding:3px 8px;
+  cursor:pointer;
+}
+#confirmBgBtn {
+  background:#1a7f37;
+  color:#fff;
+  border:none;
+  border-radius:4px;
 }
 
 #lineLayer {
@@ -229,9 +279,10 @@ h1 {
   <div id="map">
 
 
-    <!-- 배경 지도 이미지 -->
+    <!-- 배경 지도 이미지 (지도 확정 시 여기에 구워 넣음) -->
     <img id="bgMap"
-       src="kakao_capture.jpg"
+       src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="
+       alt=""
        style="
          position:absolute;
          inset:0;
@@ -241,6 +292,16 @@ h1 {
          z-index:1;
          pointer-events:none;
        ">
+
+    <!-- OpenStreetMap 실시간 지도 (배경 위치 잡기용) -->
+    <div id="osmMap"></div>
+
+    <!-- 지도 검색 바 -->
+    <div id="mapNavBar">
+      <input id="placeSearch" type="text" placeholder="주소·장소 검색 후 Enter">
+      <button id="searchBtn" type="button">검색</button>
+      <button id="confirmBgBtn" type="button">이 위치로 배경 확정</button>
+    </div>
 
 
     <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
@@ -367,9 +428,15 @@ h1 {
 
         <hr>
 
+        <!-- ===== 배경 지도 (OpenStreetMap) ===== -->
+        <b style="font-size:12px;">배경 지도</b>
+        <button onclick="openMapNav()">🗺️ 지도 열기 / 위치 변경</button>
+
+        <hr>
+
         <!-- ===== 배경 이미지 ===== -->
         <label style="font-size:12px; display:block; margin-top:6px;">
-          배경 이미지 불러오기
+          배경 이미지 불러오기 (직접 캡처)
           <input type="file" id="bgInput" accept="image/*">
         </label>
 
@@ -381,6 +448,7 @@ h1 {
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
 const mapDiv = document.getElementById('map');
@@ -974,6 +1042,12 @@ t.addEventListener('pointerup', () => {
 /* ===== PDF ===== */
 async function savePDF(){
 
+  // 지도 탐색 모드에서는 배경(실시간 지도)이 캡처되지 않음 → 먼저 확정
+  if(mapDiv.classList.contains('navigating')){
+    alert('먼저 "이 위치로 배경 확정"을 눌러 배경을 만든 뒤 PDF를 저장하세요.');
+    return;
+  }
+
   // 🔹 텍스트 input → PDF용 div로 임시 복사
   const clones = [];
 
@@ -1061,6 +1135,111 @@ bgInput.addEventListener('change', e=>{
   };
   reader.readAsDataURL(file);
 });
+
+
+/* ========================================================= */
+/* ===== OpenStreetMap 배경 지도 (API 키 불필요) ===== */
+/* ========================================================= */
+let osmMapObj = null;
+let osmTileLayer = null;
+
+function initOsmMap(){
+  if(osmMapObj) return osmMapObj;
+
+  osmMapObj = L.map('osmMap', {
+    center: [37.5665, 126.9780],   // 기본값: 서울시청
+    zoom: 17,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  osmTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    crossOrigin: true,             // html2canvas 캡처를 위해 필요
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(osmMapObj);
+
+  return osmMapObj;
+}
+
+/* 지도 탐색 모드 열기 (배경 위치 잡기) */
+function openMapNav(){
+  mapDiv.classList.add('navigating');
+  initOsmMap();
+  toolContent.style.display = 'none';        // 도구 패널 접어 시야 확보
+  setTimeout(()=> osmMapObj.invalidateSize(), 50);   // 컨테이너 표시 후 크기 재계산
+}
+
+/* 지도 탐색 모드 닫기 */
+function closeMapNav(){
+  mapDiv.classList.remove('navigating');
+}
+
+/* 장소 검색 (Nominatim, 키 불필요) */
+async function searchPlace(){
+  const q = document.getElementById('placeSearch').value.trim();
+  if(!q) return;
+  try{
+    const res = await fetch(
+      'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q='
+      + encodeURIComponent(q)
+    );
+    const data = await res.json();
+    if(!data.length){
+      alert('검색 결과가 없습니다: ' + q);
+      return;
+    }
+    osmMapObj.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 18);
+  }catch(err){
+    alert('검색 실패: ' + err.message);
+  }
+}
+
+/* 현재 지도 화면을 배경 이미지로 굽고 지도 조작을 잠금 */
+async function confirmBackground(){
+  const btn = document.getElementById('confirmBgBtn');
+  btn.disabled = true;
+  btn.textContent = '생성 중…';
+
+  try{
+    // 타일이 모두 로드될 때까지 잠시 대기
+    await new Promise(resolve=>{
+      if(!osmTileLayer) return resolve();
+      let done = false;
+      const finish = ()=>{ if(!done){ done = true; resolve(); } };
+      osmTileLayer.once('load', finish);
+      setTimeout(finish, 1500);          // 안전장치
+    });
+
+    const canvas = await html2canvas(document.getElementById('osmMap'), {
+      useCORS: true,
+      backgroundColor: '#ffffff',
+      logging: false,
+      ignoreElements: (el)=> el.classList &&
+        (el.classList.contains('leaflet-control-container') ||
+         el.classList.contains('leaflet-control'))
+    });
+
+    bgMap.src = canvas.toDataURL('image/jpeg', 0.95);
+    bgMap.style.objectFit = 'fill';
+    closeMapNav();
+  }catch(err){
+    alert('배경 생성 실패: ' + err.message +
+          '\n스크린샷 후 "배경 이미지 불러오기"를 사용해 주세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = '이 위치로 배경 확정';
+  }
+}
+
+document.getElementById('searchBtn').addEventListener('click', searchPlace);
+document.getElementById('placeSearch').addEventListener('keydown', e=>{
+  if(e.key === 'Enter'){ e.preventDefault(); searchPlace(); }
+});
+document.getElementById('confirmBgBtn').addEventListener('click', confirmBackground);
+
+/* 처음 열릴 때 바로 지도 탐색 모드로 시작 */
+openMapNav();
 
 
 /* ===== 선택 객체 속성 패널 슬라이더 이벤트 연결 ===== */
