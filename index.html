@@ -58,8 +58,14 @@ h1 {
   display:none;         /* 배경 확정 후 숨김 */
 }
 
-/* 지도 탐색 모드일 때만 지도가 포인터 이벤트를 받음 */
-#map.navigating #osmMap { display:block; }
+/* 지도 탐색 모드: 화면 중앙에 크게 띄움 (A4 지도영역과 같은 비율, 크기는 JS가 지정) */
+#map.navigating #osmMap {
+  display:block;
+  position:fixed;
+  z-index:9990;
+  border:2px solid #fff;
+  box-shadow:0 0 0 100vmax rgba(0,0,0,0.55);   /* 주변 어둡게 */
+}
 #map.navigating #lineLayer { pointer-events:none; }
 
 /* ===== 지도 검색 바 ===== */
@@ -80,7 +86,12 @@ h1 {
   flex-wrap:wrap;
   justify-content:center;
 }
-#map.navigating #mapNavBar { display:flex; }
+#map.navigating #mapNavBar {
+  display:flex;
+  position:fixed;
+  top:12px;
+  z-index:9992;
+}
 
 #mapNavBar input {
   width:160px;
@@ -309,6 +320,7 @@ h1 {
       <button id="searchBtn" type="button">검색</button>
       <select id="mapStyleSel" title="지도 스타일"></select>
       <button id="confirmBgBtn" type="button">이 위치로 배경 확정</button>
+      <button id="closeMapBtn" type="button" title="지도 닫기">✕</button>
     </div>
 
 
@@ -1156,19 +1168,19 @@ const MAP_STYLES = {
   simple: {
     label: '심플 (도로·건물 위주)',
     url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-    options: { subdomains: 'abc', maxNativeZoom: 19, maxZoom: 21,
+    options: { subdomains: 'abc', maxNativeZoom: 18, maxZoom: 24,
                attribution: '&copy; OpenStreetMap, HOT' }
   },
   standard: {
     label: '표준 지도 (OSM)',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    options: { maxNativeZoom: 19, maxZoom: 21,
+    options: { maxNativeZoom: 19, maxZoom: 24,
                attribution: '&copy; OpenStreetMap' }
   },
   aerial: {
     label: '항공사진',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    options: { maxNativeZoom: 19, maxZoom: 21,
+    options: { maxNativeZoom: 19, maxZoom: 24,
                attribution: 'Tiles &copy; Esri' }
   }
 };
@@ -1196,15 +1208,19 @@ function initOsmMap(){
   osmMapObj = L.map('osmMap', {
     center: [37.5665, 126.9780],   // 기본값: 서울시청
     zoom: 17,
-    minZoom: 3,
-    maxZoom: 21,
+    minZoom: 2,
+    maxZoom: 24,                   // 타일 한계(18~19)보다 더 확대 가능 → 이미지 확대로 표시
     zoomControl: true,
     attributionControl: false,
     scrollWheelZoom: true,         // 마우스 휠 확대/축소
-    zoomSnap: 0,                   // 자유로운(부드러운) 확대 배율
+    zoomSnap: 0,                   // 자유로운(연속) 확대 배율
     zoomDelta: 0.5,
-    wheelPxPerZoomLevel: 100,      // 휠 감도
-    doubleClickZoom: true
+    wheelPxPerZoomLevel: 60,       // 휠 감도(작을수록 민감)
+    doubleClickZoom: true,
+    zoomAnimation: false,          // 애니메이션 끔 → 확대/축소가 항상 즉시·정확하게 동작
+    fadeAnimation: false,
+    markerZoomAnimation: false,
+    bounceAtZoomLimits: false
   });
 
   L.control.scale({ imperial: false }).addTo(osmMapObj);
@@ -1227,17 +1243,40 @@ function initOsmMap(){
   return osmMapObj;
 }
 
+/* 탐색용 오버레이 지도 크기: A4 지도영역과 같은 가로세로 비율로 화면 중앙에 크게 */
+function sizeOsmOverlay(){
+  const el = document.getElementById('osmMap');
+  if(!mapDiv.classList.contains('navigating')){
+    el.style.width = el.style.height = el.style.left = el.style.top = '';
+    return;
+  }
+  const aspect = mapDiv.clientWidth / mapDiv.clientHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  let h = Math.min(vh * 0.88, (vw * 0.94) / aspect);
+  let w = h * aspect;
+  el.style.width  = Math.round(w) + 'px';
+  el.style.height = Math.round(h) + 'px';
+  el.style.left   = Math.round((vw - w) / 2) + 'px';
+  el.style.top    = Math.round((vh - h) / 2) + 'px';
+  if(osmMapObj) osmMapObj.invalidateSize();
+}
+window.addEventListener('resize', sizeOsmOverlay);
+
 /* 지도 탐색 모드 열기 (배경 위치 잡기) */
 function openMapNav(){
   mapDiv.classList.add('navigating');
+  document.body.style.overflow = 'hidden';   // 탐색 중 페이지 스크롤 잠금
   initOsmMap();
   toolContent.style.display = 'none';        // 도구 패널 접어 시야 확보
-  setTimeout(()=> osmMapObj.invalidateSize(), 50);   // 컨테이너 표시 후 크기 재계산
+  sizeOsmOverlay();
+  setTimeout(()=>{ sizeOsmOverlay(); osmMapObj.invalidateSize(); }, 60);
 }
 
 /* 지도 탐색 모드 닫기 */
 function closeMapNav(){
   mapDiv.classList.remove('navigating');
+  document.body.style.overflow = '';
+  sizeOsmOverlay();     // 인라인 크기 초기화
 }
 
 /* 장소 검색 (Nominatim, 키 불필요) */
@@ -1276,14 +1315,27 @@ async function confirmBackground(){
       setTimeout(finish, 1500);          // 안전장치
     });
 
-    const canvas = await html2canvas(document.getElementById('osmMap'), {
-      useCORS: true,
-      backgroundColor: '#ffffff',
-      logging: false,
-      ignoreElements: (el)=> el.classList &&
-        (el.classList.contains('leaflet-control-container') ||
-         el.classList.contains('leaflet-control'))
-    });
+    const osmEl = document.getElementById('osmMap');
+    const prevShadow = osmEl.style.boxShadow;
+    const prevBorder = osmEl.style.border;
+    osmEl.style.boxShadow = 'none';           // 캡처 시 주변 그림자·테두리 제외
+    osmEl.style.border = 'none';
+
+    let canvas;
+    try{
+      canvas = await html2canvas(osmEl, {
+        useCORS: true,
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false,
+        ignoreElements: (el)=> el.classList &&
+          (el.classList.contains('leaflet-control-container') ||
+           el.classList.contains('leaflet-control'))
+      });
+    } finally {
+      osmEl.style.boxShadow = prevShadow;
+      osmEl.style.border = prevBorder;
+    }
 
     bgMap.src = canvas.toDataURL('image/jpeg', 0.95);
     bgMap.style.objectFit = 'fill';
@@ -1302,6 +1354,7 @@ document.getElementById('placeSearch').addEventListener('keydown', e=>{
   if(e.key === 'Enter'){ e.preventDefault(); searchPlace(); }
 });
 document.getElementById('confirmBgBtn').addEventListener('click', confirmBackground);
+document.getElementById('closeMapBtn').addEventListener('click', closeMapNav);
 
 /* 처음 열릴 때 바로 지도 탐색 모드로 시작 */
 openMapNav();
