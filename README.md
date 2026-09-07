@@ -1,1 +1,75 @@
-index.html=선기본3=index
+# 교통사고 현장약도 앱
+
+직원 휴대폰에서 **URL 하나로 접속** → 사고현장 약도 작성 → **PDF 생성** →
+휴대폰 기본 공유창으로 **문자·카카오톡·메일 첨부 전송**하는 서버 없는 모바일 웹앱.
+
+앱 코드만 GitHub Pages 로 배포되며, **사고 내용·PDF 는 어디에도 저장되지 않고**
+직원 휴대폰 브라우저 안에서만 처리됩니다.
+
+---
+
+## 직원 사용법 (3단계)
+
+1. **지도 열기** → 주소·장소 검색 후 손가락으로 위치·확대 조정
+2. **배경 만들기**
+   - `📷 스크린샷` : 폰 스크린샷을 찍어 불러오기 (어느 지도든 가능)
+   - `현재 화면 배경` : 지금 보이는 지도를 그대로 배경으로 (OpenStreetMap 일 때만)
+3. **약도 작성** → 차량·화살표·`✕ 충돌지점`·`↔ 정차·거리`·문자·선 배치
+4. **`📄 PDF 만들기`** → 하단에 `[PDF 공유]` `[PDF 저장]`
+   - `PDF 공유` : 휴대폰 기본 공유창 → 카카오톡·문자·메일 선택 → 직원에게 전송
+   - `PDF 저장` : 파일로 저장 (공유가 안 되는 기기용)
+
+PDF 파일명: `사고현장약도_YYYYMMDD_HHmm.pdf`
+
+---
+
+## 배경지도 정책 (중요)
+
+| 지도 | PDF 저장·공유 | 키 |
+|------|--------------|----|
+| **OpenStreetMap** (기본) | ✅ 허용 (출처표시 `© OpenStreetMap 기여자` 필수, 자동 각인) | 불필요 |
+| **카카오맵** | ❌ **금지** — 카카오 운영정책상 지도 이미지를 저장·공유 불가, 실시간 호출만 허용 | JavaScript 키 필요 |
+
+그래서 이 앱은 **기본적으로 OpenStreetMap** 을 배경으로 씁니다.
+카카오맵은 "화면에서 위치를 확인하는 용도"로만 선택적으로 붙일 수 있고,
+그 경우 배경은 반드시 `📷 스크린샷` 으로 만들어야 합니다.
+
+참고: [카카오 데브톡 - 정적지도 저장 정책](https://devtalk.kakao.com/t/topic/122638),
+[지도 이미지 저작권](https://devtalk.kakao.com/t/topic/141313)
+
+---
+
+## 카카오맵을 화면 지도로 쓰려면 (선택)
+
+1. [카카오 디벨로퍼스](https://developers.kakao.com) 에서 앱 생성 → **JavaScript 키** 복사
+2. 내 애플리케이션 → 플랫폼 → **Web** 에 GitHub Pages 도메인 등록
+   (예: `https://<사용자명>.github.io`)
+3. `index.html` 상단의 설정 한 줄에 키 입력:
+   ```js
+   const KAKAO_JS_KEY = "여기에_JavaScript_키";
+   ```
+4. 커밋·푸시하면 프레임 지도가 카카오맵으로 바뀝니다. (검색은 카카오 장소·주소 검색 사용)
+
+키를 비워두면 그대로 OpenStreetMap 이 쓰입니다.
+
+---
+
+## GitHub Pages 배포
+
+1. 이 저장소 → **Settings → Pages**
+2. **Source: Deploy from a branch** → Branch `main` / `/ (root)` → Save
+3. 1~2분 후 `https://<사용자명>.github.io/Traffic_Accident_Scene_Diagram_1/` 접속
+4. 직원들에게 이 URL 공유 (홈 화면에 추가하면 앱처럼 사용 가능)
+
+> `PDF 공유` (Web Share API 파일 공유) 는 **HTTPS 에서만** 동작합니다.
+> GitHub Pages 는 HTTPS 이므로 문제없고, 로컬 `file://` 테스트에서는 저장으로 대체됩니다.
+
+---
+
+## 기술 메모
+
+- 단일 `index.html` + `icons/` + `manifest.webmanifest`. 빌드 없음.
+- 외부 라이브러리(CDN): Leaflet, html2canvas, jsPDF, (선택) 카카오맵 SDK
+- 지도 캡처: OpenStreetMap 타일은 CORS 허용이라 `html2canvas` 로 바로 캡처됨.
+  카카오 타일은 CORS 차단이라 프록시 서버 없이는 캡처 불가 → 스크린샷 방식 사용.
+- `icons/*.png` 가 장당 ~2MB 로 큼. 로딩·캡처 속도를 위해 512px 이하로 리사이즈 권장.

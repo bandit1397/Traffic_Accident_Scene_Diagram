@@ -2,37 +2,61 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Traffic Accident Scene Diagram</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>교통사고 현장약도</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#333333">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="현장약도">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./icons/car.png">
 
 <!-- ===== OpenStreetMap (Leaflet) ===== -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 
 <style>
-body { margin:0; background:#eee; font-family:sans-serif; }
+body {
+  margin:0;
+  background:#eee;
+  font-family:"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  -webkit-text-size-adjust:100%;
+  overflow-x:hidden;
+}
 
+/* A4 비율(210:297)을 유지하면서 화면 폭에 맞춰 축소 */
 #container {
   position: relative;
-  width: 210mm;     /* A4 세로 가로 */
-  height: 270mm;     
+  width: min(210mm, 100vw);
+  aspect-ratio: 210 / 297;
+  height: auto;
   margin: 0 auto;
-  padding: 15mm;    /* 사진과 유사한 여백 */
+  padding: 4vw;                /* 화면 크기에 비례한 여백 */
   background: #fff;
   border: 1px solid #000;
   box-sizing: border-box;
 }
+@media (min-width: 800px){
+  #container { padding: 15mm; }
+}
 
+
+#container { display:flex; flex-direction:column; }
 
 h1 {
   text-align: center;
-  font-size: 16px;
-  margin: 0 0 10mm 0;   /* ⭐ 제목 아래 여백 */
+  font-size: clamp(14px, 4vw, 18px);
+  margin: 0 0 3vw 0;
+  flex: 0 0 auto;
+}
+@media (min-width: 800px){
+  h1 { margin: 0 0 10mm 0; }
 }
 
 #map {
   width: 100%;
-  height: calc(100% - 30mm - 26px);
-  /* padding 상하 + 제목 영역 제외 */
+  flex: 1 1 auto;
+  min-height: 0;
   border: 1px solid #000;
   position: relative;
   overflow: hidden;
@@ -58,9 +82,123 @@ h1 {
   display:none;         /* 배경 확정 후 숨김 */
 }
 
+/* ===== 카카오맵 배경 (JS 키 입력 시) ===== */
+#kakaoMap {
+  position:absolute;
+  inset:0;
+  z-index:310;
+  display:none;
+}
+#map.navigating #kakaoMap { display:block; }
+
 /* 지도 탐색 모드: 프레임(#map) 안에서 조작 */
 #map.navigating #osmMap { display:block; }
 #map.navigating #lineLayer { pointer-events:none; }
+
+/* ===== 배경 출처 표기 (PDF에 포함) ===== */
+#bgAttribution {
+  position:absolute;
+  right:3px;
+  bottom:2px;
+  z-index:350;
+  font-size:10px;
+  line-height:1.2;
+  color:#222;
+  background:rgba(255,255,255,0.72);
+  padding:1px 4px;
+  border-radius:3px;
+  pointer-events:none;
+  max-width:90%;
+  display:none;
+}
+
+/* ===== 지도 안내 문구 ===== */
+#mapHint {
+  position:absolute;
+  left:50%;
+  bottom:10px;
+  transform:translateX(-50%);
+  z-index:600;
+  display:none;
+  background:rgba(0,0,0,0.72);
+  color:#fff;
+  font-size:12px;
+  padding:5px 10px;
+  border-radius:14px;
+  max-width:92%;
+  text-align:center;
+}
+#map.navigating #mapHint { display:block; }
+
+/* ===== 충돌지점 X ===== */
+.xmark {
+  position:absolute;
+  z-index:1000;
+  color:#e00;
+  font-weight:900;
+  font-family:Arial, sans-serif;
+  line-height:1;
+  cursor:move;
+  user-select:none;
+  text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+}
+
+/* ===== PDF 결과 바 ===== */
+#pdfResultBar {
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:5000;
+  display:none;
+  background:#111;
+  color:#fff;
+  padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+  box-shadow:0 -2px 8px rgba(0,0,0,0.35);
+  font-size:13px;
+}
+#pdfResultBar .fname {
+  display:block;
+  margin-bottom:8px;
+  word-break:break-all;
+  opacity:0.9;
+}
+#pdfResultBar .row { display:flex; gap:8px; }
+#pdfResultBar button {
+  flex:1;
+  min-height:44px;
+  font-size:15px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+#pdfShareBtn { background:#1a7f37; color:#fff; }
+#pdfSaveBtn  { background:#fff; color:#111; }
+#pdfCloseBtn {
+  flex:0 0 44px;
+  background:#333;
+  color:#fff;
+}
+
+/* ===== 토스트 ===== */
+#toast {
+  position:fixed;
+  left:50%;
+  bottom:80px;
+  transform:translateX(-50%);
+  z-index:6000;
+  background:rgba(0,0,0,0.85);
+  color:#fff;
+  font-size:13px;
+  padding:8px 14px;
+  border-radius:16px;
+  max-width:90%;
+  text-align:center;
+  opacity:0;
+  transition:opacity 0.25s;
+  pointer-events:none;
+}
+#toast.show { opacity:1; }
 
 /* ===== 지도 검색 바 ===== */
 #mapNavBar {
@@ -300,17 +438,27 @@ h1 {
          pointer-events:none;
        ">
 
-    <!-- OpenStreetMap 실시간 지도 (배경 위치 잡기용) -->
+    <!-- OpenStreetMap 실시간 지도 (배경 위치 잡기용, 키 불필요) -->
     <div id="osmMap"></div>
+
+    <!-- 카카오맵 (KAKAO_JS_KEY 입력 시 사용, 화면 위치잡기 전용) -->
+    <div id="kakaoMap"></div>
+
+    <!-- 배경 출처 표기 (배경 확정 시 표시, PDF에 포함) -->
+    <div id="bgAttribution"></div>
 
     <!-- 지도 검색 바 -->
     <div id="mapNavBar">
       <input id="placeSearch" type="text" placeholder="주소·장소 검색 후 Enter">
       <button id="searchBtn" type="button">검색</button>
       <select id="mapStyleSel" title="지도 스타일"></select>
-      <button id="confirmBgBtn" type="button">이 위치로 배경 확정</button>
+      <button id="shotBgBtn" type="button" title="폰 스크린샷 불러오기">📷 스크린샷</button>
+      <button id="confirmBgBtn" type="button">현재 화면 배경</button>
       <button id="closeMapBtn" type="button" title="지도 닫기">✕</button>
     </div>
+
+    <!-- 지도 조작 안내 -->
+    <div id="mapHint"></div>
 
 
     <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
@@ -387,6 +535,9 @@ h1 {
         </div>
 
         <button onclick="addText()">문자</button>
+        <button onclick="addX()">✕ 충돌지점</button>
+        <button onclick="startMeasure()">↔ 정차·거리</button>
+        <button onclick="clearMeasures()">↔ 측정선 지우기</button>
 
         <hr>
 
@@ -400,8 +551,6 @@ h1 {
           굵기
           <input type="range" id="lineWidth" min="1" max="15" value="3">
         </label>
-
-        <button onclick="savePDF()">PDF</button>
 
         <hr>
 
@@ -437,29 +586,56 @@ h1 {
 
         <hr>
 
-        <!-- ===== 배경 지도 (OpenStreetMap) ===== -->
+        <!-- ===== 배경 지도 ===== -->
         <b style="font-size:12px;">배경 지도</b>
         <button onclick="openMapNav()">🗺️ 지도 열기 / 위치 변경</button>
 
         <hr>
 
-        <!-- ===== 배경 이미지 ===== -->
+        <!-- ===== 배경 이미지 (폰 스크린샷 등) ===== -->
         <label style="font-size:12px; display:block; margin-top:6px;">
-          배경 이미지 불러오기 (직접 캡처)
+          폰 스크린샷·사진 불러오기
           <input type="file" id="bgInput" accept="image/*">
         </label>
+
+        <hr>
+
+        <button onclick="savePDF()" style="background:#1a7f37;color:#fff;">📄 PDF 만들기</button>
 
       </div>
     </div>
 
   </div>
-</div>
+
+  <!-- ===== PDF 생성 결과 바 ===== -->
+  <div id="pdfResultBar">
+    <span class="fname" id="pdfFname"></span>
+    <div class="row">
+      <button id="pdfShareBtn" type="button">PDF 공유</button>
+      <button id="pdfSaveBtn" type="button">PDF 저장</button>
+      <button id="pdfCloseBtn" type="button" title="닫기">✕</button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script>
+/* =========================================================================
+   설정 — 카카오맵을 프레임 안 "위치잡기 지도"로 쓰려면 아래에
+   카카오 JavaScript 키를 넣으세요. (예: "abcd1234...")
+   비워두면 키가 필요 없는 OpenStreetMap 이 사용됩니다.
+
+   ※ 카카오 지도 이미지는 정책상 PDF 로 저장·공유할 수 없으므로,
+     카카오맵은 화면에서 위치를 확인하는 용도로만 쓰고,
+     배경은 "📷 스크린샷" 으로 폰 캡처를 불러오세요.
+   ========================================================================= */
+const KAKAO_JS_KEY = "";
+const USE_KAKAO = KAKAO_JS_KEY.trim().length > 0;
+
 const mapDiv = document.getElementById('map');
 const panel = document.getElementById('panel');
 
@@ -959,13 +1135,15 @@ function addArrow(type = 0){
 }
 
 
-function addText(){
-  const p = centerPos();
+function addText(opts){
+  opts = opts || {};
+  const p = (opts.x != null && opts.y != null) ? { x: opts.x, y: opts.y } : centerPos();
   const t = document.createElement('input');
 
   t.type = 'text';
   t.className = 'textbox';
   t.placeholder = '텍스트';
+  if(opts.value != null) t.value = opts.value;
 
   t.isEditing = false;       // ⭐ 상태 플래그
   t.readOnly = true;
@@ -1046,16 +1224,124 @@ t.addEventListener('pointerup', () => {
   });
 
   adjustSize();
+  return t;
 }
+
+/* ===== 충돌지점 X ===== */
+function addX(){
+  const p = centerPos();
+  const x = document.createElement('div');
+  x.className = 'xmark';
+  x.textContent = '✕';
+  x.style.left = p.x + 'px';
+  x.style.top  = p.y + 'px';
+  x.style.fontSize = '40px';
+  objectLayer.appendChild(x);
+  drag(x);
+  enableDeleteConfirmation(x);
+  select(x);
+  toast('충돌지점 X — 드래그로 이동, 크기 슬라이더로 조절');
+}
+
+/* ===== 정차위치·거리 측정선 ===== */
+/*  지도(프레임)를 두 번 탭 → 양끝 화살표 선 + 실측 거리 라벨(직접 입력) */
+let measureArm = false;
+let measureStart = null;
+
+function startMeasure(){
+  measureArm = true;
+  measureStart = null;
+  toolContent.style.display = 'none';
+  toast('시작점과 끝점을 차례로 탭하세요');
+}
+
+svg.addEventListener('pointerdown', e=>{
+  if(!measureArm) return;
+  const pt = getSVGPoint(e);
+  if(!measureStart){
+    measureStart = pt;
+    toast('끝점을 탭하세요');
+  }else{
+    createMeasure(measureStart, pt);
+    measureArm = false;
+    measureStart = null;
+  }
+});
+
+function createMeasure(p1, p2){
+  const NS = 'http://www.w3.org/2000/svg';
+
+  // 화살촉 마커 정의 (한 번만)
+  if(!svg.querySelector('#measureArrow')){
+    const defs = document.createElementNS(NS, 'defs');
+    defs.innerHTML =
+      '<marker id="measureArrow" viewBox="0 0 10 10" refX="9" refY="5" ' +
+      'markerWidth="7" markerHeight="7" orient="auto-start-reverse">' +
+      '<path d="M0,0 L10,5 L0,10 z" fill="#c00"/></marker>';
+    svg.appendChild(defs);
+  }
+
+  const line = document.createElementNS(NS, 'line');
+  line.setAttribute('x1', p1.x); line.setAttribute('y1', p1.y);
+  line.setAttribute('x2', p2.x); line.setAttribute('y2', p2.y);
+  line.setAttribute('stroke', '#c00');
+  line.setAttribute('stroke-width', 2);
+  line.setAttribute('marker-start', 'url(#measureArrow)');
+  line.setAttribute('marker-end', 'url(#measureArrow)');
+  line.dataset.type = 'measure';
+  svg.appendChild(line);
+
+  // 가운데에 편집 가능한 거리 라벨 (사용자가 실측값 입력)
+  const svgR = svg.getBoundingClientRect();
+  const mapR = mapDiv.getBoundingClientRect();
+  const midX = (p1.x + p2.x) / 2 + (svgR.left - mapR.left);
+  const midY = (p1.y + p2.y) / 2 + (svgR.top  - mapR.top);
+  const label = addText({ x: midX, y: midY - 12, value: '0.0m' });
+  label.style.fontSize = '16px';
+  label.style.background = 'rgba(255,255,255,0.85)';
+  label._pairedLine = line;
+  label.addEventListener('dblclick', ()=> line.remove());
+
+  toast('거리 라벨을 탭해 실측값을 입력하세요');
+}
+
+function clearMeasures(){
+  svg.querySelectorAll('line[data-type="measure"]').forEach(l=> l.remove());
+  document.querySelectorAll('.textbox').forEach(t=>{ if(t._pairedLine) t.remove(); });
+  toast('측정선을 지웠습니다');
+}
+
+/* ===== 토스트 안내 ===== */
+let toastTimer = null;
+function toast(msg, ms = 2600){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), ms);
+}
+
+/* ===== PDF 파일명: 사고현장약도_YYYYMMDD_HHmm.pdf ===== */
+function makeFilename(){
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `사고현장약도_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}`
+       + `_${p(d.getHours())}${p(d.getMinutes())}.pdf`;
+}
+
+/* 생성된 PDF 보관 (저장·공유 버튼에서 사용) */
+let lastPdf = null;   // { blob, filename }
 
 /* ===== PDF ===== */
 async function savePDF(){
 
   // 지도 탐색 모드에서는 배경(실시간 지도)이 캡처되지 않음 → 먼저 확정
   if(mapDiv.classList.contains('navigating')){
-    alert('먼저 "이 위치로 배경 확정"을 눌러 배경을 만든 뒤 PDF를 저장하세요.');
+    alert('먼저 배경(📷 스크린샷 또는 "현재 화면 배경")을 만든 뒤 PDF를 만드세요.');
     return;
   }
+
+  toast('PDF 만드는 중…', 4000);
 
   // 🔹 텍스트 input → PDF용 div로 임시 복사
   const clones = [];
@@ -1083,8 +1369,15 @@ async function savePDF(){
   });
 
   const canvasImg = await html2canvas(container, {
+    useCORS: true,
+    scale: 2,
+    backgroundColor: '#ffffff',
+    logging: false,
     ignoreElements: (el) => {
-      return el.id === 'toolbox' || el.closest('#toolbox');
+      return el.id === 'toolbox'  || el.closest('#toolbox')
+          || el.id === 'panel'    || el.closest('#panel')
+          || el.id === 'pdfResultBar' || el.id === 'toast'
+          || (el.classList && el.classList.contains('leaflet-control-container'));
     }
   });
 
@@ -1096,12 +1389,67 @@ async function savePDF(){
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
-  const w = pdf.internal.pageSize.getWidth();
-  const h = canvasImg.height * w / canvasImg.width;
+  const pw = pdf.internal.pageSize.getWidth();
+  const ph = pdf.internal.pageSize.getHeight();
+  // A4 페이지에 맞춰 비율 유지하며 중앙 배치
+  let w = pw, h = canvasImg.height * pw / canvasImg.width;
+  if(h > ph){ h = ph; w = canvasImg.width * ph / canvasImg.height; }
+  const x = (pw - w) / 2, y = (ph - h) / 2;
 
-  pdf.addImage(canvasImg.toDataURL('image/png'), 'PNG', 0, 0, w, h);
-  pdf.save('Traffic_Accident_Scene_Diagram.pdf');
+  pdf.addImage(canvasImg.toDataURL('image/jpeg', 0.92), 'JPEG', x, y, w, h);
+
+  const filename = makeFilename();
+  lastPdf = { blob: pdf.output('blob'), filename };
+
+  showPdfResult(filename);
+  toast('PDF 생성 완료');
 }
+
+/* ===== PDF 결과 바 ===== */
+function showPdfResult(filename){
+  document.getElementById('pdfFname').textContent = filename;
+  document.getElementById('pdfResultBar').style.display = 'block';
+}
+
+async function sharePDF(){
+  if(!lastPdf){ toast('먼저 PDF를 만드세요'); return; }
+  const file = new File([lastPdf.blob], lastPdf.filename, { type:'application/pdf' });
+
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{
+      await navigator.share({
+        files:[file],
+        title:'교통사고 현장약도',
+        text: lastPdf.filename
+      });
+    }catch(err){
+      if(err && err.name === 'AbortError') return;   // 사용자가 공유창 취소
+      downloadPDF();
+      toast('공유를 사용할 수 없어 저장했습니다. 저장된 PDF를 첨부해 보내세요.', 4000);
+    }
+  }else{
+    downloadPDF();
+    toast('이 기기는 파일 공유를 지원하지 않습니다. 저장된 PDF를 첨부해 보내세요.', 4200);
+  }
+}
+
+function downloadPDF(){
+  if(!lastPdf){ toast('먼저 PDF를 만드세요'); return; }
+  const url = URL.createObjectURL(lastPdf.blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = lastPdf.filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=> URL.revokeObjectURL(url), 4000);
+}
+
+document.getElementById('pdfShareBtn').addEventListener('click', sharePDF);
+document.getElementById('pdfSaveBtn').addEventListener('click', downloadPDF);
+document.getElementById('pdfCloseBtn').addEventListener('click', ()=>{
+  document.getElementById('pdfResultBar').style.display = 'none';
+});
 
 
 
@@ -1117,11 +1465,26 @@ toolToggle.onclick=()=>{
     toolContent.style.display==='block'?'none':'block';
 };
 
-/* ===== 배경 이미지 선택 ===== */
+/* ===== 배경 출처 표기 ===== */
+const bgAttr = document.getElementById('bgAttribution');
+function setBgAttribution(text){
+  if(text){
+    bgAttr.textContent = text;
+    bgAttr.style.display = 'block';
+  }else{
+    bgAttr.textContent = '';
+    bgAttr.style.display = 'none';
+  }
+}
+
+/* ===== 배경 이미지 선택 (폰 스크린샷·사진) ===== */
 const bgMap = document.getElementById('bgMap');
 const bgInput = document.getElementById('bgInput');
 
-// 배경 이미지 선택 코드 끝
+// "📷 스크린샷" 버튼 → 파일 선택창
+const shotBgBtn = document.getElementById('shotBgBtn');
+if(shotBgBtn) shotBgBtn.addEventListener('click', ()=> bgInput.click());
+
 bgInput.addEventListener('change', e=>{
   const file = e.target.files[0];
   if(!file) return;
@@ -1138,55 +1501,65 @@ bgInput.addEventListener('change', e=>{
 
       // 4) 이제는 cover 필요 없음 (이미 딱 맞게 잘라져 있으니까)
       bgMap.style.objectFit = 'fill';
+      bgMap.onload = null;
     };
 
     bgMap.src = evt.target.result;
+    setBgAttribution('');            // 사용자가 직접 올린 이미지 (출처 표기는 사용자 책임)
+    closeMapNav();
+    toast('배경을 불러왔습니다');
   };
   reader.readAsDataURL(file);
+  e.target.value = '';              // 같은 파일 다시 선택 가능하도록
 });
 
 
 /* ========================================================= */
-/* ===== 배경 지도 (API 키 불필요) ===== */
+/* ===== 배경 위치잡기 지도 =====                             */
+/*   KAKAO_JS_KEY 있으면 카카오맵(위치잡기 전용),              */
+/*   없으면 OpenStreetMap(키 불필요, 화면 그대로 배경 가능)    */
 /* ========================================================= */
 let osmMapObj = null;
 let osmTileLayer = null;
+let kakaoMapObj = null;
+let kakaoReady = false;
 
-/* 사용할 수 있는 지도 스타일 (모두 키 불필요) */
+function setMapHint(text){
+  document.getElementById('mapHint').textContent = text || '';
+}
+
+/* ---------- 지도 스타일 (OSM, 모두 키 불필요) ---------- */
 const MAP_STYLES = {
   simple: {
     label: '심플 (도로·건물 위주)',
     url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-    options: { subdomains: 'abc', maxNativeZoom: 18, maxZoom: 24,
-               attribution: '&copy; OpenStreetMap, HOT' }
+    options: { subdomains: 'abc', maxNativeZoom: 18, maxZoom: 22,
+               attribution: '© OpenStreetMap 기여자, HOT' }
   },
   standard: {
     label: '표준 지도 (OSM)',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    options: { maxNativeZoom: 19, maxZoom: 24,
-               attribution: '&copy; OpenStreetMap' }
+    options: { maxNativeZoom: 19, maxZoom: 22,
+               attribution: '© OpenStreetMap 기여자' }
   },
   aerial: {
     label: '항공사진',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    options: { maxNativeZoom: 19, maxZoom: 24,
-               attribution: 'Tiles &copy; Esri' }
+    options: { maxNativeZoom: 19, maxZoom: 22,
+               attribution: '항공사진 © Esri' }
   }
 };
-let currentStyle = 'simple';   // 기본: 도로·건물 위주 심플 지도
+let currentStyle = 'simple';
 
 function setMapStyle(key){
   if(!MAP_STYLES[key] || !osmMapObj) return;
   currentStyle = key;
-
   if(osmTileLayer) osmMapObj.removeLayer(osmTileLayer);
-
   const s = MAP_STYLES[key];
   osmTileLayer = L.tileLayer(s.url, Object.assign(
     { crossOrigin: true },        // html2canvas 캡처를 위해 필요
     s.options
   )).addTo(osmMapObj);
-
   const sel = document.getElementById('mapStyleSel');
   if(sel && sel.value !== key) sel.value = key;
 }
@@ -1198,25 +1571,24 @@ function initOsmMap(){
     center: [37.5665, 126.9780],   // 기본값: 서울시청
     zoom: 17,
     minZoom: 2,
-    maxZoom: 24,                   // 타일 한계(18~19)보다 더 확대 가능 → 이미지 확대로 표시
+    maxZoom: 22,
     zoomControl: true,
     attributionControl: false,
-    scrollWheelZoom: true,         // 마우스 휠 확대/축소
-    zoomSnap: 0,                   // 자유로운(연속) 확대 배율
+    scrollWheelZoom: true,
+    zoomSnap: 0.25,                // 부드러운 확대 배율 (0은 렌더링 불안정)
     zoomDelta: 0.5,
-    wheelPxPerZoomLevel: 60,       // 휠 감도(작을수록 민감)
+    wheelPxPerZoomLevel: 80,
     doubleClickZoom: true,
-    zoomAnimation: false,          // 애니메이션 끔 → 확대/축소가 항상 즉시·정확하게 동작
+    touchZoom: true,              // 두 손가락 핀치 줌
+    zoomAnimation: false,
     fadeAnimation: false,
     markerZoomAnimation: false,
     bounceAtZoomLimits: false
   });
 
   L.control.scale({ imperial: false }).addTo(osmMapObj);
-
   setMapStyle(currentStyle);
 
-  // 스타일 선택 드롭다운 채우기
   const sel = document.getElementById('mapStyleSel');
   if(sel && !sel.options.length){
     Object.keys(MAP_STYLES).forEach(k=>{
@@ -1228,58 +1600,141 @@ function initOsmMap(){
     sel.value = currentStyle;
     sel.addEventListener('change', ()=> setMapStyle(sel.value));
   }
-
   return osmMapObj;
 }
 
-/* 지도 탐색 모드 열기 (배경 위치 잡기) */
+/* ---------- 카카오맵 (위치잡기 전용) ---------- */
+function loadKakaoSdk(){
+  return new Promise((resolve, reject)=>{
+    if(window.kakao && window.kakao.maps && window.kakao.maps.Map) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://dapi.kakao.com/v2/maps/sdk.js?appkey='
+          + encodeURIComponent(KAKAO_JS_KEY)
+          + '&autoload=false&libraries=services';
+    s.onload = ()=> kakao.maps.load(resolve);
+    s.onerror = ()=> reject(new Error('카카오맵 SDK 로드 실패 (JavaScript 키·도메인 등록 확인)'));
+    document.head.appendChild(s);
+  });
+}
+
+async function initKakaoMap(){
+  if(kakaoReady) return kakaoMapObj;
+  await loadKakaoSdk();
+
+  kakaoMapObj = new kakao.maps.Map(document.getElementById('kakaoMap'), {
+    center: new kakao.maps.LatLng(37.5665, 126.9780),
+    level: 3
+  });
+
+  const sel = document.getElementById('mapStyleSel');
+  if(sel){
+    sel.innerHTML = '';
+    [['ROADMAP','일반지도'], ['HYBRID','스카이뷰']].forEach(([v,l])=>{
+      const o = document.createElement('option');
+      o.value = v; o.textContent = l;
+      sel.appendChild(o);
+    });
+    sel.value = 'ROADMAP';
+    sel.onchange = ()=> kakaoMapObj.setMapTypeId(kakao.maps.MapTypeId[sel.value]);
+  }
+
+  kakaoReady = true;
+  return kakaoMapObj;
+}
+
+/* ---------- 지도 탐색 모드 ---------- */
+function startOsmNav(){
+  document.getElementById('confirmBgBtn').style.display = '';
+  setMapHint('두 손가락으로 확대·이동하여 사고 위치를 맞춘 뒤 "현재 화면 배경" 또는 📷 스크린샷.');
+  initOsmMap();
+  setTimeout(()=> osmMapObj && osmMapObj.invalidateSize(), 60);
+}
+
 function openMapNav(){
   mapDiv.classList.add('navigating');
-  initOsmMap();
   toolContent.style.display = 'none';        // 도구 패널 접어 시야 확보
-  setTimeout(()=> osmMapObj.invalidateSize(), 60);  // 컨테이너 표시 후 크기 재계산
-}
-window.addEventListener('resize', ()=>{ if(osmMapObj) osmMapObj.invalidateSize(); });
 
-/* 지도 탐색 모드 닫기 */
+  if(USE_KAKAO){
+    document.getElementById('confirmBgBtn').style.display = 'none';   // 카카오는 캡처 불가(정책·CORS)
+    setMapHint('지도를 사고 위치에 맞춘 뒤, 폰 스크린샷을 찍어 📷 스크린샷으로 불러오세요.');
+    initKakaoMap()
+      .then(()=> setTimeout(()=> kakaoMapObj.relayout(), 60))
+      .catch(err=>{
+        toast(err.message + ' — OSM 지도로 전환합니다.', 4500);
+        startOsmNav();
+      });
+  }else{
+    startOsmNav();
+  }
+}
+
 function closeMapNav(){
   mapDiv.classList.remove('navigating');
+  setMapHint('');
 }
 
-/* 장소 검색 (Nominatim, 키 불필요) */
+window.addEventListener('resize', ()=>{
+  if(osmMapObj) osmMapObj.invalidateSize();
+  if(kakaoMapObj) kakaoMapObj.relayout();
+});
+
+/* ---------- 장소 검색 ---------- */
 async function searchPlace(){
   const q = document.getElementById('placeSearch').value.trim();
   if(!q) return;
+
+  // 카카오맵 모드
+  if(USE_KAKAO && kakaoReady){
+    const places = new kakao.maps.services.Places();
+    places.keywordSearch(q, (data, status)=>{
+      if(status === kakao.maps.services.Status.OK){
+        kakaoMapObj.setCenter(new kakao.maps.LatLng(data[0].y, data[0].x));
+        kakaoMapObj.setLevel(3);
+      }else{
+        new kakao.maps.services.Geocoder().addressSearch(q, (r, st)=>{
+          if(st === kakao.maps.services.Status.OK){
+            kakaoMapObj.setCenter(new kakao.maps.LatLng(r[0].y, r[0].x));
+            kakaoMapObj.setLevel(3);
+          }else{
+            toast('검색 결과가 없습니다: ' + q);
+          }
+        });
+      }
+    });
+    return;
+  }
+
+  // OSM 모드 (Nominatim, 키 불필요)
   try{
     const res = await fetch(
       'https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=ko&q='
       + encodeURIComponent(q)
     );
     const data = await res.json();
-    if(!data.length){
-      alert('검색 결과가 없습니다: ' + q);
-      return;
-    }
+    if(!data.length){ toast('검색 결과가 없습니다: ' + q); return; }
     osmMapObj.setView([parseFloat(data[0].lat), parseFloat(data[0].lon)], 18);
   }catch(err){
-    alert('검색 실패: ' + err.message);
+    toast('검색 실패: ' + err.message);
   }
 }
 
-/* 현재 지도 화면을 배경 이미지로 굽고 지도 조작을 잠금 */
+/* ---------- 현재 OSM 화면을 배경으로 굽기 ---------- */
 async function confirmBackground(){
+  if(USE_KAKAO){
+    toast('카카오맵은 📷 스크린샷으로 배경을 만들어 주세요.', 3500);
+    return;
+  }
   const btn = document.getElementById('confirmBgBtn');
   btn.disabled = true;
   btn.textContent = '생성 중…';
 
   try{
-    // 타일이 모두 로드될 때까지 잠시 대기
     await new Promise(resolve=>{
       if(!osmTileLayer) return resolve();
       let done = false;
       const finish = ()=>{ if(!done){ done = true; resolve(); } };
       osmTileLayer.once('load', finish);
-      setTimeout(finish, 1500);          // 안전장치
+      setTimeout(finish, 1500);
     });
 
     const canvas = await html2canvas(document.getElementById('osmMap'), {
@@ -1294,13 +1749,16 @@ async function confirmBackground(){
 
     bgMap.src = canvas.toDataURL('image/jpeg', 0.95);
     bgMap.style.objectFit = 'fill';
+    setBgAttribution((MAP_STYLES[currentStyle].options.attribution || '')
+                     .replace(/<[^>]+>/g, ''));
     closeMapNav();
+    toast('배경을 만들었습니다');
   }catch(err){
     alert('배경 생성 실패: ' + err.message +
-          '\n스크린샷 후 "배경 이미지 불러오기"를 사용해 주세요.');
+          '\n폰 스크린샷을 찍어 "📷 스크린샷"으로 불러와 주세요.');
   }finally{
     btn.disabled = false;
-    btn.textContent = '이 위치로 배경 확정';
+    btn.textContent = '현재 화면 배경';
   }
 }
 

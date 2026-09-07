@@ -1,0 +1,14 @@
+{
+  "name": "교통사고 현장약도",
+  "short_name": "현장약도",
+  "description": "휴대폰에서 교통사고 현장약도를 그려 PDF로 공유하는 웹앱",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eeeeee",
+  "theme_color": "#333333",
+  "icons": [
+    { "src": "./icons/car.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
