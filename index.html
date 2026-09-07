@@ -74,39 +74,26 @@ h1 {
   z-index:1;
 }
 
-/* ===== OpenStreetMap 배경 (Leaflet) ===== */
+/* ===== 배경 지도 (Leaflet OSM / 카카오) =====
+   표시 여부는 JS(startOsmNav / initKakaoMap 경로)에서 직접 제어.
+   같은 자리에 겹치면 위쪽 빈 div가 이벤트를 먹으므로 반드시 하나만 block. */
 #osmMap {
   position:absolute;
   inset:0;
   z-index:300;          /* bgMap(1) 위, lineLayer(400) 아래 */
-  display:none;         /* 배경 확정 후 숨김 */
+  display:none;
 }
-
-/* ===== 카카오맵 배경 (JS 키 입력 시) ===== */
 #kakaoMap {
   position:absolute;
   inset:0;
-  z-index:310;
+  z-index:300;
   display:none;
 }
-#map.navigating #kakaoMap { display:block; }
 
-/* 지도 탐색 모드: 화면 크게 띄워 자유 이동·확대 (PC·모바일 공통)
-   크기는 JS(sizeNavMap)가 #map 프레임 비율에 맞춰 지정 → 변환 결과와 일치 */
-#map.navigating #osmMap { display:block; }
-#map.navigating #lineLayer { pointer-events:none; }
-
-#map.navigating #osmMap,
-#map.navigating #kakaoMap {
-  position:fixed;
-  left:50%;
-  top:calc(50% + 32px);        /* 상단 검색바 자리 확보 */
-  transform:translate(-50%, -50%);
-  z-index:5000;
-  border:2px solid #333;
-  border-radius:4px;
-  box-shadow:0 0 0 100vmax rgba(0,0,0,0.55);   /* 주변 어둡게 */
-}
+/* 지도 탐색 모드: 프레임(#map) 안에서 그대로 조작 (WYSIWYG).
+   화면에 보이는 그대로가 변환/캡처 배경이 됨.
+   선 레이어는 이벤트를 통과시켜 지도 드래그·확대가 되도록 함. */
+#map.navigating #lineLayer { pointer-events:none !important; }
 
 /* ===== 배경 출처 표기 (PDF에 포함) ===== */
 #bgAttribution {
@@ -141,12 +128,7 @@ h1 {
   max-width:92%;
   text-align:center;
 }
-#map.navigating #mapHint {
-  display:block;
-  position:fixed;
-  bottom:18px;
-  z-index:5200;
-}
+#map.navigating #mapHint { display:block; }
 
 /* ===== 충돌지점 X ===== */
 .xmark {
@@ -236,13 +218,7 @@ h1 {
   flex-wrap:wrap;
   justify-content:center;
 }
-#map.navigating #mapNavBar {
-  display:flex;
-  position:fixed;
-  top:14px;
-  z-index:5200;
-  max-width:96vw;
-}
+#map.navigating #mapNavBar { display:flex; }
 
 #mapNavBar input {
   width:160px;
@@ -492,19 +468,9 @@ h1 {
     <div id="mapHint"></div>
 
 
-    <!-- 🟢 실선 / 점선용 SVG (좌표 정확) -->
-    <svg id="lineLayer"
-         width="100%"
-         height="100%"
-         style="
-           position:absolute;
-           inset:0;
-           z-index:400;
-           touch-action:none;
-           pointer-events:auto;
-           background:transparent;
-         ">
-    </svg>
+    <!-- 🟢 실선 / 점선용 SVG (좌표 정확) — 스타일은 CSS(#lineLayer)에서 관리.
+         지도 탐색 중에는 CSS가 pointer-events:none 으로 바꿔 지도 조작이 통과되게 함 -->
+    <svg id="lineLayer" width="100%" height="100%"></svg>
 
   </div>
 
@@ -1606,15 +1572,15 @@ function initOsmMap(){
     zoomControl: true,
     attributionControl: false,
     scrollWheelZoom: true,        // PC: 마우스 휠로 확대/축소
-    zoomSnap: 0.25,               // 부드러운 확대 배율
+    zoomSnap: 0.5,
     zoomDelta: 0.5,
-    wheelPxPerZoomLevel: 120,     // 값이 클수록 휠 확대가 완만
-    wheelDebounceTime: 25,
+    wheelPxPerZoomLevel: 60,      // Leaflet 기본값 (휠 한 번에 확실히 반응)
     doubleClickZoom: true,
+    boxZoom: true,               // Shift+드래그로 영역 확대
     touchZoom: true,             // 모바일: 두 손가락 핀치 줌
     dragging: true,
-    inertia: true,              // 관성 이동(자유로운 팬)
-    zoomAnimation: false,       // 캡처 정확도를 위해 끔(확대는 즉시 반영)
+    inertia: true,
+    zoomAnimation: false,        // 캡처 정확도를 위해 끔(확대는 즉시 반영)
     fadeAnimation: false,
     markerZoomAnimation: false,
     bounceAtZoomLimits: false
@@ -1676,40 +1642,43 @@ async function initKakaoMap(){
   return kakaoMapObj;
 }
 
-/* ---------- 지도 탐색 모드 ---------- */
-/* 탐색용 지도 크기 = #map 프레임 비율을 유지하며 화면 최대한 크게
-   (변환 후 배경이 프레임에 그대로 들어맞도록 비율을 일치시킴) */
-function sizeNavMap(){
-  const fr = mapDiv.getBoundingClientRect();
-  const ar = (fr.width && fr.height) ? fr.width / fr.height : 0.78;
-  let w = window.innerWidth  * 0.94;
-  let h = window.innerHeight - 132;   // 상단 검색바 + 하단 안내 여백
-  if(w / h > ar) w = h * ar; else h = w / ar;
-  ['osmMap','kakaoMap'].forEach(id=>{
-    const el = document.getElementById(id);
-    el.style.width  = Math.round(w) + 'px';
-    el.style.height = Math.round(h) + 'px';
-  });
+/* ---------- 지도 탐색 모드 (프레임 안에서 WYSIWYG) ---------- */
+/* 탐색 중에는 선·객체 레이어가 포인터 이벤트를 통과시켜 지도 드래그·확대가 되게 함 */
+function setNavPointerPassthrough(on){
+  const ll = document.getElementById('lineLayer');
+  if(ll) ll.style.pointerEvents = on ? 'none' : '';
+  document.querySelectorAll('#objectLayer .icon, #objectLayer .arrow, #objectLayer .textbox, .xmark')
+    .forEach(el => el.style.pointerEvents = on ? 'none' : '');
+}
+
+function refreshMapSize(){
+  // 프레임이 반응형이라 표시 직후 크기 재계산 필요
+  if(osmMapObj) osmMapObj.invalidateSize();
+  if(kakaoMapObj && kakaoReady) kakaoMapObj.relayout();
 }
 
 function startOsmNav(){
   document.getElementById('confirmBgBtn').style.display = '';
-  setMapHint('마우스 드래그로 이동, 휠로 확대·축소하여 사고 위치를 맞추세요.');
+  document.getElementById('kakaoMap').style.display = 'none';   // 빈 카카오 div가 이벤트 막지 않게
+  document.getElementById('osmMap').style.display = 'block';
+  setMapHint('지도를 드래그해 이동, 휠(또는 두 손가락)으로 확대·축소하여 사고 위치를 프레임에 맞추세요.');
   initOsmMap();
-  sizeNavMap();
-  setTimeout(()=>{ if(osmMapObj) osmMapObj.invalidateSize(); }, 60);
+  setTimeout(refreshMapSize, 60);
+  setTimeout(refreshMapSize, 300);
 }
 
 function openMapNav(){
   mapDiv.classList.add('navigating');
   toolContent.style.display = 'none';        // 도구 패널 접어 시야 확보
-  sizeNavMap();
+  setNavPointerPassthrough(true);
 
   if(USE_KAKAO){
     document.getElementById('confirmBgBtn').style.display = 'none';   // 카카오는 캡처 불가(정책·CORS)
-    setMapHint('마우스 드래그로 이동, 휠로 확대. 위치를 맞춘 뒤 폰 스크린샷 → 📷 스크린샷.');
+    document.getElementById('osmMap').style.display = 'none';
+    document.getElementById('kakaoMap').style.display = 'block';
+    setMapHint('지도를 드래그·확대해 사고 위치를 프레임에 맞춘 뒤, 폰 스크린샷 → 📷 스크린샷.');
     initKakaoMap()
-      .then(()=>{ sizeNavMap(); setTimeout(()=> kakaoMapObj.relayout(), 60); })
+      .then(()=>{ setTimeout(refreshMapSize, 60); setTimeout(refreshMapSize, 300); })
       .catch(err=>{
         toast(err.message + ' — OSM 지도로 전환합니다.', 4500);
         startOsmNav();
@@ -1722,17 +1691,13 @@ function openMapNav(){
 function closeMapNav(){
   mapDiv.classList.remove('navigating');
   setMapHint('');
-  ['osmMap','kakaoMap'].forEach(id=>{
-    const el = document.getElementById(id);
-    el.style.width = ''; el.style.height = '';
-  });
+  setNavPointerPassthrough(false);
+  // 지도 레이어를 숨겨 배경(bgMap)/객체 조작을 방해하지 않게
+  document.getElementById('osmMap').style.display = 'none';
+  document.getElementById('kakaoMap').style.display = 'none';
 }
 
-window.addEventListener('resize', ()=>{
-  if(mapDiv.classList.contains('navigating')) sizeNavMap();
-  if(osmMapObj) osmMapObj.invalidateSize();
-  if(kakaoMapObj) kakaoMapObj.relayout();
-});
+window.addEventListener('resize', refreshMapSize);
 
 /* ---------- 장소 검색 ---------- */
 async function searchPlace(){
