@@ -284,8 +284,19 @@ h1 {
 #objectLayer .icon,
 #objectLayer .arrow,
 #objectLayer .textbox,
-#objectLayer .xmark{
+#objectLayer .xmark,
+#objectLayer .crosswalk{
   pointer-events:auto;   /* 객체만 이벤트 */
+}
+
+/* ===== 반투명 횡단보도 (SVG — 다른 객체처럼 크기·회전·이동) ===== */
+.crosswalk{
+  position:absolute;
+  z-index:900;            /* 지도 위, 다른 객체 아래(가리지 않게) */
+  cursor:move;
+  user-select:none;
+  display:block;
+  opacity:0.75;
 }
 
 .arrow { transform-origin:center; }
@@ -516,13 +527,13 @@ h1 {
         </div>
       </label>
       <label>크기
-        <input id="size" type="range" min="10" max="150" value="32">
+        <input id="size" type="range" min="10" max="400" value="32">
       </label>
       <label>글자크기
         <input id="fontSize" type="range" min="8" max="48" value="14">
       </label>
       <label>폭
-        <input id="width" type="range" min="10" max="300" value="60">
+        <input id="width" type="range" min="10" max="500" value="60">
       </label>
     </div>
 
@@ -560,6 +571,7 @@ h1 {
 
         <button onclick="addText()">문자</button>
         <button onclick="addX()">✕ 충돌지점</button>
+        <button onclick="addCrosswalk()">▦ 횡단보도</button>
         <button onclick="startMeasure()">↔ 정차·거리</button>
         <button onclick="clearMeasures()">↔ 측정선 지우기</button>
 
@@ -1325,6 +1337,34 @@ function addX(){
   toast('충돌지점 X — 드래그로 이동, 크기·각도 슬라이더로 조절');
 }
 
+/* ===== 반투명 횡단보도 ===== */
+const CROSSWALK_RATIO = 0.55;   // 세로/가로 비율
+function addCrosswalk(){
+  const p = centerPos();
+  const NS = 'http://www.w3.org/2000/svg';
+  const cw = document.createElementNS(NS, 'svg');
+  cw.setAttribute('class', 'crosswalk');
+  cw.setAttribute('viewBox', '0 0 100 55');
+  cw.setAttribute('preserveAspectRatio', 'none');
+  // 흰 줄무늬 6개 (반투명은 CSS opacity 로)
+  let bars = '';
+  for(let i = 0; i < 6; i++){
+    const x = 4 + i * 16;
+    bars += '<rect x="' + x + '" y="2" width="10" height="51" fill="#ffffff" '
+          + 'stroke="#333" stroke-width="1"/>';
+  }
+  cw.innerHTML = bars;
+  cw.style.left = p.x + 'px';
+  cw.style.top  = p.y + 'px';
+  cw.style.width  = '140px';
+  cw.style.height = (140 * CROSSWALK_RATIO) + 'px';
+  objectLayer.appendChild(cw);
+  drag(cw);
+  enableDeleteConfirmation(cw);
+  select(cw);
+  toast('횡단보도 — 드래그로 이동, 크기·각도 슬라이더로 조절');
+}
+
 /* ===== 정차위치·거리 측정선 ===== */
 /*  지도(프레임)를 두 번 탭 → 양끝 화살표 선 + 실측 거리 라벨(직접 입력) */
 let measureArm = false;
@@ -1733,7 +1773,7 @@ async function initKakaoMap(){
 function setNavPointerPassthrough(on){
   const ll = document.getElementById('lineLayer');
   if(ll) ll.style.pointerEvents = on ? 'none' : '';
-  document.querySelectorAll('#objectLayer .icon, #objectLayer .arrow, #objectLayer .textbox, .xmark')
+  document.querySelectorAll('#objectLayer .icon, #objectLayer .arrow, #objectLayer .textbox, .xmark, .crosswalk')
     .forEach(el => el.style.pointerEvents = on ? 'none' : '');
 }
 
@@ -2169,10 +2209,13 @@ angleInput.addEventListener('input', ()=> {
 
 sizeInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
-  selected.style.width = sizeInput.value + 'px';
+  const v = +sizeInput.value;
+  selected.style.width = v + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
   if(selected.classList && selected.classList.contains('xmark'))
-    selected.style.height = sizeInput.value + 'px';   // X 는 정사각 유지
+    selected.style.height = v + 'px';                         // X 는 정사각
+  if(selected.classList && selected.classList.contains('crosswalk'))
+    selected.style.height = (v * CROSSWALK_RATIO) + 'px';     // 횡단보도 비율 유지
 });
 
 fontSizeInput.addEventListener('input', ()=> {
@@ -2188,6 +2231,8 @@ widthInput.addEventListener('input', ()=> {
   } else if(selected.classList.contains('arrow')) {
     selected.style.width = widthInput.value + 'px';
     selected.style.height = 'auto';
+  } else if(selected.classList.contains('crosswalk')) {
+    selected.style.width = widthInput.value + 'px';   // 도로 폭에 맞춰 가로만 늘림
   }
 });
 
