@@ -304,29 +304,49 @@ h1 {
 
 /* ===== 속성 패널 ===== */
 #panel {
-  position:absolute;
+  position:fixed;              /* 화면에 고정 → 도면을 스크롤해도 항상 접근 가능 */
   left:50%;
-  top:50%;
+  top:40%;
   transform:translate(-50%, -50%);
   background:#fff;
   border:1px solid #333;
+  border-radius:4px;
   padding:10px;
-  width:200px;
+  width:210px;
+  max-width:calc(100vw - 16px);
   visibility:hidden;
   opacity:0;
-  z-index:3000;
+  z-index:3500;               /* 도구패널(4000)보다 낮지만 객체보다 위 */
+  box-shadow:0 4px 16px rgba(0,0,0,0.28);
+  touch-action:none;          /* 빈 영역을 잡고 드래그 */
 }
 
-
+/* 헤더 = 드래그 바 (손가락으로 잡기 쉽게 크고 뚜렷하게) */
 #panelHeader {
-  font-weight: bold;
-  margin-bottom: 6px;
-  cursor: move;
-  user-select: none;
+  font-weight:bold;
+  margin:-10px -10px 8px -10px;
+  padding:11px 12px;
+  background:#333;
+  color:#fff;
+  cursor:move;
+  user-select:none;
+  border-radius:3px 3px 0 0;
+  touch-action:none;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:13px;
+}
+#panelHeader::before {
+  content:"⠿⠿";
+  letter-spacing:-2px;
+  opacity:0.75;
+  font-size:15px;
 }
 
-#panel, #panelHeader {
-  touch-action: none;
+/* 슬라이더·버튼은 기본 터치 동작 유지 */
+#panel input, #panel button, #panel select {
+  touch-action:auto;
 }
 
 #panel label {
@@ -969,13 +989,12 @@ function togglePanel(){
     panel.style.visibility = 'hidden';
     panel.style.opacity = '0';
   } else {
-    // 🔹 현재 화면 기준 위치를 px로 고정 (panel 은 container 자식)
+    // 🔹 현재 화면(뷰포트) 위치를 px로 고정 (panel 은 position:fixed)
     const r = panel.getBoundingClientRect();
-    const cR = container.getBoundingClientRect();
-
-    panel.style.left = (r.left - cR.left) + 'px';
-    panel.style.top  = (r.top  - cR.top ) + 'px';
-    panel.style.transform = 'none';   // ⭐ transform 완전 제거
+    panel.style.left = r.left + 'px';
+    panel.style.top  = r.top  + 'px';
+    panel.style.transform = 'none';
+    panelInitialized = true;
 
     panel.style.visibility = 'visible';
     panel.style.opacity = '1';
@@ -983,8 +1002,56 @@ function togglePanel(){
 }
 
   
-const panelHeader = document.getElementById('panelHeader');
-drag(panelHeader, panel);
+/* ===== 속성 패널 드래그 (모바일·PC 공통, 자유 이동) =====
+   헤더 바 또는 패널의 빈 영역을 잡고 끌면 이동. 슬라이더·버튼 위에서 시작하면 무시.
+   화면 밖으로 완전히 사라지지 않도록 뷰포트 기준으로 클램프. */
+function makePanelDraggable(panel){
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+
+  panel.addEventListener('pointerdown', e=>{
+    if(e.target.closest('input, button, select, textarea')) return;   // 컨트롤 조작은 그대로
+    const pR = panel.getBoundingClientRect();                         // position:fixed → 뷰포트 좌표
+    panel.style.transform = 'none';
+    ox = pR.left;
+    oy = pR.top;
+    panel.style.left = ox + 'px';
+    panel.style.top  = oy + 'px';
+    sx = e.clientX; sy = e.clientY;
+    dragging = true;
+    panel.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+
+  panel.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    let nx = ox + e.clientX - sx;
+    let ny = oy + e.clientY - sy;
+    panel.style.left = nx + 'px';
+    panel.style.top  = ny + 'px';
+
+    // 뷰포트 밖으로 완전히 나가지 않도록 보정 (헤더는 항상 잡을 수 있게)
+    const b = panel.getBoundingClientRect();
+    const vw = window.innerWidth, vh = window.innerHeight;
+    let dx = 0, dy = 0;
+    if(b.top < 4)                 dy = 4 - b.top;
+    else if(b.top > vh - 44)      dy = (vh - 44) - b.top;
+    if(b.left > vw - 60)          dx = (vw - 60) - b.left;
+    else if(b.right < 60)         dx = 60 - b.right;
+    if(dx || dy){
+      panel.style.left = (nx + dx) + 'px';
+      panel.style.top  = (ny + dy) + 'px';
+    }
+  });
+
+  const end = e=>{
+    dragging = false;
+    try{ panel.releasePointerCapture(e.pointerId); }catch(_){}
+  };
+  panel.addEventListener('pointerup', end);
+  panel.addEventListener('pointercancel', end);
+}
+
+makePanelDraggable(panel);
 
 
 /* ===== 공통 ===== */
@@ -1029,9 +1096,10 @@ function select(el){
   }
 
   if(!panelInitialized){
-    const r = container.getBoundingClientRect();
-    panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
-    panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
+    // 뷰포트 우측 상단 근처에 첫 배치 (도면을 가리지 않게), position:fixed 기준
+    const w = panel.offsetWidth || 210;
+    panel.style.left = Math.max(8, window.innerWidth - w - 12) + 'px';
+    panel.style.top  = '72px';
     panel.style.transform = 'none';
     panelInitialized = true;
   }
