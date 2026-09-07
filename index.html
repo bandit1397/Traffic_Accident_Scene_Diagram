@@ -43,14 +43,20 @@ body {
 
 #container { display:flex; flex-direction:column; }
 
+/* 상단 제목 영역 / 하단 여백 영역 — 같은 높이(A4 세로의 12%씩).
+   두 영역 모두 사건 관련 객체(문자·메모 등)를 올릴 수 있는 흰 여백. */
+h1, #bottomArea {
+  flex: 0 0 12%;
+  margin: 0;
+  position: relative;
+}
 h1 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   font-size: clamp(14px, 4vw, 18px);
-  margin: 0 0 3vw 0;
-  flex: 0 0 auto;
-}
-@media (min-width: 800px){
-  h1 { margin: 0 0 10mm 0; }
+  font-weight: 700;
 }
 
 #map {
@@ -130,17 +136,14 @@ h1 {
 }
 #map.navigating #mapHint { display:block; }
 
-/* ===== 충돌지점 X ===== */
+/* ===== 충돌지점 X (SVG — 다른 객체처럼 width 로 크기 조절) ===== */
 .xmark {
   position:absolute;
   z-index:1000;
-  color:#e00;
-  font-weight:900;
-  font-family:Arial, sans-serif;
-  line-height:1;
   cursor:move;
   user-select:none;
-  text-shadow:0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+  overflow:visible;
+  display:block;
 }
 
 /* ===== PDF 결과 바 ===== */
@@ -474,6 +477,9 @@ h1 {
     <svg id="lineLayer" width="100%" height="100%"></svg>
 
   </div>
+
+  <!-- 하단 여백 (상단 제목 영역과 같은 높이) — 사건 관련 객체·메모 배치 공간 -->
+  <div id="bottomArea"></div>
 
   <div id="objectLayer"></div>
 
@@ -963,12 +969,12 @@ function togglePanel(){
     panel.style.visibility = 'hidden';
     panel.style.opacity = '0';
   } else {
-    // 🔹 현재 화면 기준 위치를 px로 고정
+    // 🔹 현재 화면 기준 위치를 px로 고정 (panel 은 container 자식)
     const r = panel.getBoundingClientRect();
-    const mapR = mapDiv.getBoundingClientRect();
+    const cR = container.getBoundingClientRect();
 
-    panel.style.left = (r.left - mapR.left) + 'px';
-    panel.style.top  = (r.top  - mapR.top ) + 'px';
+    panel.style.left = (r.left - cR.left) + 'px';
+    panel.style.top  = (r.top  - cR.top ) + 'px';
     panel.style.transform = 'none';   // ⭐ transform 완전 제거
 
     panel.style.visibility = 'visible';
@@ -1004,8 +1010,11 @@ const icons = {
 let selected=null;
 let panelInitialized = false;
 function centerPos(){
-  const r=mapDiv.getBoundingClientRect();
-  return {x:r.width/2-16, y:r.height/2-16};
+  // 객체는 objectLayer(컨테이너 전체) 좌표계에 놓이므로 지도 프레임의 오프셋을 반영
+  const m = mapDiv.getBoundingClientRect();
+  const c = objectLayer.getBoundingClientRect();
+  return { x: (m.left - c.left) + m.width/2 - 16,
+           y: (m.top  - c.top ) + m.height/2 - 16 };
 }
 
 function select(el){
@@ -1020,7 +1029,7 @@ function select(el){
   }
 
   if(!panelInitialized){
-    const r = mapDiv.getBoundingClientRect();
+    const r = container.getBoundingClientRect();
     panel.style.left = (r.width/2 - panel.offsetWidth/2) + 'px';
     panel.style.top  = (r.height/2 - panel.offsetHeight/2) + 'px';
     panel.style.transform = 'none';
@@ -1228,17 +1237,24 @@ t.addEventListener('pointerup', () => {
 /* ===== 충돌지점 X ===== */
 function addX(){
   const p = centerPos();
-  const x = document.createElement('div');
-  x.className = 'xmark';
-  x.textContent = '✕';
+  const NS = 'http://www.w3.org/2000/svg';
+  const x = document.createElementNS(NS, 'svg');
+  x.setAttribute('class', 'xmark');
+  x.setAttribute('viewBox', '0 0 100 100');
+  x.innerHTML =
+    '<line x1="14" y1="14" x2="86" y2="86" stroke="#fff" stroke-width="26" stroke-linecap="round"/>' +
+    '<line x1="86" y1="14" x2="14" y2="86" stroke="#fff" stroke-width="26" stroke-linecap="round"/>' +
+    '<line x1="14" y1="14" x2="86" y2="86" stroke="#e00" stroke-width="16" stroke-linecap="round"/>' +
+    '<line x1="86" y1="14" x2="14" y2="86" stroke="#e00" stroke-width="16" stroke-linecap="round"/>';
   x.style.left = p.x + 'px';
   x.style.top  = p.y + 'px';
-  x.style.fontSize = '40px';
+  x.style.width  = '48px';
+  x.style.height = '48px';
   objectLayer.appendChild(x);
   drag(x);
   enableDeleteConfirmation(x);
   select(x);
-  toast('충돌지점 X — 드래그로 이동, 크기 슬라이더로 조절');
+  toast('충돌지점 X — 드래그로 이동, 크기·각도 슬라이더로 조절');
 }
 
 /* ===== 정차위치·거리 측정선 ===== */
@@ -1290,10 +1306,11 @@ function createMeasure(p1, p2){
   svg.appendChild(line);
 
   // 가운데에 편집 가능한 거리 라벨 (사용자가 실측값 입력)
+  // p1/p2 는 lineLayer 좌표 → objectLayer 좌표로 변환
   const svgR = svg.getBoundingClientRect();
-  const mapR = mapDiv.getBoundingClientRect();
-  const midX = (p1.x + p2.x) / 2 + (svgR.left - mapR.left);
-  const midY = (p1.y + p2.y) / 2 + (svgR.top  - mapR.top);
+  const c = objectLayer.getBoundingClientRect();
+  const midX = (p1.x + p2.x) / 2 + (svgR.left - c.left);
+  const midY = (p1.y + p2.y) / 2 + (svgR.top  - c.top);
   const label = addText({ x: midX, y: midY - 12, value: '0.0m' });
   label.style.fontSize = '16px';
   label.style.background = 'rgba(255,255,255,0.85)';
@@ -2084,12 +2101,10 @@ angleInput.addEventListener('input', ()=> {
 
 sizeInput.addEventListener('input', ()=> {
   if(!selected || selected === panel) return;
-  if(selected.classList.contains('xmark')){       // 충돌지점 X 는 글자크기로 조절
-    selected.style.fontSize = sizeInput.value + 'px';
-    return;
-  }
   selected.style.width = sizeInput.value + 'px';
   if(selected.tagName === 'IMG') selected.style.height = 'auto';
+  if(selected.classList && selected.classList.contains('xmark'))
+    selected.style.height = sizeInput.value + 'px';   // X 는 정사각 유지
 });
 
 fontSizeInput.addEventListener('input', ()=> {
