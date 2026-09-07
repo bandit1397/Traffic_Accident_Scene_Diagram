@@ -1786,10 +1786,10 @@ document.getElementById('closeMapBtn').addEventListener('click', closeMapNav);
    ========================================================================= */
 const OVERPASS_ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+  'https://overpass.private.coffee/api/interpreter'
 ];
+const OVERPASS_TRIES = 2;          // 엔드포인트 목록을 몇 바퀴 시도할지
+const OVERPASS_TIMEOUT = 15000;    // 한 요청 제한시간(ms)
 
 /* 등급별 약도 도로폭(m) — 실제 폭이 아닌 단순화 값 */
 const ROAD_M = {
@@ -1819,22 +1819,24 @@ function currentMapBounds(){
 
 async function overpassFetch(query){
   let lastErr;
-  for(const url of OVERPASS_ENDPOINTS){
-    try{
-      const ctl = new AbortController();
-      const timer = setTimeout(()=> ctl.abort(), 22000);
-      const res = await fetch(url, {
-        method: 'POST',
-        body: 'data=' + encodeURIComponent(query),
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        signal: ctl.signal
-      });
-      clearTimeout(timer);
-      if(!res.ok) throw new Error('HTTP ' + res.status);
-      const txt = await res.text();
-      if(txt.charAt(0) !== '{') throw new Error('지도 서버 혼잡');
-      return JSON.parse(txt);
-    }catch(err){ lastErr = err; }
+  for(let round = 0; round < OVERPASS_TRIES; round++){
+    for(const url of OVERPASS_ENDPOINTS){
+      try{
+        const ctl = new AbortController();
+        const timer = setTimeout(()=> ctl.abort(), OVERPASS_TIMEOUT);
+        const res = await fetch(url, {
+          method: 'POST',
+          body: 'data=' + encodeURIComponent(query),
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          signal: ctl.signal
+        });
+        clearTimeout(timer);
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        if(txt.charAt(0) !== '{') throw new Error('지도 서버 혼잡');
+        return JSON.parse(txt);
+      }catch(err){ lastErr = err; }
+    }
   }
   throw lastErr || new Error('Overpass 연결 실패');
 }
@@ -1876,9 +1878,9 @@ async function generateRoadSchematic(){
     closeMapNav();
     toast('도로 약도를 만들었습니다');
   }catch(err){
-    alert('도로 약도 생성 실패: ' + (err && err.message ? err.message : err) +
-          '\n\n공용 지도 서버가 혼잡할 수 있습니다. 잠시 후 다시 시도하거나\n' +
-          '"📷 스크린샷" 또는 "현재 화면 배경"을 사용하세요.');
+    // 지도창은 열어둔 채로 안내 (다시 시도하거나 다른 배경 방식 사용)
+    toast('도로 약도 실패: ' + (err && err.message ? err.message : err)
+          + ' · 잠시 후 다시 시도하거나 📷 스크린샷을 쓰세요', 5000);
   }finally{
     btn.disabled = false;
     btn.textContent = oldTxt;
