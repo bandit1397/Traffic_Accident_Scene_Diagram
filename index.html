@@ -91,9 +91,22 @@ h1 {
 }
 #map.navigating #kakaoMap { display:block; }
 
-/* 지도 탐색 모드: 프레임(#map) 안에서 조작 */
+/* 지도 탐색 모드: 화면 크게 띄워 자유 이동·확대 (PC·모바일 공통)
+   크기는 JS(sizeNavMap)가 #map 프레임 비율에 맞춰 지정 → 변환 결과와 일치 */
 #map.navigating #osmMap { display:block; }
 #map.navigating #lineLayer { pointer-events:none; }
+
+#map.navigating #osmMap,
+#map.navigating #kakaoMap {
+  position:fixed;
+  left:50%;
+  top:calc(50% + 32px);        /* 상단 검색바 자리 확보 */
+  transform:translate(-50%, -50%);
+  z-index:5000;
+  border:2px solid #333;
+  border-radius:4px;
+  box-shadow:0 0 0 100vmax rgba(0,0,0,0.55);   /* 주변 어둡게 */
+}
 
 /* ===== 배경 출처 표기 (PDF에 포함) ===== */
 #bgAttribution {
@@ -128,7 +141,12 @@ h1 {
   max-width:92%;
   text-align:center;
 }
-#map.navigating #mapHint { display:block; }
+#map.navigating #mapHint {
+  display:block;
+  position:fixed;
+  bottom:18px;
+  z-index:5200;
+}
 
 /* ===== 충돌지점 X ===== */
 .xmark {
@@ -218,7 +236,13 @@ h1 {
   flex-wrap:wrap;
   justify-content:center;
 }
-#map.navigating #mapNavBar { display:flex; }
+#map.navigating #mapNavBar {
+  display:flex;
+  position:fixed;
+  top:14px;
+  z-index:5200;
+  max-width:96vw;
+}
 
 #mapNavBar input {
   width:160px;
@@ -1581,13 +1605,16 @@ function initOsmMap(){
     maxZoom: 22,
     zoomControl: true,
     attributionControl: false,
-    scrollWheelZoom: true,
-    zoomSnap: 0.25,                // 부드러운 확대 배율 (0은 렌더링 불안정)
+    scrollWheelZoom: true,        // PC: 마우스 휠로 확대/축소
+    zoomSnap: 0.25,               // 부드러운 확대 배율
     zoomDelta: 0.5,
-    wheelPxPerZoomLevel: 80,
+    wheelPxPerZoomLevel: 120,     // 값이 클수록 휠 확대가 완만
+    wheelDebounceTime: 25,
     doubleClickZoom: true,
-    touchZoom: true,              // 두 손가락 핀치 줌
-    zoomAnimation: false,
+    touchZoom: true,             // 모바일: 두 손가락 핀치 줌
+    dragging: true,
+    inertia: true,              // 관성 이동(자유로운 팬)
+    zoomAnimation: false,       // 캡처 정확도를 위해 끔(확대는 즉시 반영)
     fadeAnimation: false,
     markerZoomAnimation: false,
     bounceAtZoomLimits: false
@@ -1650,22 +1677,39 @@ async function initKakaoMap(){
 }
 
 /* ---------- 지도 탐색 모드 ---------- */
+/* 탐색용 지도 크기 = #map 프레임 비율을 유지하며 화면 최대한 크게
+   (변환 후 배경이 프레임에 그대로 들어맞도록 비율을 일치시킴) */
+function sizeNavMap(){
+  const fr = mapDiv.getBoundingClientRect();
+  const ar = (fr.width && fr.height) ? fr.width / fr.height : 0.78;
+  let w = window.innerWidth  * 0.94;
+  let h = window.innerHeight - 132;   // 상단 검색바 + 하단 안내 여백
+  if(w / h > ar) w = h * ar; else h = w / ar;
+  ['osmMap','kakaoMap'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.style.width  = Math.round(w) + 'px';
+    el.style.height = Math.round(h) + 'px';
+  });
+}
+
 function startOsmNav(){
   document.getElementById('confirmBgBtn').style.display = '';
-  setMapHint('두 손가락으로 확대·이동하여 사고 위치를 맞춘 뒤 "현재 화면 배경" 또는 📷 스크린샷.');
+  setMapHint('마우스 드래그로 이동, 휠로 확대·축소하여 사고 위치를 맞추세요.');
   initOsmMap();
-  setTimeout(()=> osmMapObj && osmMapObj.invalidateSize(), 60);
+  sizeNavMap();
+  setTimeout(()=>{ if(osmMapObj) osmMapObj.invalidateSize(); }, 60);
 }
 
 function openMapNav(){
   mapDiv.classList.add('navigating');
   toolContent.style.display = 'none';        // 도구 패널 접어 시야 확보
+  sizeNavMap();
 
   if(USE_KAKAO){
     document.getElementById('confirmBgBtn').style.display = 'none';   // 카카오는 캡처 불가(정책·CORS)
-    setMapHint('지도를 사고 위치에 맞춘 뒤, 폰 스크린샷을 찍어 📷 스크린샷으로 불러오세요.');
+    setMapHint('마우스 드래그로 이동, 휠로 확대. 위치를 맞춘 뒤 폰 스크린샷 → 📷 스크린샷.');
     initKakaoMap()
-      .then(()=> setTimeout(()=> kakaoMapObj.relayout(), 60))
+      .then(()=>{ sizeNavMap(); setTimeout(()=> kakaoMapObj.relayout(), 60); })
       .catch(err=>{
         toast(err.message + ' — OSM 지도로 전환합니다.', 4500);
         startOsmNav();
@@ -1678,9 +1722,14 @@ function openMapNav(){
 function closeMapNav(){
   mapDiv.classList.remove('navigating');
   setMapHint('');
+  ['osmMap','kakaoMap'].forEach(id=>{
+    const el = document.getElementById(id);
+    el.style.width = ''; el.style.height = '';
+  });
 }
 
 window.addEventListener('resize', ()=>{
+  if(mapDiv.classList.contains('navigating')) sizeNavMap();
   if(osmMapObj) osmMapObj.invalidateSize();
   if(kakaoMapObj) kakaoMapObj.relayout();
 });
