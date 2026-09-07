@@ -241,6 +241,12 @@ h1 {
   border:none;
   border-radius:4px;
 }
+#autoMapBtn {
+  background:#1461b8;
+  color:#fff;
+  border:none;
+  border-radius:4px;
+}
 
 #lineLayer {
   position:absolute;
@@ -452,6 +458,7 @@ h1 {
       <input id="placeSearch" type="text" placeholder="주소·장소 검색 후 Enter">
       <button id="searchBtn" type="button">검색</button>
       <select id="mapStyleSel" title="지도 스타일"></select>
+      <button id="autoMapBtn" type="button" title="현재 화면의 도로·건물을 약도로 자동 생성">🛣️ 도로 약도</button>
       <button id="shotBgBtn" type="button" title="폰 스크린샷 불러오기">📷 스크린샷</button>
       <button id="confirmBgBtn" type="button">현재 화면 배경</button>
       <button id="closeMapBtn" type="button" title="지도 닫기">✕</button>
@@ -1768,6 +1775,245 @@ document.getElementById('placeSearch').addEventListener('keydown', e=>{
 });
 document.getElementById('confirmBgBtn').addEventListener('click', confirmBackground);
 document.getElementById('closeMapBtn').addEventListener('click', closeMapNav);
+
+
+/* =========================================================================
+   도로 자동 약도
+   현재 지도 화면 범위의 도로·건물을 OpenStreetMap 벡터 데이터(Overpass)로
+   가져와 약도(개념도)로 그려 배경에 넣는다.
+   - 카카오/타 지도 이미지 미사용 → 이용정책 무관
+   - 차량·충돌지점·화살표·거리 등은 이후 도구로 직접 배치
+   ========================================================================= */
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter'
+];
+
+/* 등급별 약도 도로폭(m) — 실제 폭이 아닌 단순화 값 */
+const ROAD_M = {
+  motorway:24, trunk:22, primary:18, secondary:15, tertiary:11,
+  unclassified:8, residential:6, living_street:5, pedestrian:3,
+  motorway_link:12, trunk_link:11, primary_link:10, secondary_link:9, tertiary_link:7
+};
+function roadRank(hw){
+  const m = { motorway:5, trunk:5, primary:4, secondary:3, secondary_link:3,
+              tertiary:2, tertiary_link:2, unclassified:1, residential:1,
+              living_street:1, pedestrian:0 };
+  return (hw in m) ? m[hw] : 1;
+}
+
+function currentMapBounds(){
+  if(USE_KAKAO && kakaoReady && kakaoMapObj){
+    const b = kakaoMapObj.getBounds();
+    const sw = b.getSouthWest(), ne = b.getNorthEast();
+    return { s: sw.getLat(), w: sw.getLng(), n: ne.getLat(), e: ne.getLng() };
+  }
+  if(osmMapObj){
+    const b = osmMapObj.getBounds();
+    return { s: b.getSouth(), w: b.getWest(), n: b.getNorth(), e: b.getEast() };
+  }
+  return null;
+}
+
+async function overpassFetch(query){
+  let lastErr;
+  for(const url of OVERPASS_ENDPOINTS){
+    try{
+      const ctl = new AbortController();
+      const timer = setTimeout(()=> ctl.abort(), 22000);
+      const res = await fetch(url, {
+        method: 'POST',
+        body: 'data=' + encodeURIComponent(query),
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        signal: ctl.signal
+      });
+      clearTimeout(timer);
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      const txt = await res.text();
+      if(txt.charAt(0) !== '{') throw new Error('지도 서버 혼잡');
+      return JSON.parse(txt);
+    }catch(err){ lastErr = err; }
+  }
+  throw lastErr || new Error('Overpass 연결 실패');
+}
+
+async function generateRoadSchematic(){
+  const btn = document.getElementById('autoMapBtn');
+  const bnd = currentMapBounds();
+  if(!bnd){ toast('먼저 지도를 여세요'); return; }
+
+  const latC = (bnd.s + bnd.n)/2, lonC = (bnd.w + bnd.e)/2;
+  const mPerLat = 110540, mPerLon = 111320 * Math.cos(latC * Math.PI/180);
+
+  // bbox 절반 크기(m) — 너무 넓으면 축소, 너무 좁으면 확대
+  let halfH = (bnd.n - bnd.s)/2 * mPerLat;
+  let halfW = (bnd.e - bnd.w)/2 * mPerLon;
+  const bigger = Math.max(halfH, halfW) || 1;
+  const MAXH = 420, MINH = 60;
+  const k = Math.max(Math.min(1, MAXH/bigger), MINH/bigger);
+  halfH *= k; halfW *= k;
+
+  const s = latC - halfH/mPerLat, n = latC + halfH/mPerLat;
+  const w = lonC - halfW/mPerLon, e = lonC + halfW/mPerLon;
+
+  const q =
+'[out:json][timeout:25];\n(\n' +
+'  way["highway"~"^(motorway|trunk|primary|secondary|tertiary|unclassified|residential|living_street|pedestrian|motorway_link|trunk_link|primary_link|secondary_link|tertiary_link)$"](' + s + ',' + w + ',' + n + ',' + e + ');\n' +
+'  way["building"](' + s + ',' + w + ',' + n + ',' + e + ');\n' +
+');\nout geom;';
+
+  btn.disabled = true;
+  const oldTxt = btn.textContent;
+  btn.textContent = '불러오는 중…';
+  toast('도로·건물 데이터 불러오는 중…', 8000);
+
+  try{
+    const data = await overpassFetch(q);
+    drawSchematicFromOSM(data, { s, w, n, e, latC, lonC, mPerLat, mPerLon });
+    setBgAttribution('© OpenStreetMap 기여자 (ODbL)');
+    closeMapNav();
+    toast('도로 약도를 만들었습니다');
+  }catch(err){
+    alert('도로 약도 생성 실패: ' + (err && err.message ? err.message : err) +
+          '\n\n공용 지도 서버가 혼잡할 수 있습니다. 잠시 후 다시 시도하거나\n' +
+          '"📷 스크린샷" 또는 "현재 화면 배경"을 사용하세요.');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = oldTxt;
+  }
+}
+
+function drawSchematicFromOSM(data, geo){
+  const r = mapDiv.getBoundingClientRect();
+  const DPR = 2;
+  const cw = Math.max(2, Math.round(r.width));
+  const ch = Math.max(2, Math.round(r.height));
+  const cv = document.createElement('canvas');
+  cv.width = cw * DPR; cv.height = ch * DPR;
+  const ctx = cv.getContext('2d');
+  ctx.scale(DPR, DPR);
+
+  // 투영: bbox를 프레임에 cover(등축척)로 맞춤
+  const bboxWm = (geo.e - geo.w) * geo.mPerLon;
+  const bboxHm = (geo.n - geo.s) * geo.mPerLat;
+  const scale = Math.max(cw / bboxWm, ch / bboxHm);   // px / m
+  function P(lat, lon){
+    return [ (lon - geo.lonC) * geo.mPerLon * scale + cw/2,
+             -(lat - geo.latC) * geo.mPerLat * scale + ch/2 ];
+  }
+  function offCanvas(pts){
+    return pts.every(p => p[0] < -60 || p[0] > cw+60 || p[1] < -60 || p[1] > ch+60);
+  }
+
+  const els = data.elements || [];
+  const buildings = [], roads = [];
+  for(const el of els){
+    if(el.type !== 'way' || !el.geometry) continue;
+    const t = el.tags || {};
+    if(t.building && t.building !== 'no') buildings.push(el);
+    else if(t.highway) roads.push(el);
+  }
+  if(!roads.length) throw new Error('이 위치의 도로 데이터가 없습니다 (지도를 조금 이동/축소해 보세요)');
+  roads.sort((a,b)=> roadRank(a.tags.highway) - roadRank(b.tags.highway));
+
+  ctx.fillStyle = '#f7f7f4';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // ---- 건물 ----
+  ctx.lineWidth = 0.7;
+  ctx.strokeStyle = '#d0d0c8';
+  ctx.fillStyle = '#e7e7e1';
+  for(const b of buildings){
+    const pts = b.geometry.map(pt => P(pt.lat, pt.lon));
+    if(pts.length < 3 || offCanvas(pts)) continue;
+    ctx.beginPath();
+    pts.forEach((p,i)=> i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  function roadPx(hw){
+    const m = ROAD_M[hw] || 5;
+    return Math.max(3, Math.min(46, m * scale));
+  }
+  function trace(el){
+    ctx.beginPath();
+    el.geometry.forEach((pt,i)=>{
+      const [x,y] = P(pt.lat, pt.lon);
+      i ? ctx.lineTo(x,y) : ctx.moveTo(x,y);
+    });
+  }
+  const visRoads = roads.filter(el => !offCanvas(el.geometry.map(pt => P(pt.lat, pt.lon))));
+
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  // casing → fill → 중앙선
+  for(const el of visRoads){ trace(el); ctx.strokeStyle = '#2b2b2b'; ctx.lineWidth = roadPx(el.tags.highway) + 3; ctx.stroke(); }
+  for(const el of visRoads){ trace(el); ctx.strokeStyle = roadRank(el.tags.highway) >= 2 ? '#ffffff' : '#efefec'; ctx.lineWidth = roadPx(el.tags.highway); ctx.stroke(); }
+  ctx.setLineDash([9,7]);
+  for(const el of visRoads){
+    if(roadRank(el.tags.highway) >= 2 && roadPx(el.tags.highway) >= 11){
+      trace(el); ctx.strokeStyle = '#e5b100'; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+  }
+  ctx.setLineDash([]);
+
+  // ---- 도로명 라벨 ----
+  const placed = [], seen = new Set();
+  const majorFirst = visRoads.slice().sort((a,b)=> roadRank(b.tags.highway) - roadRank(a.tags.highway));
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for(const el of majorFirst){
+    const nm = el.tags.name;
+    if(!nm || seen.has(nm) || roadRank(el.tags.highway) < 2) continue;
+    let best = null;
+    for(let i=0;i<el.geometry.length-1;i++){
+      const [x1,y1] = P(el.geometry[i].lat, el.geometry[i].lon);
+      const [x2,y2] = P(el.geometry[i+1].lat, el.geometry[i+1].lon);
+      const mx = (x1+x2)/2, my = (y1+y2)/2;
+      if(mx < 10 || mx > cw-10 || my < 10 || my > ch-10) continue;
+      const L = Math.hypot(x2-x1, y2-y1);
+      if(!best || L > best.L) best = { L, x1,y1,x2,y2, mx, my };
+    }
+    if(!best || best.L < 60) continue;
+    if(placed.some(p => Math.hypot(p.x-best.mx, p.y-best.my) < 64)) continue;
+    let ang = Math.atan2(best.y2-best.y1, best.x2-best.x1);
+    if(ang >  Math.PI/2) ang -= Math.PI;
+    if(ang < -Math.PI/2) ang += Math.PI;
+    ctx.save();
+    ctx.translate(best.mx, best.my);
+    ctx.rotate(ang);
+    ctx.font = '700 13px "Malgun Gothic","Apple SD Gothic Neo",sans-serif';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(255,255,255,0.92)';
+    ctx.strokeText(nm, 0, 0);
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillText(nm, 0, 0);
+    ctx.restore();
+    placed.push({ x: best.mx, y: best.my });
+    seen.add(nm);
+  }
+
+  // 테두리 + 출처
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(0.5, 0.5, cw-1, ch-1);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '10px sans-serif';
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.fillRect(cw-152, ch-15, 152, 15);
+  ctx.fillStyle = '#333';
+  ctx.fillText('© OpenStreetMap 기여자', cw-4, ch-3);
+
+  bgMap.src = cv.toDataURL('image/jpeg', 0.92);
+  bgMap.style.objectFit = 'fill';
+}
+
+document.getElementById('autoMapBtn').addEventListener('click', generateRoadSchematic);
 
 /* 처음 열릴 때 바로 지도 탐색 모드로 시작 */
 openMapNav();
