@@ -1466,30 +1466,70 @@ async function savePDF(){
 
   toast('PDF 만드는 중…', 4000);
 
-  // 🔹 텍스트 input → PDF용 div로 임시 복사
-  const clones = [];
+  /* 🔹 PDF 캡처 준비
+     html2canvas 는 폼 요소(<input>)와 스크립트로 만든 인라인 <svg>(충돌지점 X,
+     횡단보도)를 제대로 그리지 못한다. 캡처 직전에 같은 위치·크기의 정적 요소
+     (div / img)로 잠시 대체하고, 캡처 후 원상복구한다.
+     대체 요소는 정상 출력되는 아이콘들과 같은 좌표계(#objectLayer)에 넣는다. */
+  const pdfTemp = [];     // 캡처 후 제거할 임시 노드
+  const pdfHidden = [];    // 캡처 후 다시 보이게 할 원본
 
-  document.querySelectorAll('.textbox').forEach(t=>{
+  function stageForPdf(orig, clone){
+    const cs = getComputedStyle(orig);
+    clone.style.position = 'absolute';
+    clone.style.left = orig.style.left || ((parseFloat(cs.left) || 0) + 'px');
+    clone.style.top  = orig.style.top  || ((parseFloat(cs.top)  || 0) + 'px');
+    clone.style.transform = (cs.transform && cs.transform !== 'none') ? cs.transform : '';
+    clone.style.transformOrigin = cs.transformOrigin;
+    clone.style.zIndex = (cs.zIndex && cs.zIndex !== 'auto') ? cs.zIndex : '1000';
+    objectLayer.appendChild(clone);
+    orig.style.visibility = 'hidden';
+    pdfTemp.push(clone);
+    pdfHidden.push(orig);
+  }
+
+  // 문자(textbox input) → div
+  document.querySelectorAll('#objectLayer .textbox').forEach(t=>{
+    const cs = getComputedStyle(t);
     const div = document.createElement('div');
-
-    const r = t.getBoundingClientRect();
-    const mapR = container.getBoundingClientRect();
-
-    div.innerText = t.value;
-    div.style.position = 'absolute';
-    div.style.left = (r.left - mapR.left) + 'px';
-    div.style.top  = (r.top  - mapR.top ) + 'px';
-    div.style.fontSize = getComputedStyle(t).fontSize;
-    div.style.fontFamily = getComputedStyle(t).fontFamily;
+    div.textContent = t.value || '';
+    div.style.font       = cs.font;
+    div.style.fontSize   = cs.fontSize;
+    div.style.fontFamily = cs.fontFamily;
+    div.style.fontWeight = cs.fontWeight;
+    div.style.lineHeight = cs.lineHeight;
+    div.style.color      = '#000';
+    div.style.background  = cs.backgroundColor;
+    div.style.padding    = cs.padding;
+    div.style.textAlign  = cs.textAlign;
     div.style.whiteSpace = 'nowrap';
-    div.style.transform = t.style.transform;
-    div.style.transformOrigin = t.style.transformOrigin;
-
-    container.appendChild(div);
-    t.style.visibility = 'hidden';
-
-    clones.push({input:t, clone:div});
+    stageForPdf(t, div);
   });
+
+  // 충돌지점 X · 횡단보도(인라인 svg) → 크기가 명시된 svg data-URI img
+  document.querySelectorAll('#objectLayer .xmark, #objectLayer .crosswalk').forEach(el=>{
+    const w = el.offsetWidth  || parseFloat(el.style.width)  || 48;
+    const h = el.offsetHeight || parseFloat(el.style.height) || 48;
+    const svgClone = el.cloneNode(true);
+    svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+    svgClone.setAttribute('width', w);
+    svgClone.setAttribute('height', h);
+    svgClone.removeAttribute('class');
+    svgClone.removeAttribute('style');
+    const xml = new XMLSerializer().serializeToString(svgClone);
+    const img = document.createElement('img');
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(xml);
+    img.width = w; img.height = h;
+    img.style.width  = w + 'px';
+    img.style.height = h + 'px';
+    img.style.opacity = getComputedStyle(el).opacity;
+    stageForPdf(el, img);
+  });
+
+  // 임시 img 디코딩 대기 (html2canvas 가 빈 이미지를 그리지 않도록)
+  await Promise.all(pdfTemp
+    .filter(n => n.tagName === 'IMG' && n.decode)
+    .map(n => n.decode().catch(()=>{})));
 
   const canvasImg = await html2canvas(container, {
     useCORS: true,
@@ -1505,10 +1545,8 @@ async function savePDF(){
   });
 
   // 🔹 원상복구
-  clones.forEach(o=>{
-    o.input.style.visibility = 'visible';
-    o.clone.remove();
-  });
+  pdfTemp.forEach(n => n.remove());
+  pdfHidden.forEach(el => { el.style.visibility = 'visible'; });
 
   const { jsPDF } = window.jspdf;
   const pdf = new jsPDF('p','mm','a4');
