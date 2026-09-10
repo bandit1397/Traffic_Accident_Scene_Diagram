@@ -212,6 +212,7 @@ h1 {
   z-index:600;
   display:none;
   gap:4px;
+  align-items:center;
   background:rgba(255,255,255,0.95);
   border:1px solid #333;
   border-radius:8px;
@@ -220,8 +221,28 @@ h1 {
   max-width:94%;
   flex-wrap:wrap;
   justify-content:center;
+  touch-action:none;          /* 빈 영역·그립을 잡고 드래그 */
 }
 #map.navigating #mapNavBar { display:flex; }
+
+/* 컨트롤은 기본 터치 동작 유지 */
+#mapNavBar input, #mapNavBar button, #mapNavBar select { touch-action:auto; }
+
+/* 검색 바 드래그 손잡이 */
+#mapNavGrip {
+  cursor:move;
+  touch-action:none;
+  user-select:none;
+  align-self:stretch;
+  display:flex;
+  align-items:center;
+  padding:2px 3px;
+  font-size:16px;
+  line-height:1;
+  letter-spacing:-2px;
+  color:#555;
+}
+#mapNavGrip:active { color:#000; }
 
 #mapNavBar input {
   width:160px;
@@ -490,6 +511,7 @@ h1 {
 
     <!-- 지도 검색 바 -->
     <div id="mapNavBar">
+      <span id="mapNavGrip" title="드래그하여 패널 이동">⠿</span>
       <input id="placeSearch" type="text" placeholder="주소·장소 검색 후 Enter">
       <button id="searchBtn" type="button">검색</button>
       <select id="mapStyleSel" title="지도 스타일"></select>
@@ -1064,6 +1086,57 @@ function makePanelDraggable(panel){
 }
 
 makePanelDraggable(panel);
+
+
+/* ===== 지도 검색 바(#mapNavBar) 자유 이동 =====
+   그립(⠿) 또는 바의 빈 영역을 잡고 끌면 이동. 입력·버튼·선택 조작은 그대로.
+   #mapNavBar 는 #map 안의 position:absolute → left/top(px, #map 기준)로 이동.
+   지도 프레임 밖으로 완전히 나가지 않도록 클램프. */
+function makeMapBarDraggable(bar, grip){
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  const mapEl = document.getElementById('map');
+
+  bar.addEventListener('pointerdown', e=>{
+    // 그립이 아니고 컨트롤 위에서 시작했으면 무시 (검색·버튼 정상 동작)
+    if(e.target !== grip && e.target.closest('input, button, select, textarea')) return;
+
+    const bR = bar.getBoundingClientRect();
+    const mR = mapEl.getBoundingClientRect();
+    bar.style.transform = 'none';
+    ox = bR.left - mR.left;
+    oy = bR.top  - mR.top;
+    bar.style.left = ox + 'px';
+    bar.style.top  = oy + 'px';
+    sx = e.clientX; sy = e.clientY;
+    dragging = true;
+    try{ bar.setPointerCapture(e.pointerId); }catch(_){}
+    e.preventDefault();
+  });
+
+  bar.addEventListener('pointermove', e=>{
+    if(!dragging) return;
+    const mW = mapEl.clientWidth, mH = mapEl.clientHeight;
+    const bW = bar.offsetWidth,   bH = bar.offsetHeight;
+    const KEEP = 48;   // 화면에 항상 남길 최소 크기
+    let nx = ox + e.clientX - sx;
+    let ny = oy + e.clientY - sy;
+    nx = Math.max(KEEP - bW, Math.min(mW - KEEP, nx));
+    ny = Math.max(0,          Math.min(mH - Math.min(bH, 40), ny));
+    bar.style.left = nx + 'px';
+    bar.style.top  = ny + 'px';
+  });
+
+  const end = e=>{
+    dragging = false;
+    try{ bar.releasePointerCapture(e.pointerId); }catch(_){}
+  };
+  bar.addEventListener('pointerup', end);
+  bar.addEventListener('pointercancel', end);
+}
+makeMapBarDraggable(
+  document.getElementById('mapNavBar'),
+  document.getElementById('mapNavGrip')
+);
 
 
 /* ===== 공통 ===== */
